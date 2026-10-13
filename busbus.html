@@ -288,6 +288,8 @@ color:var(--primary);display:flex;align-items:center;justify-content:center;}
 padding:3px 9px;border-radius:999px;text-transform:uppercase;letter-spacing:.03em;}
 .settingsFooter{text-align:center;color:var(--ink-soft);font-size:12px;padding:10px 20px 30px;line-height:1.7;}
 .settingsFooter b{color:var(--primary);font-family:'Fredoka';}
+.footerAuthorLink{text-decoration:none;}
+.footerAuthorLink:active b{opacity:.7;}
 .radioGroup{display:flex;flex-wrap:wrap;gap:8px;}
 .radioBtn{padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--bg);
 font-size:12.5px;font-weight:600;color:var(--ink-soft);cursor:pointer;}
@@ -355,6 +357,7 @@ locTimestamp: null,
 radarRadius: 600,
 rotationEnabled: false,
 theme: "system",
+mapTheme: "auto", // "auto" segue o tema do app; "light"/"dark" força o visual do mapa independente do tema do app
 favoriteStops: [],
 lastMapView: null,
 lastMapInteractionTs: 0,
@@ -398,6 +401,10 @@ const t = localStorage.getItem("busbus_theme");
 if(t === "dark" || t === "amoled" || t === "light" || t === "system") state.theme = t;
 }catch(e){}
 try{
+const mt = localStorage.getItem("busbus_map_theme");
+if(mt === "light" || mt === "dark" || mt === "auto") state.mapTheme = mt;
+}catch(e){}
+try{
 const favs = JSON.parse(localStorage.getItem("busbus_favorites") || "[]");
 if(Array.isArray(favs)) state.favoriteStops = favs;
 }catch(e){}
@@ -414,6 +421,62 @@ state.theme = theme;
 applyTheme(theme);
 try{ localStorage.setItem("busbus_theme", theme); }catch(e){}
 renderConfigScreen();
+}
+function setMapTheme(theme){
+state.mapTheme = theme;
+try{ localStorage.setItem("busbus_map_theme", theme); }catch(e){}
+renderConfigScreen();
+// Se o mapa da tela de paradas já estiver aberto, recarrega ele agora com
+// o visual novo. Os outros mapas (linha em tempo real, planejar rota)
+// pegam o tema atualizado da próxima vez que forem abertos — refazê-los na
+// hora atrapalharia o acompanhamento do ônibus que já estiver rolando.
+if(leafletMap && state.view === "stops"){
+destroyLeafletMap();
+try{ initLeafletMapOnce(); }catch(e){ console.error("[BusBus] mapa indisponível:", e); }
+}
+}
+function effectiveMapIsDark(){
+if(state.mapTheme === "dark") return true;
+if(state.mapTheme === "light") return false;
+// "auto": segue o tema do app (e, se o app estiver no padrão do sistema,
+// segue o modo claro/escuro do próprio aparelho)
+if(state.theme === "dark" || state.theme === "amoled") return true;
+if(state.theme === "light") return false;
+try{ return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches; }
+catch(e){ return false; }
+}
+// A cor normal da polilinha (azul escuro) some quase por completo em cima
+// do mapa escuro (que é o tile claro invertido por CSS, ver addBaseMapLayers
+// — fica um fundo escuro navy). Por isso, no modo escuro do mapa a rota usa
+// um azul bem mais claro, legível em cima do fundo escuro.
+function routeLineColor(){
+return effectiveMapIsDark() ? '#7EC8FF' : '#2B5F8A';
+}
+// Usado pelos três mapas do app (paradas, linha em tempo real e planejar
+// rota). Tentei usar os tiles da CARTO (base sem texto + uma camada só com
+// os rótulos das ruas por cima da rota, e um visual escuro de verdade) mas
+// a CARTO passou a exigir uma chave de API própria pra isso — sem chave,
+// os tiles vêm com uma marca d'água de "API KEY REQUIRED" por cima do mapa
+// inteiro, pior que o problema original. Então aqui fica o tile padrão do
+// OpenStreetMap (gratuito, sem chave, o mesmo de sempre), e o "modo escuro"
+// do mapa é simulado invertendo as cores da camada de tiles por CSS — não é
+// um tile desenhado pra ser escuro, mas evita tanto a marca d'água quanto
+// depender de uma chave paga. Como o nome das ruas vem "pintado" dentro da
+// própria imagem do tile (não dá pra separar sem um provedor pago), a rota
+// agora é desenhada mais fina e translúcida, só pra incomodar menos a
+// leitura do nome da rua por baixo — não é a sobreposição perfeita tipo
+// Google Maps, que exigiria tiles vetoriais (pagos) pra funcionar de graça.
+function addBaseMapLayers(map){
+const dark = effectiveMapIsDark();
+const layer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+maxZoom: 19
+}).addTo(map);
+const applyDarkFilter = () => {
+const pane = map.getPane("tilePane");
+if(pane) pane.style.filter = dark ? "invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9)" : "";
+};
+if(layer && typeof layer.on === "function") layer.on("load", applyDarkFilter);
+applyDarkFilter();
 }
 function saveRotationEnabled(v){
 state.rotationEnabled = v;
@@ -435,15 +498,44 @@ if(!state.stops.find(s => String(s.id) === String(id))) state.stops.push({ id, n
 focusStopOnMap(lat, lng);
 selectStop(id);
 }
+// Pilha lógica das telas "de primeiro nível" (as abas: paradas, pesquisar,
+// rota, ajustes, mensagens), uma posição por entrada real do histórico do
+// navegador. Antes, cada troca de aba empilhava sempre uma entrada nova —
+// então, numa sessão longa alternando entre as mesmas abas repetidas vezes,
+// o histórico só crescia, sem limite, e "voltar" podia precisar de
+// centenas/milhares de toques até chegar na primeira vez que a pessoa
+// esteve na Home. Agora, se a aba pra onde você está indo já existe em
+// algum ponto mais abaixo dessa pilha, a gente pula direto pra essa posição
+// já existente (history.go) em vez de empilhar mais uma — o navegador
+// descarta sozinho as entradas que ficaram "à frente" dela assim que uma
+// navegação nova empilhar algo ali, então a pilha nunca cresce além do
+// número de telas realmente diferentes visitadas na sequência atual.
+let navStack = ["stops"];
 function pushNav(label){
-if(!isPopping){
-try{ history.pushState({ label }, "", "#" + label); }catch(e){ console.error("[BusBus] pushState bloqueado:", e); }
+if(isPopping) return;
+const existingIdx = navStack.indexOf(label);
+if(existingIdx !== -1 && existingIdx < navStack.length - 1){
+const delta = navStack.length - 1 - existingIdx;
+navStack = navStack.slice(0, existingIdx + 1);
+isPopping = true;
+try{ history.go(-delta); }
+catch(e){ console.error("[BusBus] history.go bloqueado:", e); isPopping = false; }
+return;
 }
+if(existingIdx === -1){
+navStack.push(label);
+try{ history.pushState({ label }, "", "#" + label); }
+catch(e){ console.error("[BusBus] pushState bloqueado:", e); navStack.pop(); }
+}
+// se existingIdx === navStack.length-1, a aba já é a atual (ex.: pushNav
+// chamado de novo pra mesma tela) — nada a fazer no histórico.
 }
 function handlePopState(e){
 stopPolling();
 isPopping = true;
 const label = (e.state && e.state.label) || "stops";
+const stackIdx = navStack.indexOf(label);
+navStack = stackIdx !== -1 ? navStack.slice(0, stackIdx + 1) : ["stops"];
 if(label !== "route") destroyTripMap();
 if(label === "lines" && state.stopSel){
 destroyLeafletMap();
@@ -455,7 +547,9 @@ if(savedLinesScrollY){
 requestAnimationFrame(() => window.scrollTo(0, savedLinesScrollY));
 }
 } else if(label === "search"){
-destroyLeafletMap(); renderSearchScreen();
+destroyLeafletMap();
+pendingSearchScrollRestore = true;
+renderSearchScreen();
 } else if(label === "route"){
 destroyLeafletMap(); renderRouteScreen();
 } else if(label === "config"){
@@ -536,6 +630,13 @@ function goBack(){
 try{ history.back(); }catch(e){ console.error("[BusBus] history.back bloqueado:", e); renderStopsScreenStructure(); startGpsTracking(); }
 }
 function navTo(tab){
+if(tab === state.view){
+// Já está nessa aba (tocada de novo à toa) — não há nada pra recarregar.
+// Pra "paradas" isso também evita jogar fora o fix de GPS que já tínhamos
+// e forçar esperar um novo, o que deixava a troca de aba lenta sem
+// necessidade.
+return;
+}
 stopPolling();
 if(tab !== 'route') destroyTripMap();
 if(tab === 'stops') {
@@ -557,8 +658,14 @@ renderMessagesScreen();
 pushNav(tab);
 }
 function startGpsTracking(){
+// Se já existe um watch rodando, ele continua valendo — reiniciar aqui
+// (clearWatch + watchPosition de novo) descartava o último fix de GPS e
+// obrigava o aparelho a adquirir um fix 100% novo do zero (maximumAge: 0),
+// o que podia levar vários segundos. Isso é o que deixava a troca de aba
+// lenta: a cada navTo('stops') o app jogava fora uma localização boa que
+// já tinha.
+if(state.watchGpsId) return;
 if("geolocation" in navigator){
-if(state.watchGpsId) navigator.geolocation.clearWatch(state.watchGpsId);
 state.watchGpsId = navigator.geolocation.watchPosition(
 pos => {
 setAndSaveCoord(pos.coords.latitude, pos.coords.longitude, "GPS Vivo");
@@ -566,7 +673,7 @@ setAndSaveCoord(pos.coords.latitude, pos.coords.longitude, "GPS Vivo");
 err => {
 fallbackToIpOrStorage();
 },
-{ enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+{ enableHighAccuracy: true, timeout: 8000, maximumAge: 15000 }
 );
 } else {
 fallbackToIpOrStorage();
@@ -677,6 +784,18 @@ function renderStopsScreenStructure(){
 state.view = "stops";
 destroyLeafletMap();
 updateHeaderAndNav("stops");
+// O subtítulo de "Radar de Xm (fonte)" só era escrito dentro de
+// fetchStopsSilent(), que só roda de novo quando a localização mudou o
+// bastante ou ficou velha o bastante — então, ao voltar pra essa aba sem
+// nenhuma dessas condições, o subtítulo continuava mostrando o texto da
+// tela anterior (ex: "Ajustes do Radar"). Escreve aqui, na hora de montar a
+// tela, pra sempre corresponder à tela que está de fato na tela.
+const subtitleEl = el("subtitle");
+if(subtitleEl){
+subtitleEl.textContent = state.coord
+? `Radar de ${state.radarRadius}m (${state.locSource})`
+: "Buscando sua localização…";
+}
 render(`
 <div class="mainMapContainer">
 <div id="mapContainer"></div>
@@ -692,9 +811,10 @@ ${state.rotationEnabled ? `
 </div>
 </div>
 <div id="statusArea"></div>
-<section id="stopList">${renderFavoritesSection()}${skeletonStopCards()}</section>
+<section id="stopList">${renderFavoritesSection()}${state.stops.length > 0 ? "" : skeletonStopCards()}</section>
 `);
 try{ initLeafletMapOnce(); }catch(e){ console.error("[BusBus] mapa indisponível:", e); }
+if(state.stops.length > 0) renderStopsListOnly();
 if(state.weather) renderWeatherChip();
 }
 function skeletonStopCards(n = 3){
@@ -718,9 +838,7 @@ leafletMap = L.map('mapContainer', {
 zoomControl: false, attributionControl: false, rotate: state.rotationEnabled, rotateControl: false,
 touchRotate: state.rotationEnabled, bearing: keepPrevView ? (state.lastMapView.bearing || 0) : 0
 }).setView(center, zoom);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-maxZoom: 19
-}).addTo(leafletMap);
+addBaseMapLayers(leafletMap);
 if(keepPrevView) initialCenterSet = true; // não deixa o próximo fix de GPS recentralizar e perder o enquadramento restaurado
 leafletMap.on('rotate', updateCompassIcon);
 const saveMapView = () => {
@@ -959,11 +1077,11 @@ leafletMap = L.map('mapContainer', {
 zoomControl: false, attributionControl: false, rotate: state.rotationEnabled, rotateControl: false,
 touchRotate: state.rotationEnabled, bearing: 0
 });
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(leafletMap);
+addBaseMapLayers(leafletMap);
 busMarkersGroup = L.layerGroup().addTo(leafletMap);
 if(state.route && state.route.length > 0){
 const latLngs = state.route.map(p => [p.lat, p.lng]);
-const routePoly = L.polyline(latLngs, { color: '#2B5F8A', weight: 5, opacity: 0.8 }).addTo(leafletMap);
+const routePoly = L.polyline(latLngs, { color: routeLineColor(), weight: 5, opacity: 0.8 }).addTo(leafletMap);
 leafletMap.fitBounds(routePoly.getBounds(), { padding: [20, 20] });
 } else {
 leafletMap.setView([-1.4558, -48.4902], 14);
@@ -1144,7 +1262,12 @@ else if (state.view === "map") startPolling();
 });
 let allLinesCache = null, allPointsCache = null;
 function normalize(s){
-return (s||"").toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+// Al\u00e9m de min\u00fasculas e sem acento, troca qualquer caractere que n\u00e3o seja
+// letra/n\u00famero por espa\u00e7o (h\u00edfen, v\u00edrgula, ponto, barra\u2026) e colapsa espa\u00e7os
+// (inclusive um espa\u00e7o sobrando no fim, digitado sem querer), pra "Parque
+// Shopping " ou "Parque-Shopping" continuarem achando "Parque Shopping".
+return (s||"").toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+.replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
 }
 function historyKey(type){ return `busbus_search_history_${type}`; }
 function loadSearchHistory(type){
@@ -1192,6 +1315,7 @@ const btn = el("searchClearBtn");
 if(btn) btn.style.display = state.searchQuery ? "flex" : "none";
 }
 function clearSearchInput(){
+clearTimeout(searchIdleTimer);
 state.searchQuery = "";
 const input = el("searchInput");
 if(input){ input.value = ""; input.focus(); }
@@ -1242,21 +1366,54 @@ render(`
 <div id="searchResults"></div>
 </section>
 `);
-if(state.searchQuery) handleSearch(state.searchQuery);
-else el("searchResults").innerHTML = renderSearchHistoryHTML(state.searchType);
+if(state.searchQuery){
+handleSearch(state.searchQuery);
+} else {
+el("searchResults").innerHTML = renderSearchHistoryHTML(state.searchType);
+restoreSearchScrollIfPending();
+}
 }
 function setSearchType(type){
 state.searchType = type;
 renderSearchScreen();
 }
 let searchDebounce = null;
+// Guarda onde a pessoa estava rolada na lista de resultados antes de tocar
+// num ponto/linha, pra voltar pro mesmo lugar (e não pro topo) ao apertar
+// "voltar" — igual já acontecia na lista de linhas de uma parada.
+let savedSearchScrollY = 0;
+let pendingSearchScrollRestore = false;
+function restoreSearchScrollIfPending(){
+if(!pendingSearchScrollRestore) return;
+pendingSearchScrollRestore = false;
+requestAnimationFrame(() => window.scrollTo(0, savedSearchScrollY));
+}
+// Se a pessoa digitar algo na pesquisa e não mexer mais na tela por um
+// tempo, o campo se apaga sozinho — evita deixar uma busca antiga parada
+// ali indefinidamente.
+let searchIdleTimer = null;
+const SEARCH_IDLE_CLEAR_MS = 90000;
+function resetSearchIdleTimer(){
+clearTimeout(searchIdleTimer);
+if(!state.searchQuery) return;
+searchIdleTimer = setTimeout(() => {
+state.searchQuery = "";
+const input = el("searchInput");
+if(input) input.value = "";
+toggleSearchClearBtn();
+const resEl = el("searchResults");
+if(resEl) resEl.innerHTML = renderSearchHistoryHTML(state.searchType);
+}, SEARCH_IDLE_CLEAR_MS);
+}
 function handleSearch(q){
 state.searchQuery = q;
 toggleSearchClearBtn();
+resetSearchIdleTimer();
 clearTimeout(searchDebounce);
 const resEl = el("searchResults");
 if(!q.trim()){
 resEl.innerHTML = renderSearchHistoryHTML(state.searchType);
+restoreSearchScrollIfPending();
 return;
 }
 resEl.innerHTML = statusHTML("Buscando…", true);
@@ -1264,6 +1421,7 @@ searchDebounce = setTimeout(async () => {
 try{
 if(state.searchType === "ponto") await runStopSearch(q, resEl);
 else await runLineSearch(q, resEl);
+restoreSearchScrollIfPending();
 }catch(e){
 resEl.innerHTML = `<div class="status err">Erro na busca: ${e.message}</div>`;
 }
@@ -1291,6 +1449,7 @@ ${l.trajetos[0] ? `<button class="infoBtn" onclick="event.stopPropagation();show
 </div>`).join("") : `<div class="empty">Nenhuma linha encontrada.</div>`;
 }
 async function searchSelectStop(id, lat, lng, name){
+savedSearchScrollY = window.scrollY;
 addSearchHistory("ponto", state.searchQuery || name);
 if(!state.stops.find(s => String(s.id) === String(id))){
 state.stops.push({ id, name, lat, lng });
@@ -1298,6 +1457,7 @@ state.stops.push({ id, name, lat, lng });
 await selectStop(id);
 }
 async function searchSelectLine(lineId){
+savedSearchScrollY = window.scrollY;
 addSearchHistory("linha", state.searchQuery);
 destroyLeafletMap();
 state.view = "map";
@@ -1410,6 +1570,14 @@ const themeOptions = [
 const themeBtns = themeOptions.map(t => `
 <button class="radioBtn ${state.theme === t.id ? 'selected' : ''}" onclick="setTheme('${t.id}')">${t.label}</button>
 `).join("");
+const mapThemeOptions = [
+{ id: "auto", label: "Igual ao tema do app" },
+{ id: "light", label: "Sempre claro" },
+{ id: "dark", label: "Sempre escuro" },
+];
+const mapThemeBtns = mapThemeOptions.map(t => `
+<button class="radioBtn ${state.mapTheme === t.id ? 'selected' : ''}" onclick="setMapTheme('${t.id}')">${t.label}</button>
+`).join("");
 render(`
 <section>
 <div class="settingsTitle">Ajustes</div>
@@ -1446,6 +1614,14 @@ render(`
 </span>
 Ativar rotação do mapa (padrão: desligado)
 </label>
+</div>
+</div>
+<div class="settingsRow">
+<div class="settingsIcon">${mapThemeIcon}</div>
+<div class="rowBody">
+<div class="rowTitle">Modo claro/escuro do mapa</div>
+<div class="rowDesc">Independente do tema do app: dá pra manter o mapa sempre claro (mais fácil de ler sob sol forte) mesmo usando o app no tema escuro, por exemplo.</div>
+<div class="rowControl radioGroup">${mapThemeBtns}</div>
 </div>
 </div>
 </div>
@@ -1486,8 +1662,9 @@ Ativar rotação do mapa (padrão: desligado)
 </div>
 <div class="settingsFooter">
 ${heartIcon}<br>
-Feito com carinho por <b>rilclesaraiva</b><br>
-BusBus · dados em tempo real de Belém
+Feito com carinho por <a class="footerAuthorLink" href="${GITHUB_PROFILE_URL}" target="_blank" rel="noopener"><b>rilclesaraiva</b></a><br>
+BusBus · dados em tempo real de Belém<br>
+<span style="opacity:.75;">Código escrito com apoio de IA · <span class="licenseLink" style="cursor:pointer;" onclick="openPrivacyModal()">saiba mais</span></span>
 </div>
 </section>
 `);
@@ -1631,7 +1808,7 @@ if(tripMap) return;
 tripMap = L.map('tripMapContainer', {
 zoomControl: false, attributionControl: false, rotate: state.rotationEnabled, rotateControl: false, touchRotate: state.rotationEnabled
 }).setView([-1.4558, -48.4902], 13);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(tripMap);
+addBaseMapLayers(tripMap);
 tripMapLayer = L.layerGroup().addTo(tripMap);
 }
 function dotMarker(lat, lng, color, label){
@@ -1978,10 +2155,12 @@ const starIconFilled = `<svg width="19" height="19" viewBox="0 0 24 24" fill="cu
 const starIconOutline = `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`;
 const paletteIcon = `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 0 20c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.3-.3-.3-.5-.8-.5-1.2 0-1.1.9-2 2-2h2.3A4.2 4.2 0 0 0 21.5 11c0-5-4.3-9-9.5-9Z"/><circle cx="7.5" cy="10.5" r="1.3" fill="currentColor" stroke="none"/><circle cx="12" cy="7" r="1.3" fill="currentColor" stroke="none"/><circle cx="16.5" cy="10.5" r="1.3" fill="currentColor" stroke="none"/></svg>`;
 const rotateSettingIcon = `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>`;
+const mapThemeIcon = `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><path d="M9 3v15M15 6v15"/></svg>`;
 const githubIcon = `<svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.7.5.7 5.6.7 12a11.5 11.5 0 0 0 7.9 11c.6.1.8-.3.8-.6v-2c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.4 1 .1-.8.4-1.3.8-1.6-2.6-.3-5.3-1.3-5.3-5.8 0-1.3.5-2.3 1.2-3.2-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11 11 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.8.1 3.1.8.9 1.2 1.9 1.2 3.2 0 4.5-2.7 5.5-5.4 5.8.5.4.9 1.1.9 2.3v3.3c0 .3.2.7.8.6A11.5 11.5 0 0 0 23.3 12C23.3 5.6 18.3.5 12 .5Z"/></svg>`;
 const coffeeIcon = `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a3 3 0 0 1 0 6h-1"/><path d="M2 8h16v6a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V8Z"/><path d="M6 1v2M10 1v2M14 1v2"/></svg>`;
 const BUY_COFFEE_URL = "https://buymeacoffee.com/saraivarilcle";
 const GITHUB_URL = "https://github.com/rilclesaraiva/BusBus";
+const GITHUB_PROFILE_URL = "https://github.com/rilclesaraiva";
 const PRIVACY_URL = "https://busbus.saraivarilcle.workers.dev/privacy";
 const PIX_CODE = "00020126580014br.gov.bcb.pix013675eadc64-11f6-4883-a059-9f05670af82d5204000053039865802BR5914RILCLE_SARAIVA6009Sao Paulo610901227-20062230519daqr640397992297291630413B8";
 const PIX_QR_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMQAAADEAQAAAADo3bPGAAAB/UlEQVR42t2Ysa3dMBAE54yfDzt4/ZelDpYVrAN9J4adkYBhhhKgBanb2TtO+fPaP/jb+rffzMxizcwMe2aGNTPruI4tGwvlQ5od2ws7nQWbbReUgffRWZ0vAFYw6yF8up517c/5YfazZu0H1o06oLYW21qbtLU1Z3WmA/7uHfA5vZ+2TZNiX0nbNqd1aEgaBRJrywWdQmPTVq2g5ryOQi1FMZUQL+ynCTRqGyHADZ0U/SWWICWeP7emIqlJS6tyfj+JpI2xprT2vE9pmiBSKiVIPa3zhYvd1c2Ehx3M3lmc949RIthIY3uhDppQQi3G5D3I8zrSCEhNSILH/fMDwnxohWEtFzdyjjYW9IVPaayez5/9gd2hC9gSFuye798eAu2C0M0sAhfqOuB3oiql4AUeYEoNqWlNmxscfUVsNDWNpBdyIfRXlKoIcoOjNHxLlLR96/u8TtLEJg0VQm/wujDdz2QhGyDrPA++GOnaDcRxI+yu89x5OwLbUk3C28+d9w/Ji+qKxhfh5/sqjQ1CSF7f3vDP94erBJPWCz717awJb3/4cu4Cd97JJ28LD9beyNOZWXvtD7AgZrMIV+ZtMEuyF/AhrHV+Dh7JYnXteWNoD710H6IPGB6Yh3iBB683IWBKKOCNeaEvd7AaDXdyAVSDCZqqPc6d+c/uxX4CcLHkfj3ULf0AAAAASUVORK5CYII=";
@@ -2037,12 +2216,21 @@ essa é uma promessa, não um período de teste.</div>
 BusBus funcionando e evoluindo — custos como manter o acesso aos dados, hospedagem e o tempo de desenvolvimento —
 nunca pra criar cobranças, assinaturas ou recursos trancados atrás de pagamento.</div>
 </div>
-<div class="aboutSection" style="border-bottom:none;">
+<div class="aboutSection">
 <div class="aboutTitle">Um app que nunca para de melhorar</div>
 <div class="aboutText">O BusBus é construído com a ideia de que ele nunca vai estar realmente "pronto". Sempre vai
 existir uma versão melhor possível — mais rápida, mais precisa, mais acessível — e é atrás dela que o
 desenvolvimento continua, por mais perto que a gente chegue. Esse estado perfeito é inatingível de propósito: é o
 que garante que o app continue sendo cuidado e atualizado, em vez de parar no "bom o suficiente".</div>
+</div>
+<div class="aboutSection" style="border-bottom:none;">
+<div class="aboutTitle">Feito com apoio de inteligência artificial</div>
+<div class="aboutText">O código do BusBus foi escrito com apoio de ferramentas de IA, sob a direção de
+rilclesaraiva — cada funcionalidade, ajuste e correção parte de uma decisão sua, não de algo gerado sozinho e
+publicado sem revisão. É assim que um projeto pessoal e independente consegue entregar um app deste tamanho sem
+uma equipe por trás. O cuidado pra deixar tudo o mais polido e livre de problemas possível é constante — e, como
+em qualquer software, alguma coisa pode passar despercebida. Encontrou algo estranho? Conta pra gente em
+<a class="licenseLink" href="mailto:saraivarilcle@gmail.com">saraivarilcle@gmail.com</a>.</div>
 </div>
 `);
 }
