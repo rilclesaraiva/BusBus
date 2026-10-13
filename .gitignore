@@ -1,0 +1,15 @@
+# Dependências instaladas pelo "npm install" — pesado e 100% reconstruível a
+# partir de package.json + package-lock.json, nunca deve ir pro Git.
+node_modules/
+
+# Saída do "npm run build" — é o arquivo final (busbus.html ou index.html)
+# que vai pro AppMint/Cloudflare, mas o resultado do build não precisa viver
+# dentro do repositório junto com o código-fonte que o gera. Se a estratégia
+# escolhida for commitar o build final na raiz do repo (opção "a" do plano),
+# aí sim essa linha deve sair daqui — do contrário o Git vai ignorar
+# justamente o arquivo que você quer commitar.
+dist/
+
+# Arquivos de sistema operacional / editor que não têm nada a ver com o
+# projeto em si.
+.DS_Store

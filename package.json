@@ -1,1 +1,24 @@
-{ "name": "busbus-api-proxy", "private": true }
+{
+  "name": "busbus-experimental-modular",
+  "private": true,
+  "version": "0.2.0",
+  "description": "BusBus Experimental Modular (B.E.M.) — reconstrução do BusBus com Vite + vite-plugin-singlefile, ainda gerando um único arquivo HTML no final (pro AppMint e pro PWA), mas com o código-fonte organizado em módulos.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "leaflet": "^1.9.4",
+    "leaflet-rotate": "^0.2.8"
+  },
+  "devDependencies": {
+    "jsdom": "^29.1.1",
+    "playwright": "^1.64.0",
+    "vite": "^6.0.0",
+    "vite-plugin-singlefile": "^2.1.0",
+    "vitest": "^5.0.4"
+  }
+}

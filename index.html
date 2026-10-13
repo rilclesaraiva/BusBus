@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<!-- BusBus Experimental Modular (B.E.M.) — versão %APP_VERSION%
+     Copyright (C) 2026 rilclesaraiva — licenciado sob GNU GPLv3.
+     Texto completo: https://github.com/rilclesaraiva/BusBus/blob/main/LICENSE -->
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="app-version" content="%APP_VERSION%">
+<title>BusBus — Belém em tempo real</title>
+<!-- PWA: deixa o BusBus instalável como app direto do navegador (inclusive
+no iPhone, via "Adicionar à Tela de Início" do Safari — útil pra quem usa
+iOS, já que o app publicado na loja é só pra Android). Esses arquivos
+(manifest.json, sw.js, ícones) só existem quando o busbus.html é servido
+por um site de verdade; dentro do APK do AppMint eles simplesmente não
+fazem nada, sem quebrar nada. -->
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#146B49">
+<link rel="icon" href="./icon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BusBus">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+<div id="app">
+<header>
+<button class="backBtn" id="globalBackBtn" onclick="goBack()">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+</button>
+<div>
+<h1>BusBus</h1>
+<p id="subtitle">Belém em tempo real</p>
+</div>
+<button class="bellBtn" id="bellBtn" onclick="navTo('messages')" title="Mensagens do sistema">
+<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 4.5 1.5 6 2 7H4c.5-1 2-2.5 2-7Z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
+<span class="bellDot" id="bellDot"></span>
+</button>
+</header>
+<div id="screens"></div>
+<nav class="bottomNav" id="bottomNav">
+<button class="navBtn" id="btnNavSearch" onclick="navTo('search')">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+Pesquisar
+</button>
+<button class="navBtn active" id="btnNavHome" onclick="navTo('stops')">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s7-7.5 7-12.5A7 7 0 0 0 5 9.5C5 14.5 12 22 12 22Z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
+Paradas
+</button>
+<button class="navBtn" id="btnNavRoute" onclick="navTo('route')">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M8.3 17.7 15.7 6.3M18 7.5v3a4 4 0 0 1-4 4H9"/></svg>
+Rota
+</button>
+<button class="navBtn" id="btnNavConfig" onclick="navTo('config')">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+Ajustes
+</button>
+</nav>
+</div>
+<script type="module" src="/src/app.js"></script>
+</div>
+</body>
+</html>
