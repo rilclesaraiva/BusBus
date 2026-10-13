@@ -8,12 +8,15 @@ Rastreamento de ônibus em tempo real para Belém (PA) — de graça, sem anúnc
 [![Licença: GPLv3](https://img.shields.io/badge/licença-GPLv3-146B49?style=flat-square)](./LICENSE)
 [![Plataforma: Android](https://img.shields.io/badge/plataforma-Android-146B49?style=flat-square)](#)
 [![Feito em Belém](https://img.shields.io/badge/feito%20em-Belém%20(PA)-146B49?style=flat-square)](#)
+[![Código com apoio de IA](https://img.shields.io/badge/código-com%20apoio%20de%20IA-146B49?style=flat-square)](#-feito-com-apoio-de-ia)
 
 ![BusBus](./hero.png)
 
 </div>
 
 BusBus é um projeto pessoal e independente, feito por [rilclesaraiva](https://github.com/rilclesaraiva). Não tem vínculo com nenhuma operadora de transporte ou órgão público — existe pelo direito de quem mora e trabalha em Belém de saber quando o próximo ônibus chega.
+
+> 🤖 O código deste projeto foi escrito com apoio de ferramentas de IA, sob direção e revisão de rilclesaraiva. Mais detalhes [aqui embaixo](#-feito-com-apoio-de-ia).
 
 ## ✨ O que o app faz
 
@@ -33,8 +36,12 @@ BusBus é um projeto pessoal e independente, feito por [rilclesaraiva](https://g
 <table>
 <tr>
 <td><img src="./paradas.png" width="200"><br><sub>Paradas próximas + clima</sub></td>
-<td><img src="./linhas.png" width="200"><br><sub>Linhas e previsão de chegada</sub></td>
-<td><img src="./mapa.png" width="200"><br><sub>Ônibus ao vivo no mapa</sub></td>
+<td><img src="./mapa.png" width="200"><br><sub>Rota e ônibus ao vivo no mapa</sub></td>
+<td><img src="./pesquisar.png" width="200"><br><sub>Busca por linha</sub></td>
+</tr>
+<tr>
+<td><img src="./horario.png" width="200"><br><sub>Horário programado (tema escuro)</sub></td>
+<td><img src="./mensagens.png" width="200"><br><sub>Avisos do sistema</sub></td>
 <td><img src="./ajustes.png" width="200"><br><sub>Ajustes e temas</sub></td>
 </tr>
 </table>
@@ -78,6 +85,12 @@ O BusBus é construído sobre serviços gratuitos e de código aberto. A lista c
 ## 🔒 Privacidade
 
 Sua localização é usada só no seu aparelho, em tempo real, pra desenhar o mapa — nunca é enviada, guardada ou compartilhada em nenhum servidor nosso. Leia a [política de privacidade completa](https://busbus.saraivarilcle.workers.dev/privacy).
+
+## 🤖 Feito com apoio de IA
+
+O código do BusBus — o app (`busbus.html`), o proxy (`worker.js`) e os próprios materiais deste repositório — foi escrito com apoio de ferramentas de IA. Cada funcionalidade, correção e decisão de design parte de rilclesaraiva, que dirige, revisa e testa tudo antes de publicar; nada aqui é gerado e colocado no ar sem revisão. É assim que um projeto pessoal e independente, sem equipe por trás, consegue entregar um app deste tamanho.
+
+O cuidado pra manter o BusBus polido e livre de problemas é constante, mas, como em qualquer software, alguma coisa pode passar despercebida — principalmente numa fase inicial de testes com poucos usuários. Encontrou algo estranho? Abra uma [issue](https://github.com/rilclesaraiva/BusBus/issues) ou mande um e-mail (contato abaixo).
 
 ## 📄 Licença
 
