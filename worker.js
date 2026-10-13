@@ -1,4 +1,6 @@
 // BusBus API Proxy — Cloudflare Worker
+// Copyright (C) 2026 rilclesaraiva — licenciado sob GNU GPLv3.
+// Texto completo: https://github.com/rilclesaraiva/BusBus/blob/main/LICENSE
 //
 // O que isso faz: repassa (proxy) as chamadas que o app BusBus faz pra API
 // real, sem que o endereço dessa API apareça em nenhum lugar do código
@@ -101,7 +103,8 @@ nenhum servidor nosso nem sai do seu aparelho.</p>
 dentro do próprio app antes de entrar em vigor.</p>
 
 <h2>Contato</h2>
-<p>Dúvidas, sugestões ou problemas: <a href="https://buymeacoffee.com/saraivarilcle" target="_blank" rel="noopener">buymeacoffee.com/saraivarilcle</a></p>
+<p>Dúvidas, sugestões ou problemas: <a href="mailto:saraivarilcle@gmail.com">saraivarilcle@gmail.com</a>
+ou pelo <a href="https://buymeacoffee.com/saraivarilcle" target="_blank" rel="noopener">buymeacoffee.com/saraivarilcle</a></p>
 </body>
 </html>`;
 
