@@ -1,96 +1,92 @@
 <div align="center">
 
-# ğ BusBus
+# 🚌 BusBus
 
-**Onde estÃ¡ seu Ã´nibus, agora.**
-Rastreamento de Ã´nibus em tempo real para BelÃ©m (PA) â de graÃ§a, sem anÃºncios, sem conta.
+**Onde está seu ônibus, agora.**
+Rastreamento de ônibus em tempo real para Belém (PA) — de graça, sem anúncios, sem conta.
 
-[![LicenÃ§a: GPLv3](https://img.shields.io/badge/licenÃ§a-GPLv3-146B49?style=flat-square)](./LICENSE)
+[![Licença: GPLv3](https://img.shields.io/badge/licença-GPLv3-146B49?style=flat-square)](./LICENSE)
 [![Plataforma: Android](https://img.shields.io/badge/plataforma-Android-146B49?style=flat-square)](#)
-[![Feito em BelÃ©m](https://img.shields.io/badge/feito%20em-BelÃ©m%20(PA)-146B49?style=flat-square)](#)
+[![Feito em Belém](https://img.shields.io/badge/feito%20em-Belém%20(PA)-146B49?style=flat-square)](#)
 
 ![BusBus](./hero.png)
 
 </div>
 
-BusBus Ã© um projeto pessoal e independente, feito por [rilclesaraiva](https://github.com/rilclesaraiva). NÃ£o tem vÃ­nculo com nenhuma operadora de transporte ou Ã³rgÃ£o pÃºblico â existe pelo direito de quem mora e trabalha em BelÃ©m de saber quando o prÃ³ximo Ã´nibus chega.
+BusBus é um projeto pessoal e independente, feito por [rilclesaraiva](https://github.com/rilclesaraiva). Não tem vínculo com nenhuma operadora de transporte ou órgão público — existe pelo direito de quem mora e trabalha em Belém de saber quando o próximo ônibus chega.
 
-## â¨ O que o app faz
+## ✨ O que o app faz
 
 | | |
 |---|---|
-| ğºï¸ **Mapa ao vivo** | Paradas, linhas e veÃ­culos em tempo real, com sua localizaÃ§Ã£o GPS |
-| ğ¶ **Rotas a pÃ©** | AtÃ© a parada mais prÃ³xima, com raio de busca ajustÃ¡vel |
-| ğ¤ï¸ **Clima integrado** | PrevisÃ£o do tempo (Open-Meteo) direto no mapa |
-| â­ **Favoritos e histÃ³rico** | Suas paradas e buscas mais usadas, salvas sÃ³ no seu aparelho |
-| ğ¨ **Temas** | Claro, escuro e AMOLED (preto puro, economiza bateria) |
-| ğ **Avisos do sistema** | Comunicados mantidos pela equipe do BusBus |
-| ğ **Apoio opcional** | Pix ou cartÃ£o (dÃ©bito/crÃ©dito internacional) â nunca obrigatÃ³rio |
+| 🗺️ **Mapa ao vivo** | Paradas, linhas e veículos em tempo real, com sua localização GPS |
+| 🚶 **Rotas a pé** | Até a parada mais próxima, com raio de busca ajustável |
+| 🌤️ **Clima integrado** | Previsão do tempo (Open-Meteo) direto no mapa |
+| ⭐ **Favoritos e histórico** | Suas paradas e buscas mais usadas, salvas só no seu aparelho |
+| 🎨 **Temas** | Claro, escuro e AMOLED (preto puro, economiza bateria) |
+| 🔔 **Avisos do sistema** | Comunicados mantidos pela equipe do BusBus |
+| 💚 **Apoio opcional** | Pix ou cartão (débito/crédito internacional) — nunca obrigatório |
 
-## ğ± Capturas de tela
+## 📱 Capturas de tela
 
 <div align="center">
 <table>
 <tr>
-<td><img src="./paradas.png" width="200"><br><sub>Paradas prÃ³ximas + clima</sub></td>
-<td><img src="./mapa.png" width="200"><br><sub>Rota e Ã´nibus ao vivo no mapa</sub></td>
-<td><img src="./pesquisar.png" width="200"><br><sub>Busca por linha</sub></td>
-</tr>
-<tr>
-<td><img src="./horario.png" width="200"><br><sub>HorÃ¡rio programado (tema escuro)</sub></td>
-<td><img src="./mensagens.png" width="200"><br><sub>Avisos do sistema</sub></td>
+<td><img src="./paradas.png" width="200"><br><sub>Paradas próximas + clima</sub></td>
+<td><img src="./linhas.png" width="200"><br><sub>Linhas e previsão de chegada</sub></td>
+<td><img src="./mapa.png" width="200"><br><sub>Ônibus ao vivo no mapa</sub></td>
 <td><img src="./ajustes.png" width="200"><br><sub>Ajustes e temas</sub></td>
 </tr>
 </table>
 </div>
 
-## ğ¦ O que tem no repositÃ³rio
+## 📦 O que tem no repositório
 
 ```
 BusBus/
-âââ busbus.html     # o app inteiro: um Ãºnico arquivo HTML/CSS/JS,
-â                    # empacotado em APK via AppMint (HTML â Android)
-âââ worker.js        # proxy em Cloudflare Workers que protege a API
-â                    # de dados de transporte e serve a polÃ­tica de
-â                    # privacidade
-âââ wrangler.toml     # configuraÃ§Ã£o de deploy do Worker
-âââ package.json
-âââ LICENSE
+├── busbus.html     # o app inteiro: um único arquivo HTML/CSS/JS,
+│                    # empacotado em APK via AppMint (HTML → Android)
+├── worker.js        # proxy em Cloudflare Workers que protege a API
+│                    # de dados de transporte e serve a política de
+│                    # privacidade
+├── wrangler.toml     # configuração de deploy do Worker
+├── package.json
+└── LICENSE
 ```
 
-## âï¸ Como funciona
+## ⚙️ Como funciona
 
-O app (`busbus.html`) nunca fala direto com a API de dados de transporte. Todas as chamadas passam por um proxy prÃ³prio em Cloudflare Workers (`worker.js`), que:
+O app (`busbus.html`) nunca fala direto com a API de dados de transporte. Todas as chamadas passam por um proxy próprio em Cloudflare Workers (`worker.js`), que:
 
-- Esconde o endereÃ§o real da API (guardado como *Secret* no painel do Cloudflare, nunca neste repositÃ³rio);
-- Serve a [polÃ­tica de privacidade](https://busbus.saraivarilcle.workers.dev/privacy) do app;
+- Esconde o endereço real da API (guardado como *Secret* no painel do Cloudflare, nunca neste repositório);
+- Serve a [política de privacidade](https://busbus.saraivarilcle.workers.dev/privacy) do app;
 - Faz cache curto (5s) na borda da Cloudflare pra aliviar a carga na API de origem sem deixar os dados desatualizados.
 
-## ğ Dados e serviÃ§os de terceiros
+## 🙏 Dados e serviços de terceiros
 
-O BusBus Ã© construÃ­do sobre serviÃ§os gratuitos e de cÃ³digo aberto. A lista completa, com descriÃ§Ã£o e licenÃ§a de cada um, estÃ¡ dentro do prÃ³prio app em **Ajustes â LicenÃ§as & AtribuiÃ§Ãµes**:
+O BusBus é construído sobre serviços gratuitos e de código aberto. A lista completa, com descrição e licença de cada um, está dentro do próprio app em **Ajustes → Licenças & Atribuições**:
 
 <div align="center">
 <img src="./licencas.png" width="220">
 </div>
 
-- [OpenStreetMap](https://www.openstreetmap.org) â mapas e geocodificaÃ§Ã£o (ODbL)
-- [Leaflet](https://leafletjs.com) â biblioteca de mapa interativo (BSD-2-Clause)
-- [Open-Meteo](https://open-meteo.com) â previsÃ£o do tempo (CC BY 4.0)
-- [ipapi.co](https://ipapi.co) â localizaÃ§Ã£o aproximada por IP (fallback)
+- [OpenStreetMap](https://www.openstreetmap.org) — mapas e geocodificação (ODbL)
+- [Leaflet](https://leafletjs.com) — biblioteca de mapa interativo (BSD-2-Clause)
+- [Open-Meteo](https://open-meteo.com) — previsão do tempo (CC BY 4.0)
+- [ipapi.co](https://ipapi.co) — localização aproximada por IP (fallback)
 
-## ğ Privacidade
+## 🔒 Privacidade
 
-Sua localizaÃ§Ã£o Ã© usada sÃ³ no seu aparelho, em tempo real, pra desenhar o mapa â nunca Ã© enviada, guardada ou compartilhada em nenhum servidor nosso. Leia a [polÃ­tica de privacidade completa](https://busbus.saraivarilcle.workers.dev/privacy).
+Sua localização é usada só no seu aparelho, em tempo real, pra desenhar o mapa — nunca é enviada, guardada ou compartilhada em nenhum servidor nosso. Leia a [política de privacidade completa](https://busbus.saraivarilcle.workers.dev/privacy).
 
-## ğ LicenÃ§a
+## 📄 Licença
 
-Este projeto Ã© distribuÃ­do sob a [GNU General Public License v3.0](./LICENSE). Isso significa que qualquer cÃ³pia, modificaÃ§Ã£o ou redistribuiÃ§Ã£o â inclusive como app publicado â precisa continuar com o cÃ³digo aberto, sob a mesma licenÃ§a.
+Este projeto é distribuído sob a [GNU General Public License v3.0](./LICENSE). Isso significa que qualquer cópia, modificação ou redistribuição — inclusive como app publicado — precisa continuar com o código aberto, sob a mesma licença.
 
-## âï¸ Contato
+## ✉️ Contato
 
-DÃºvidas, sugestÃµes ou problemas: [saraivarilcle@gmail.com](mailto:saraivarilcle@gmail.com) ou [buymeacoffee.com/saraivarilcle](https://buymeacoffee.com/saraivarilcle)
+Dúvidas, sugestões ou problemas: [saraivarilcle@gmail.com](mailto:saraivarilcle@gmail.com) ou [buymeacoffee.com/saraivarilcle](https://buymeacoffee.com/saraivarilcle)
 
 ---
 
-<div align="center"><sub>Feito com carinho por <b>rilclesaraiva</b> â BusBus Â· dados em tempo real de BelÃ©m</sub></div>
+<div align="center"><sub>Feito com carinho por <b>rilclesaraiva</b> — BusBus · dados em tempo real de Belém</sub></div>
