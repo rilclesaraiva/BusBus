@@ -4,6 +4,11 @@ Todas as mudanças notáveis do BusBus (B.E.M.) ficam registradas aqui, por vers
 
 Formato livremente inspirado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/). Versionamento: [SemVer](https://semver.org/lang/pt-BR/) — `MAJOR.MINOR.PATCH`, onde incompatibilidades/mudanças grandes de comportamento sobem o `MAJOR`, funcionalidades novas sem quebrar nada sobem o `MINOR`, e correções sobem o `PATCH`.
 
+## [1.1.1] — 2026-10-14
+
+### 🐛 Correções
+- **App fechando ao voltar durante carregamento**: em quatro telas (linhas de uma parada, GPS de uma linha a partir da lista, a partir da busca, e a partir do planejador de rota), a troca de tela acontecia visualmente antes da entrada correspondente ser registrada no histórico de navegação. Resultado: se a pessoa apertasse voltar (gesto/botão do Android, ou o botão de voltar do próprio app) enquanto a tela ainda estava carregando ("Buscando linhas...", "Buscando veículos..."), o app fechava inteiro em vez de voltar pra tela anterior — e o botão de voltar do app ficava travado e parava de funcionar daquele ponto em diante, mesmo depois do carregamento terminar. Corrigido registrando a navegação (`pushNav`) assim que a tela muda, antes do carregamento assíncrono começar, não depois.
+
 ## [1.1.0] — 2026-10-14
 
 ### ✨ Novidades

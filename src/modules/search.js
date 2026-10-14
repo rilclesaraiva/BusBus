@@ -231,6 +231,7 @@ addSearchHistory("linha", state.searchQuery);
 destroyLeafletMap();
 state.view = "map";
 updateHeaderAndNav("map");
+pushNav("map"); // empilha ANTES do carregamento assíncrono (ver stops.js selectStop)
 el("subtitle").textContent = "Carregando a linha…";
 // Mesmo esqueleto de carregamento usado em selectLine (stops.js) e
 // openLegLive (trip-planner.js): caixa do mapa com spinner + cards
@@ -265,7 +266,6 @@ render(`<div class="mainMapContainer" style="height:280px;"><div id="mapContaine
 initLineRouteMap(pat, trajeto.id);
 await refreshBusesOnMap();
 startPolling();
-pushNav("map");
 }catch(e){
 render(`${statusHTML("Não consegui carregar essa linha: "+e.message, false, true)}`);
 }

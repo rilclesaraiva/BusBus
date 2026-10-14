@@ -650,6 +650,7 @@ state.stopSel = { id: stopId, name: stopName, lat: stopLat, lng: stopLng };
 state.view = "map";
 state.followBusEnabled = true;
 updateHeaderAndNav("map");
+pushNav("map"); // empilha ANTES do carregamento assíncrono (ver stops.js selectStop)
 el("subtitle").textContent = `perto de ${stopName}`;
 render(`<div class="mainMapContainer" style="height:280px;"><div id="mapContainer">${mapLoadingHTML("Carregando rota e posição do ônibus…")}</div><div class="mapBtnStack">${followBtnHTML()}</div></div><section id="busListSection"><div class="sectionTitle">Buscando veículos…</div>${skeletonLineRows(2)}</section>`);
 try{
@@ -662,7 +663,6 @@ if(match) state.lineSel = match;
 initLineRouteMap(segs, patternId);
 await refreshBusesOnMap();
 startPolling();
-pushNav("map");
 }catch(e){
 render(`${statusHTML("Erro ao carregar essa linha: "+e.message, false, true)}`);
 }

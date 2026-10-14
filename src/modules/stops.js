@@ -228,6 +228,14 @@ const stop = state.stops.find(s => String(s.id) === String(id)) || { name: "Para
 state.stopSel = stop;
 state.view = "lines";
 updateHeaderAndNav("lines");
+// pushNav tem que acontecer AQUI, antes do carregamento assíncrono abaixo
+// — não só depois que os dados chegam. A tela já muda pra "lines" agora
+// (botão de voltar aparece, cabeçalho atualiza), então o histórico
+// precisa refletir isso na hora, senão voltar (gesto do Android ou botão
+// do app) durante o carregamento não tem pra onde ir: o gesto do sistema
+// fecha o app, e o botão do app trava "isPopping" pra sempre (porque o
+// popstate esperado nunca chega), quebrando a navegação até um reload.
+pushNav("lines");
 el("subtitle").textContent = stop.name;
 render(`<section><div class="sectionTitle">Buscando linhas no ponto…</div>${skeletonLineRows()}</section>`);
 try{
@@ -253,7 +261,6 @@ etaMin: null, schedTime: null, scheduled: true
 }));
 }
 renderLines();
-pushNav("lines");
 }catch(e){
 render(`${statusHTML("Erro ao buscar linhas: " + errMsg(e), false, true)}`);
 }
@@ -299,6 +306,7 @@ state.lineSel = state.lines[i];
 state.view = "map";
 state.followBusEnabled = true;
 updateHeaderAndNav("map");
+pushNav("map"); // mesmo motivo de selectStop() acima: empilha ANTES do carregamento assíncrono
 const titleText = state.lineSel.dest ? `${state.lineSel.name} (${state.lineSel.dest})` : state.lineSel.name;
 el("subtitle").textContent = titleText;
 render(`
@@ -315,7 +323,6 @@ state.route = seg ? seg.polyLine : [];
 initLineRouteMap(pat, state.lineSel.patternId);
 await refreshBusesOnMap();
 startPolling();
-pushNav("map");
 }catch(e){
 render(`${statusHTML("Erro ao carregar a rota", false, true)}`);
 }
