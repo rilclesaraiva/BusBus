@@ -83,6 +83,8 @@ BusBus/
 
 O código-fonte é organizado em módulos (pasta `src/`), mas o build (`vite build`, com `vite-plugin-singlefile`) continua gerando um único arquivo HTML autocontido no final — é esse arquivo que vira o app Android via AppMint, e é o mesmo que está publicado como site (seção acima, "Testar no iPhone").
 
+Pra ver o que mudou em cada versão, tem o [CHANGELOG.md](./CHANGELOG.md).
+
 ## ⚙️ Como funciona
 
 O app nunca fala direto com a API de dados de transporte. Todas as chamadas passam por um proxy próprio em Cloudflare Workers (`worker.js`), que:
@@ -110,7 +112,7 @@ Sua localização é usada só no seu aparelho, em tempo real, pra desenhar o ma
 
 ## 🤖 Feito com apoio de IA
 
-O código do BusBus — o app (`busbus.html`), o proxy (`worker.js`) e os próprios materiais deste repositório — foi escrito com apoio de ferramentas de IA. Cada funcionalidade, correção e decisão de design parte de rilclesaraiva, que dirige, revisa e testa tudo antes de publicar; nada aqui é gerado e colocado no ar sem revisão. É assim que um projeto pessoal e independente, sem equipe por trás, consegue entregar um app deste tamanho.
+O código do BusBus — o app (pasta `src/`), o proxy (`worker.js`) e os próprios materiais deste repositório — foi escrito com apoio de ferramentas de IA. Cada funcionalidade, correção e decisão de design parte de rilclesaraiva, que dirige, revisa e testa tudo antes de publicar; nada aqui é gerado e colocado no ar sem revisão. É assim que um projeto pessoal e independente, sem equipe por trás, consegue entregar um app deste tamanho.
 
 O cuidado pra manter o BusBus polido e livre de problemas é constante, mas, como em qualquer software, alguma coisa pode passar despercebida — principalmente numa fase inicial de testes com poucos usuários. Encontrou algo estranho? Abra uma [issue](https://github.com/rilclesaraiva/BusBus/issues) ou mande um e-mail (contato abaixo).
 
