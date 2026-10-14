@@ -38,6 +38,7 @@ Pra instalar no iPhone como se fosse um app (ícone na tela, tela cheia, sem bar
 |---|---|
 | 🗺️ **Mapa ao vivo** | Paradas, linhas e veículos em tempo real, com sua localização GPS |
 | 🚶 **Rotas a pé** | Até a parada mais próxima, com raio de busca ajustável |
+| 🛣️ **Itinerário oficial das linhas** | Mais de 160 linhas já com o trajeto oficial (Prefeitura de Belém / SEGBEL) cadastrado — mostra as ruas na hora, sem depender de estimativa por geocodificação |
 | 🌤️ **Clima integrado** | Previsão do tempo (Open-Meteo) direto no mapa |
 | ⭐ **Favoritos e histórico** | Suas paradas e buscas mais usadas, salvas só no seu aparelho |
 | 🎨 **Temas** | Claro, escuro e AMOLED (preto puro, economiza bateria) |
@@ -65,19 +66,26 @@ Pra instalar no iPhone como se fosse um app (ícone na tela, tela cheia, sem bar
 
 ```
 BusBus/
-├── busbus.html     # o app inteiro: um único arquivo HTML/CSS/JS,
-│                    # empacotado em APK via AppMint (HTML → Android)
-├── worker.js        # proxy em Cloudflare Workers que protege a API
-│                    # de dados de transporte e serve a política de
-│                    # privacidade
-├── wrangler.toml     # configuração de deploy do Worker
-├── package.json
+├── src/
+│   ├── app.js              # ponto de entrada
+│   ├── styles.css
+│   └── modules/             # mapa, GPS, busca, paradas, planejador de rota,
+│                            # itinerários oficiais das linhas, ajustes etc.
+├── public/                  # ícones, manifest.json (PWA) e service worker
+├── test/                     # testes automatizados (Vitest)
+├── worker.js                 # proxy em Cloudflare Workers que protege a API
+│                              # de dados de transporte e serve a política de
+│                              # privacidade
+├── wrangler.toml              # configuração de deploy do Worker
+├── vite.config.js
 └── LICENSE
 ```
 
+O código-fonte é organizado em módulos (pasta `src/`), mas o build (`vite build`, com `vite-plugin-singlefile`) continua gerando um único arquivo HTML autocontido no final — é esse arquivo que vira o app Android via AppMint, e é o mesmo que está publicado como site (seção acima, "Testar no iPhone").
+
 ## ⚙️ Como funciona
 
-O app (`busbus.html`) nunca fala direto com a API de dados de transporte. Todas as chamadas passam por um proxy próprio em Cloudflare Workers (`worker.js`), que:
+O app nunca fala direto com a API de dados de transporte. Todas as chamadas passam por um proxy próprio em Cloudflare Workers (`worker.js`), que:
 
 - Esconde o endereço real da API (guardado como *Secret* no painel do Cloudflare, nunca neste repositório);
 - Serve a [política de privacidade](https://busbus.saraivarilcle.workers.dev/privacy) do app;
