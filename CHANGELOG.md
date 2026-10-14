@@ -4,6 +4,11 @@ Todas as mudanças notáveis do BusBus (B.E.M.) ficam registradas aqui, por vers
 
 Formato livremente inspirado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/). Versionamento: [SemVer](https://semver.org/lang/pt-BR/) — `MAJOR.MINOR.PATCH`, onde incompatibilidades/mudanças grandes de comportamento sobem o `MAJOR`, funcionalidades novas sem quebrar nada sobem o `MINOR`, e correções sobem o `PATCH`.
 
+## [1.1.2] — 2026-10-14
+
+### 🐛 Correções
+- **Carregamento "fantasma" ao voltar rápido demais**: a correção da v1.1.1 resolveu o histórico de navegação, mas expôs um problema relacionado: se a pessoa saísse de uma tela (voltar, ou abrir outra parada/linha) antes da API responder, o resultado atrasado ainda era desenhado — só que agora em cima de QUALQUER tela aberta na hora, inclusive a Home, misturando o conteúdo de "linhas"/"GPS da linha" com a tela errada por baixo. Corrigido com um sistema de token: cada chamada a `selectStop`, `selectLine`, `searchSelectLine` e `openLegLive` marca a navegação como "atual"; se outra navegação acontecer antes da resposta chegar, o resultado atrasado é silenciosamente descartado em vez de ser renderizado.
+
 ## [1.1.1] — 2026-10-14
 
 ### 🐛 Correções

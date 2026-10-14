@@ -15,7 +15,7 @@ import { destroyLeafletMap, initLineRouteMap } from "./map.js";
 // funciona porque as chamadas ficam dentro de funções, não no topo do
 // módulo.
 import { followBtnHTML, refreshBusesOnMap, startPolling, skeletonLineRows } from "./stops.js";
-import { updateHeaderAndNav, pushNav } from "./nav.js";
+import { updateHeaderAndNav, pushNav, bumpNavToken, navToken } from "./nav.js";
 import { render } from "./utils.js";
 import { openModal } from "./settings.js";
 import { ROUTE_STREETS } from "./itinerarios.js";
@@ -643,6 +643,7 @@ if(results[selectedTripResultIndex]) showTripOnMap(results[selectedTripResultInd
 }
 
 export async function openLegLive(stopId, stopLat, stopLng, stopName, busServiceId, patternId){
+const myToken = bumpNavToken(); // ver stops.js selectStop()
 savedRouteScrollY = window.scrollY; // pra restaurar quando a pessoa voltar pra essa posição na tela de rota
 destroyLeafletMap();
 if(!state.stops.find(s => String(s.id) === String(stopId))) state.stops.push({ id: stopId, name: stopName, lat: stopLat, lng: stopLng });
@@ -655,15 +656,19 @@ el("subtitle").textContent = `perto de ${stopName}`;
 render(`<div class="mainMapContainer" style="height:280px;"><div id="mapContainer">${mapLoadingHTML("Carregando rota e posição do ônibus…")}</div><div class="mapBtnStack">${followBtnHTML()}</div></div><section id="busListSection"><div class="sectionTitle">Buscando veículos…</div>${skeletonLineRows(2)}</section>`);
 try{
 const segs = await getPatternSegments(busServiceId);
+if(myToken !== navToken) return; // a pessoa já saiu dessa tela enquanto isso carregava
 state.route = getRouteForPattern(segs, patternId);
 state.lineSel = { busServiceId, patternId, name: "Linha", dest: "" };
 const lines = await fetchLinesAtStop(stopId);
+if(myToken !== navToken) return;
 const match = lines.find(l => String(l.patternId) === String(patternId));
 if(match) state.lineSel = match;
 initLineRouteMap(segs, patternId);
 await refreshBusesOnMap();
+if(myToken !== navToken) return;
 startPolling();
 }catch(e){
+if(myToken !== navToken) return;
 render(`${statusHTML("Erro ao carregar essa linha: "+e.message, false, true)}`);
 }
 }

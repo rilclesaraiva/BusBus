@@ -7,7 +7,7 @@ import { el, jsStr, statusHTML, normalize, render, mapLoadingHTML } from "./util
 import { pinIcon } from "./icons.js";
 import { ensureAllPoints, ensureAllLines, api } from "./api.js";
 import { CITY } from "./state.js";
-import { pushNav } from "./nav.js";
+import { pushNav, bumpNavToken, navToken } from "./nav.js";
 import { destroyLeafletMap } from "./map.js";
 // Importação circular de propósito: selecionar um resultado de busca abre a
 // tela de linhas da parada (stops.js) ou a tela de GPS da linha. Só
@@ -226,6 +226,7 @@ await selectStop(id);
 }
 
 export async function searchSelectLine(lineId){
+const myToken = bumpNavToken(); // ver stops.js selectStop()
 savedSearchScrollY = window.scrollY;
 addSearchHistory("linha", state.searchQuery);
 destroyLeafletMap();
@@ -256,6 +257,7 @@ const d = metersBetween(origin, p);
 if(d < best){ best = d; nearest = p; }
 }
 if(!nearest) throw new Error("não achei uma parada próxima da rota");
+if(myToken !== navToken) return; // a pessoa já saiu dessa tela enquanto isso carregava
 if(!state.stops.find(s => String(s.id) === String(nearest.id))) state.stops.push(nearest);
 state.stopSel = nearest;
 state.lineSel = { busServiceId: line.id, patternId: trajeto.id, name: `${line.numero} - ${line.name}`, dest: trajeto.nome };
@@ -265,8 +267,10 @@ el("subtitle").textContent = `${line.numero} · perto de ${nearest.name}`;
 render(`<div class="mainMapContainer" style="height:280px;"><div id="mapContainer"></div><div class="mapBtnStack">${followBtnHTML()}</div></div><section id="busListSection"><div class="sectionTitle">Buscando veículos…</div>${skeletonLineRows(2)}</section>`);
 initLineRouteMap(pat, trajeto.id);
 await refreshBusesOnMap();
+if(myToken !== navToken) return;
 startPolling();
 }catch(e){
+if(myToken !== navToken) return;
 render(`${statusHTML("Não consegui carregar essa linha: "+e.message, false, true)}`);
 }
 }

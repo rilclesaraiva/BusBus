@@ -16,6 +16,21 @@ export let isPopping = false; // true enquanto um popstate (botão/gesto voltar)
 
 export let navStack = ["stops"];
 
+// Protege contra carregamento "fantasma": selectStop/selectLine/
+// searchSelectLine/openLegLive são assíncronas (esperam a API responder)
+// e, até a v1.1.1, continuavam escrevendo no DOM mesmo se a pessoa já
+// tivesse saído daquela tela (voltando, ou abrindo outra parada/linha
+// enquanto a primeira ainda carregava) — o resultado chegava atrasado e
+// era desenhado em cima de QUALQUER tela que estivesse aberta na hora,
+// inclusive a Home, mesmo com o histórico de navegação já correto. Cada
+// uma dessas funções chama bumpNavToken() assim que começa e guarda o
+// número devolvido; antes de qualquer render() feito depois de um await,
+// ela compara esse número com navToken — se mudou, uma navegação mais
+// nova já aconteceu nesse meio tempo, e o resultado atrasado é descartado
+// em silêncio, sem tocar no DOM.
+export let navToken = 0;
+export function bumpNavToken(){ return ++navToken; }
+
 export function pushNav(label){
 if(isPopping) return;
 const existingIdx = navStack.indexOf(label);
@@ -38,6 +53,7 @@ catch(e){ console.error("[BusBus] pushState bloqueado:", e); navStack.pop(); }
 
 export function handlePopState(e){
 stopPolling();
+bumpNavToken(); // invalida qualquer carregamento em andamento da tela que está sendo deixada
 isPopping = true;
 // O "finally" aqui é uma rede de segurança: sem ele, se qualquer coisa
 // dentro do bloco abaixo lançar uma exceção (um erro de rede ao recarregar
@@ -145,6 +161,7 @@ if(tab === state.view){
 scrollToTopFast();
 return;
 }
+bumpNavToken(); // invalida qualquer carregamento em andamento da aba que está sendo deixada
 stopPolling();
 if(tab !== 'route') destroyTripMap();
 if(tab === 'stops') {

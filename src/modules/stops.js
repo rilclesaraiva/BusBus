@@ -18,7 +18,7 @@ import {
 // "paradas", e esta tela precisa empilhar navegação (pushNav) ao abrir uma
 // parada/linha. Só funciona porque as chamadas ficam dentro de funções, não
 // no topo do módulo.
-import { pushNav, updateHeaderAndNav } from "./nav.js";
+import { pushNav, updateHeaderAndNav, bumpNavToken, navToken } from "./nav.js";
 import { startGpsTracking } from "./gps.js";
 
 export function weatherEmoji(code){
@@ -217,6 +217,12 @@ selectStop(id);
 }
 
 export async function selectStop(id){
+// Marca essa chamada como "a navegação atual" — se a pessoa sair dessa
+// tela (voltar, ou abrir outra parada) antes da API responder, o token
+// muda e o resultado atrasado é descartado em vez de ser desenhado em
+// cima de qualquer tela que esteja aberta na hora (ver bumpNavToken em
+// nav.js).
+const myToken = bumpNavToken();
 // guarda onde a pessoa estava rolada na home ANTES de sair dela — só faz
 // sentido quando ela realmente está vindo da home (toque num resultado de
 // busca ou numa favorita vindo de outra tela não deve sobrescrever isso
@@ -260,8 +266,10 @@ number: l.numero, name: l.name, dest: l.dest,
 etaMin: null, schedTime: null, scheduled: true
 }));
 }
+if(myToken !== navToken) return; // a pessoa já saiu dessa tela enquanto isso carregava
 renderLines();
 }catch(e){
+if(myToken !== navToken) return;
 render(`${statusHTML("Erro ao buscar linhas: " + errMsg(e), false, true)}`);
 }
 }
@@ -300,6 +308,7 @@ ${rows || `<div class="empty">Nenhuma linha cadastrada pra essa parada.</div>`}
 }
 
 export async function selectLine(i){
+const myToken = bumpNavToken(); // ver selectStop() acima
 savedLinesScrollY = window.scrollY; // guarda onde a pessoa estava na lista antes de abrir o GPS do ônibus
 destroyLeafletMap();
 state.lineSel = state.lines[i];
@@ -318,12 +327,15 @@ render(`
 `);
 try{
 const pat = await api(`/pattern/${state.lineSel.busServiceId}/${CITY}`);
+if(myToken !== navToken) return; // a pessoa já saiu dessa tela enquanto isso carregava
 const seg = (Array.isArray(pat) ? pat : []).find(p => String(p.id) === String(state.lineSel.patternId)) || pat[0];
 state.route = seg ? seg.polyLine : [];
 initLineRouteMap(pat, state.lineSel.patternId);
 await refreshBusesOnMap();
+if(myToken !== navToken) return; // checa de novo: outro await pode ter passado por cima da navegação
 startPolling();
 }catch(e){
+if(myToken !== navToken) return;
 render(`${statusHTML("Erro ao carregar a rota", false, true)}`);
 }
 }
