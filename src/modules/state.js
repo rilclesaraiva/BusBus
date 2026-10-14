@@ -23,7 +23,7 @@ locTimestamp: null,
 radarRadius: 600,
 rotationEnabled: false,
 theme: "system",
-mapTheme: "auto", // "auto" segue o tema do app; "light"/"dark" força o visual do mapa independente do tema do app
+mapTheme: "light", // padrão de fábrica: mapa sempre claro. "auto" segue o tema do app; "dark" força escuro — o usuário troca em Ajustes
 favoriteStops: [],
 lastMapView: null,
 lastMapInteractionTs: 0,

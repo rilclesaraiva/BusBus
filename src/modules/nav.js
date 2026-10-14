@@ -3,10 +3,10 @@
 // Texto completo: https://github.com/rilclesaraiva/BusBus/blob/main/LICENSE
 
 import { state } from "./state.js";
-import { el } from "./utils.js";
+import { el, scrollToTopFast } from "./utils.js";
 import { destroyLeafletMap } from "./map.js";
 import { destroyTripMap, renderRouteScreen, scheduleRouteIdleClear, cancelRouteIdleClear, savedRouteScrollY } from "./trip-planner.js";
-import { stopPolling, renderStopsScreenStructure, savedLinesScrollY, renderLines } from "./stops.js";
+import { stopPolling, renderStopsScreenStructure, savedStopsScrollY, savedLinesScrollY, renderLines } from "./stops.js";
 import { renderSearchScreen, setPendingSearchScrollRestore, scheduleSearchIdleClear, cancelSearchIdleClear } from "./search.js";
 import { renderConfigScreen } from "./settings.js";
 import { renderMessagesScreen } from "./messages.js";
@@ -77,6 +77,9 @@ destroyLeafletMap(); renderConfigScreen();
 destroyLeafletMap(); renderMessagesScreen();
 } else {
 renderStopsScreenStructure(); startGpsTracking();
+if(savedStopsScrollY){
+requestAnimationFrame(() => window.scrollTo(0, savedStopsScrollY));
+}
 }
 }finally{
 isPopping = false;
@@ -113,15 +116,33 @@ if(viewName === 'route') el("btnNavRoute").classList.add("active");
 }
 
 export function goBack(){
-try{ history.back(); }catch(e){ console.error("[BusBus] history.back bloqueado:", e); renderStopsScreenStructure(); startGpsTracking(); }
+// Sem essa trava, um toque duplo (ou um toque seguido bem de perto pelo
+// botão físico/gesto de voltar do aparelho) disparava DOIS history.back()
+// antes do primeiro popstate ser processado — o navegador pulava direto
+// pra entrada anterior à anterior (ex.: do mapa do ônibus direto pra
+// home, pulando a tela de linhas no meio). "isPopping" só virava "true"
+// DENTRO de handlePopState, tarde demais pra barrar o segundo toque; agora
+// ele trava assim que o primeiro goBack() é chamado, e handlePopState
+// libera de novo (no "finally") só depois que aquela navegação terminou.
+if(isPopping) return;
+isPopping = true;
+try{ history.back(); }
+catch(e){
+console.error("[BusBus] history.back bloqueado:", e);
+isPopping = false;
+renderStopsScreenStructure(); startGpsTracking();
+}
 }
 
 export function navTo(tab){
 if(tab === state.view){
-// Já está nessa aba (tocada de novo à toa) — não há nada pra recarregar.
-// Pra "paradas" isso também evita jogar fora o fix de GPS que já tínhamos
-// e forçar esperar um novo, o que deixava a troca de aba lenta sem
-// necessidade.
+// Já está nessa aba — um segundo toque nela não recarrega nada (isso
+// evitava jogar fora o fix de GPS que já tínhamos, por exemplo), mas
+// serve de atalho "voltar ao topo": rola suavemente até o início da
+// lista, nunca um teletransporte instantâneo. Isso só acontece aqui,
+// quando a aba tocada já é a que está na tela — trocar de aba de
+// verdade (branch abaixo) nunca mexe na rolagem.
+scrollToTopFast();
 return;
 }
 stopPolling();

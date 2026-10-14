@@ -91,6 +91,10 @@ planejador de rota, que ficava escondida atrás do mapa já carregado. */
 #mapContainer{width:100%;height:100%;background:#e5e3df;}
 .mapLoading{width:100%;height:100%;display:flex;align-items:center;justify-content:center;gap:8px;
 font-size:12.5px;color:var(--ink-soft);background:var(--bg);}
+/* Fica por cima do #mapContainer (que o Leaflet ocupa na hora, sem esperar
+os ladrilhos baixarem) até o mapa realmente aparecer — ver addBaseMapLayers
+em map.js, que remove esta caixa quando o tileLayer avisa que terminou. */
+.mapLoadingOverlay{position:absolute;inset:0;z-index:1001;}
 .mapBtnStack{position:absolute;bottom:12px;right:12px;z-index:1000;display:flex;flex-direction:column;gap:8px;}
 .weatherChip{position:absolute;top:12px;left:12px;z-index:1000;background:var(--card);border:1px solid var(--line);
 border-radius:999px;padding:7px 13px 7px 10px;align-items:center;gap:6px;font-size:12.5px;font-weight:600;
@@ -100,6 +104,13 @@ color:var(--ink);box-shadow:0 2px 8px rgba(0,0,0,.18);cursor:pointer;}
 .weatherDetailCard{background:var(--card);border:1px solid var(--line);border-radius:var(--radius-md);
 padding:14px 16px;margin:0 20px 12px;font-size:13px;color:var(--ink-soft);line-height:1.6;}
 .weatherDetailCard b{color:var(--ink);}
+/* Aviso sob os campos de origem/destino da Rota (ver renderRouteScreen em
+trip-planner.js) — o Photon (serviço de busca por aproximação) responde
+numa navegação direta pelo navegador mas o fetch() de dentro do app não
+está voltando com resultado (provável bloqueio de CORS do lado do serviço
+pra chamadas feitas por JavaScript), então por enquanto a pessoa precisa
+saber que só o nome completo funciona de forma confiável. */
+.routeSearchHint{margin:0 20px 12px;font-size:12px;color:var(--ink-soft);line-height:1.5;}
 .mapBtn{background:var(--card);border:1px solid var(--line);border-radius:50%;width:36px;height:36px;
 display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.2);color:var(--primary);}
 .mapBtn:active{transform:scale(0.92);}

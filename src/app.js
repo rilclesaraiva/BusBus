@@ -107,6 +107,13 @@ import {
 import { saveRotationEnabled } from "./modules/state.js";
 
 Object.assign(window, {
+  // "state" precisa estar aqui: o botão "Ver ruas desta linha" (stops.js)
+  // referencia "state.lineSel..." direto no onclick="", e um onclick=""
+  // só enxerga identificadores que existem em window — sem isso o clique
+  // disparava "state is not defined" em silêncio (sem popup de erro
+  // nenhum, só não acontecia nada), porque só as funções estavam sendo
+  // expostas, nunca o state em si.
+  state,
   goBack, navTo,
   clearSearchHistory, clearSearchInput, runHistorySearch, setSearchType, handleSearch,
   searchSelectStop, searchSelectLine, handleSearchInputFocus,

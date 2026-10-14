@@ -4,7 +4,7 @@
 
 import L from "leaflet";
 import { state, CITY } from "./state.js";
-import { el, jsStr, pick, statusHTML, errMsg, metersBetween, bearingBetween, mapLoadingHTML } from "./utils.js";
+import { el, jsStr, pick, statusHTML, errMsg, metersBetween, bearingBetween, mapLoadingHTML, friendlyErrMsg } from "./utils.js";
 import { walkIcon, busIcon, locIcon } from "./icons.js";
 import { api, getPatternSegments, fetchLinesAtStop, fetchScheduledLinesAtStop, ensureAllPoints, ensureAllLines, nominatimReverse, nominatimSearch, patternCache } from "./api.js";
 import { addBaseMapLayers } from "./map.js";
@@ -18,6 +18,7 @@ import { followBtnHTML, refreshBusesOnMap, startPolling, skeletonLineRows } from
 import { updateHeaderAndNav, pushNav } from "./nav.js";
 import { render } from "./utils.js";
 import { openModal } from "./settings.js";
+import { ROUTE_STREETS } from "./itinerarios.js";
 
 export function decimateRouteForGeocoding(route, maxPoints = 22){
 if(!route || route.length < 2) return [];
@@ -48,7 +49,36 @@ return sampled;
 return pts;
 }
 
-export async function showRouteStreetsModal(busServiceId, patternId, preloadedRoute){
+// Linhas com itinerário oficial cadastrado (ver itinerarios.js) mostram a
+// lista de ruas na hora, sem precisar geocodificar nada — é só exibir os
+// dados já estruturados, vindos da Prefeitura de Belém / SEGBEL. Só as
+// linhas que não estão nesse acervo caem no modo antigo (mais lento: manda
+// a geometria da rota, ponto a ponto, pro Nominatim identificar as ruas).
+export function renderOfficialStreetsHTML(data){
+const terminalHTML = data.terminal
+? `<div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:10px;"><strong>Terminal:</strong> ${data.terminal}</div>`
+: "";
+const sections = data.sentidos.map(s => `
+<div class="sectionTitle" style="margin-top:10px;">${s.label}</div>
+${renderStreetsList(s.ruas)}
+`).join("");
+return `
+<div style="font-size:11.5px;color:var(--ink-soft);margin-bottom:10px;">Itinerário oficial (Prefeitura de Belém / SEGBEL) — não é a geometria ao vivo da linha.</div>
+${terminalHTML}
+${sections}
+`;
+}
+
+export async function showRouteStreetsModal(busServiceId, patternId, preloadedRoute, lineNumero){
+const numero = lineNumero != null ? String(lineNumero).trim() : null;
+const official = numero ? ROUTE_STREETS[numero] : null;
+if(official){
+openModal(`
+<div class="modalHead"><h3>Ruas da linha ${numero}</h3><button class="modalClose" onclick="closeModal()">✕</button></div>
+<div id="streetsModalBody">${renderOfficialStreetsHTML(official)}</div>
+`);
+return;
+}
 openModal(`
 <div class="modalHead"><h3>Ruas da linha</h3><button class="modalClose" onclick="closeModal()">✕</button></div>
 <div id="streetsModalBody">${statusHTML("Carregando a geometria da rota…", true)}</div>
@@ -130,6 +160,7 @@ render(`
 <div id="tripDestSuggest"></div>
 </div>
 </div>
+<p class="routeSearchHint">Pra achar o lugar certo, digite o nome completo — a busca ainda não funciona bem com o nome pela metade.</p>
 <button class="planBtn" id="planBtn" onclick="planTrip()" ${(!tripOrigin || !tripDestination) ? "disabled" : ""}>Traçar rota</button>
 <div class="mainMapContainer" id="tripMapWrap" style="height:240px;display:none;margin-bottom:14px;"><div id="tripMapContainer" style="height:100%;"></div></div>
 <div id="tripResultsArea"></div>
@@ -316,12 +347,22 @@ resetRouteResults();
 }
 if(!q || q.trim().length < 3){ suggestEl.innerHTML = ""; return; }
 tripGeoDebounce = setTimeout(async () => {
+try{
 const results = await nominatimSearch(q);
 const freshEl = el(field === "o" ? "tripOriginSuggest" : "tripDestSuggest");
 if(!freshEl) return; // usuário já saiu da tela de rota antes da busca terminar
 freshEl.innerHTML = results.length ? `<div class="geoSuggest">${results.map((r,i) =>
 `<div onclick='selectTripGeo("${field}", ${r.lat}, ${r.lng}, ${JSON.stringify(r.label)})'>${r.label}</div>`
 ).join("")}</div>` : `<div class="geoSuggest"><div style="color:var(--ink-soft);">Nenhum lugar encontrado.</div></div>`;
+}catch(e){
+// Sem isso, "sem internet" e "procurei e não achei nada" apareciam com
+// o mesmo texto genérico pro usuário — não dava pra saber se era culpa
+// da conexão ou se o lugar digitado realmente não existe.
+console.error("[BusBus] erro ao buscar endereço:", e);
+const freshEl = el(field === "o" ? "tripOriginSuggest" : "tripDestSuggest");
+if(!freshEl) return;
+freshEl.innerHTML = `<div class="geoSuggest"><div style="color:var(--ink-soft);">${friendlyErrMsg(e)}</div></div>`;
+}
 }, 450);
 }
 
@@ -368,18 +409,58 @@ return `<details class="diagCard">
 </details>`;
 }
 
+// Cards fantasma do MESMO tamanho/formato dos .tripCard de verdade
+// (renderTripResults, mais abaixo) — badge+texto do topo, uma perna a pé,
+// uma perna de ônibus com selo redondo, outra perna a pé. Mostrados
+// enquanto planTrip() ainda está calculando, pra a tela não ficar só com
+// um texto de status solto enquanto a busca (que passa por várias etapas
+// de rede) roda.
+export function skeletonTripCards(n = 2){
+return Array.from({length:n}).map(() => `
+<div class="tripCard" style="cursor:default;">
+<div class="skeletonLine" style="width:60%;height:13px;margin-bottom:14px;"></div>
+<div class="skeletonLine" style="width:45%;margin-bottom:10px;"></div>
+<div class="legConnector"></div>
+<div class="legBus" style="pointer-events:none;">
+<div class="skeletonIcon" style="width:40px;height:28px;border-radius:10px;"></div>
+<div class="skeletonLine" style="width:55%;"></div>
+</div>
+<div class="legConnector"></div>
+<div class="skeletonLine" style="width:50%;margin-top:10px;"></div>
+</div>`).join("");
+}
+
 export async function planTrip(){
 planTrace = [];
 savedRouteScrollY = 0; // busca nova: a tela deve abrir do topo, não restaurar rolagem de uma busca anterior
 const area = el("tripResultsArea");
-area.innerHTML = statusHTML("Buscando paradas perto de você…", true);
+const mapWrap = el("tripMapWrap");
+// Mesma caixa de "carregando o mapa" (spinner) usada nas outras telas com
+// mapa — antes essa aqui só mostrava alguma coisa no lugar do mapa DEPOIS
+// que um resultado já tinha chegado; enquanto a busca ainda rodava (e ela
+// passa por várias chamadas de rede em sequência) ficava uma área vazia
+// ali embaixo do botão, sem nenhum sinal de carregamento.
+if(mapWrap){
+mapWrap.style.display = "block";
+const mapBox = el("tripMapContainer");
+if(mapBox) mapBox.innerHTML = mapLoadingHTML("Carregando a rota…");
+}
+// Atualiza só o texto de status (dentro de #tripStatusMsg), preservando
+// os cards fantasma abaixo dele — se escrevesse em area.innerHTML direto
+// a cada etapa, os cards fantasma sumiam e voltavam a cada mensagem nova.
+const setStatus = (msg) => {
+const statusEl = el("tripStatusMsg");
+if(statusEl){ statusEl.innerHTML = statusHTML(msg, true); return; }
+area.innerHTML = `<div id="tripStatusMsg">${statusHTML(msg, true)}</div>${skeletonTripCards(2)}`;
+};
+setStatus("Buscando paradas perto de você…");
 try{
 const points = await ensureAllPoints();
 trace(`allPoints retornou ${points.length} parada(s) com id+lat/lng reconhecidos no total da cidade.`);
 const nearOrigin = points.map(p => ({ ...p, d: metersBetween(tripOrigin, p) }))
 .sort((a,b) => a.d - b.d).slice(0, 6);
 trace(`6 paradas mais próximas da origem: ${nearOrigin.map(s => `${s.name} (${Math.round(s.d)}m)`).join(", ") || "nenhuma"}.`);
-area.innerHTML = statusHTML(`Verificando linhas em ${nearOrigin.length} parada(s) próxima(s)…`, true);
+setStatus(`Verificando linhas em ${nearOrigin.length} parada(s) próxima(s)…`);
 const linesByStop = await Promise.all(nearOrigin.map(s => fetchScheduledLinesAtStop(s.id)));
 nearOrigin.forEach((s,i) => {
 trace(`Parada "${s.name}": linesFromBusstop devolveu ${linesByStop[i].length} linha(s)${linesByStop[i].length ? " (" + linesByStop[i].map(l=>l.numero).join(", ") + ")" : ""}.`);
@@ -398,10 +479,11 @@ candidates.set(key, { boardStop: stop, line: l });
 const candList = Array.from(candidates.values()).slice(0, 14);
 trace(`${candList.length} linha(s) candidata(s) únicas no total (deduplicadas por patternId).`);
 if(!candList.length){
+if(mapWrap) mapWrap.style.display = "none";
 area.innerHTML = `<div class="empty">Nenhuma linha com ônibus ativo agora passa perto de onde você está (raio: 6 paradas mais próximas). Tente de novo mais tarde, ou ajuste a origem.</div>${renderDiagnosticBlock()}`;
 return;
 }
-area.innerHTML = statusHTML(`Verificando ${candList.length} linha(s) candidata(s)…`, true);
+setStatus(`Verificando ${candList.length} linha(s) candidata(s)…`);
 const directResults = [];
 for(const c of candList){
 const segs = await getPatternSegments(c.line.busServiceId);
@@ -420,7 +502,7 @@ renderTripResults(directResults.slice(0, 4));
 return;
 }
 trace(`Nenhuma linha direta chegou perto o bastante do destino. Procurando baldeação…`);
-area.innerHTML = statusHTML("Sem linha direta — procurando conexões com baldeação…", true);
+setStatus("Sem linha direta — procurando conexões com baldeação…");
 const transferStopsToTry = [];
 for(const c of candList.slice(0, 6)){
 const segs = await getPatternSegments(c.line.busServiceId);
@@ -465,9 +547,11 @@ transferResults.sort((a,b) => (a.boardStop.d + a.walkFrom) - (b.boardStop.d + b.
 if(transferResults.length){
 renderTripResults(transferResults.slice(0, 3));
 } else {
+if(mapWrap) mapWrap.style.display = "none";
 area.innerHTML = `<div class="empty">Não encontrei uma rota direta nem com 1 baldeação. Tente uma origem ou destino um pouco diferente, ou use a busca por parada/linha manualmente.</div>${renderDiagnosticBlock()}`;
 }
 }catch(e){
+if(mapWrap) mapWrap.style.display = "none";
 trace(`Erro não esperado: ${e.message}`);
 area.innerHTML = `<div class="status err">Erro ao traçar a rota: ${e.message}</div>${renderDiagnosticBlock()}`;
 }
@@ -575,7 +659,7 @@ state.lineSel = { busServiceId, patternId, name: "Linha", dest: "" };
 const lines = await fetchLinesAtStop(stopId);
 const match = lines.find(l => String(l.patternId) === String(patternId));
 if(match) state.lineSel = match;
-initLineRouteMap();
+initLineRouteMap(segs, patternId);
 await refreshBusesOnMap();
 startPolling();
 pushNav("map");

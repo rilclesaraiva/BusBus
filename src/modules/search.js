@@ -3,7 +3,7 @@
 // Texto completo: https://github.com/rilclesaraiva/BusBus/blob/main/LICENSE
 
 import { state } from "./state.js";
-import { el, jsStr, statusHTML, normalize, render } from "./utils.js";
+import { el, jsStr, statusHTML, normalize, render, mapLoadingHTML } from "./utils.js";
 import { pinIcon } from "./icons.js";
 import { ensureAllPoints, ensureAllLines, api } from "./api.js";
 import { CITY } from "./state.js";
@@ -13,7 +13,7 @@ import { destroyLeafletMap } from "./map.js";
 // tela de linhas da parada (stops.js) ou a tela de GPS da linha. Só
 // funciona porque as chamadas ficam dentro de funções, não no topo do
 // módulo.
-import { selectStop, followBtnHTML, refreshBusesOnMap, startPolling, skeletonLineRows } from "./stops.js";
+import { selectStop, followBtnHTML, refreshBusesOnMap, startPolling, skeletonLineRows, skeletonStopCards } from "./stops.js";
 import { initLineRouteMap } from "./map.js";
 import { showRouteStreetsModal } from "./trip-planner.js";
 import { metersBetween } from "./utils.js";
@@ -176,7 +176,12 @@ resEl.innerHTML = renderSearchHistoryHTML(state.searchType);
 restoreSearchScrollIfPending();
 return;
 }
-resEl.innerHTML = statusHTML("Buscando…", true);
+// Mesma lógica de esqueleto (cards/linhas fantasma) usada em todo o resto
+// do app — antes essa tela era a única que ainda mostrava só um texto
+// "Buscando…" solto com spinner, inconsistente com paradas/linhas/mapa.
+resEl.innerHTML = state.searchType === "ponto"
+? skeletonStopCards(5)
+: `<div class="sectionTitle">Buscando linhas…</div>${skeletonLineRows(5)}`;
 searchDebounce = setTimeout(async () => {
 try{
 if(state.searchType === "ponto") await runStopSearch(q, resEl);
@@ -207,7 +212,7 @@ resEl.innerHTML = matches.length ? matches.map(l => `
 <div class="lineRow" onclick="searchSelectLine(${l.id})">
 <div class="badge">${l.numero || "—"}</div>
 <div class="dest">${l.name}</div>
-${l.trajetos[0] ? `<button class="infoBtn" onclick="event.stopPropagation();showRouteStreetsModal(${l.id}, ${l.trajetos[0].id})" title="Ver ruas desta linha">i</button>` : ""}
+${l.trajetos[0] ? `<button class="infoBtn" onclick="event.stopPropagation();showRouteStreetsModal(${l.id}, ${l.trajetos[0].id}, null, ${jsStr(l.numero)})" title="Ver ruas desta linha">i</button>` : ""}
 </div>`).join("") : `<div class="empty">Nenhuma linha encontrada.</div>`;
 }
 
@@ -227,7 +232,12 @@ destroyLeafletMap();
 state.view = "map";
 updateHeaderAndNav("map");
 el("subtitle").textContent = "Carregando a linha…";
-render(statusHTML("Carregando rota e paradas…", true));
+// Mesmo esqueleto de carregamento usado em selectLine (stops.js) e
+// openLegLive (trip-planner.js): caixa do mapa com spinner + cards
+// fantasma da lista de ônibus. Antes essa tela (chegando via busca) usava
+// só um texto de status solto, sem bater com as outras duas entradas pro
+// mesmo lugar — inconsistente.
+render(`<div class="mainMapContainer" style="height:280px;"><div id="mapContainer">${mapLoadingHTML("Carregando rota e posição do ônibus…")}</div><div class="mapBtnStack">${followBtnHTML()}</div></div><section id="busListSection"><div class="sectionTitle">Buscando veículos…</div>${skeletonLineRows(2)}</section>`);
 try{
 const lines = await ensureAllLines();
 const line = lines.find(l => String(l.id) === String(lineId));
@@ -252,7 +262,7 @@ state.route = route;
 state.followBusEnabled = true;
 el("subtitle").textContent = `${line.numero} · perto de ${nearest.name}`;
 render(`<div class="mainMapContainer" style="height:280px;"><div id="mapContainer"></div><div class="mapBtnStack">${followBtnHTML()}</div></div><section id="busListSection"><div class="sectionTitle">Buscando veículos…</div>${skeletonLineRows(2)}</section>`);
-initLineRouteMap();
+initLineRouteMap(pat, trajeto.id);
 await refreshBusesOnMap();
 startPolling();
 pushNav("map");

@@ -7,7 +7,7 @@ import { el, render } from "./utils.js";
 import { updateHeaderAndNav } from "./nav.js";
 import {
   paletteIcon, locIcon, rotateSettingIcon, mapThemeIcon, githubIcon, coffeeIcon,
-  licenseIcon, shieldIcon, heartIcon, favicon,
+  licenseIcon, shieldIcon, heartIcon, favicon, osmLogoDataUri,
 } from "./icons.js";
 import { destroyLeafletMap, leafletMap } from "./map.js";
 import { initLeafletMapOnce } from "./map.js";
@@ -33,9 +33,9 @@ const themeBtns = themeOptions.map(t => `
 <button class="radioBtn ${state.theme === t.id ? 'selected' : ''}" onclick="setTheme('${t.id}')">${t.label}</button>
 `).join("");
 const mapThemeOptions = [
-{ id: "auto", label: "Igual ao tema do app" },
-{ id: "light", label: "Sempre claro" },
-{ id: "dark", label: "Sempre escuro" },
+{ id: "auto", label: "Padrão do sistema" },
+{ id: "light", label: "Claro" },
+{ id: "dark", label: "Escuro" },
 ];
 const mapThemeBtns = mapThemeOptions.map(t => `
 <button class="radioBtn ${state.mapTheme === t.id ? 'selected' : ''}" onclick="setMapTheme('${t.id}')">${t.label}</button>
@@ -161,8 +161,33 @@ try{ initLeafletMapOnce(); }catch(e){ console.error("[BusBus] mapa indisponível
 }
 }
 
+// Trava o scroll da página por trás do painel/pop-up enquanto ele estiver
+// aberto — sem isso, arrastar o dedo sobre a área escura atrás do painel
+// ainda rolava a tela de baixo junto (comum em overlays "position:fixed" no
+// mobile). A técnica é travar o <body> em "position:fixed" na posição atual
+// e devolver o scroll exato pro mesmo lugar ao fechar.
+let modalScrollY = 0;
+
+function lockBodyScroll(){
+modalScrollY = window.scrollY;
+document.body.style.position = "fixed";
+document.body.style.top = `-${modalScrollY}px`;
+document.body.style.left = "0";
+document.body.style.right = "0";
+}
+
+function unlockBodyScroll(){
+if(document.body.style.position !== "fixed") return;
+document.body.style.position = "";
+document.body.style.top = "";
+document.body.style.left = "";
+document.body.style.right = "";
+window.scrollTo(0, modalScrollY);
+}
+
 export function openModal(innerHTML){
 closeModal();
+lockBodyScroll();
 const ov = document.createElement("div");
 ov.className = "modalOverlay";
 ov.id = "activeModal";
@@ -171,7 +196,11 @@ ov.innerHTML = `<div class="modalCard">${innerHTML}</div>`;
 document.body.appendChild(ov);
 }
 
-export function closeModal(){ const ov = el("activeModal"); if(ov) ov.remove(); }
+export function closeModal(){
+const ov = el("activeModal");
+if(ov) ov.remove();
+unlockBodyScroll();
+}
 
 export const BUY_COFFEE_URL = "https://buymeacoffee.com/saraivarilcle";
 
@@ -255,10 +284,11 @@ em qualquer software, alguma coisa pode passar despercebida. Encontrou algo estr
 }
 
 export const LICENSE_ITEMS = [
-{ name: "OpenStreetMap", icon: favicon("openstreetmap.org"), url: "https://www.openstreetmap.org", desc: "Mapas e busca de endereços são fornecidos pelos colaboradores do OpenStreetMap, sob a licença Open Database License (ODbL)." },
+{ name: "OpenStreetMap", icon: osmLogoDataUri, url: "https://www.openstreetmap.org", desc: "Mapas e busca de endereços são fornecidos pelos colaboradores do OpenStreetMap, sob a licença Open Database License (ODbL)." },
 { name: "Leaflet", icon: favicon("leafletjs.com"), url: "https://leafletjs.com", desc: "Biblioteca de código aberto que desenha o mapa interativo do app. Licença BSD-2-Clause." },
 { name: "Open-Meteo", icon: favicon("open-meteo.com"), url: "https://open-meteo.com", desc: "Previsão do tempo gratuita e sem necessidade de cadastro, usada no widget de clima. Licença CC BY 4.0." },
 { name: "ipapi.co", icon: favicon("ipapi.co"), url: "https://ipapi.co", desc: "Estimativa de localização aproximada por IP, usada só quando o GPS falha ou é negado." },
+{ name: "Prefeitura de Belém / SEGBEL", icon: favicon("belem.pa.gov.br"), url: "https://seguranca.belem.pa.gov.br/linhas/", desc: "As listas de ruas de \"Ruas da linha\" vêm dos itinerários oficiais publicados pela Prefeitura de Belém, através da Segbel (Segurança, Ordem Pública e Mobilidade)." },
 { name: "Buy Me a Coffee", icon: favicon("buymeacoffee.com"), url: "https://buymeacoffee.com", desc: "Processa as doações voluntárias feitas por cartão dentro do app." },
 ];
 

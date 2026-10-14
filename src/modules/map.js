@@ -33,8 +33,22 @@ const applyDarkFilter = () => {
 const pane = map.getPane("tilePane");
 if(pane) pane.style.filter = dark ? "invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9)" : "";
 };
-if(layer && typeof layer.on === "function") layer.on("load", applyDarkFilter);
+// A caixa de carregamento da home (#mapLoadingOverlay, montada em
+// renderStopsScreenStructure) fica por cima do #mapContainer até aqui — o
+// Leaflet toma conta do container na hora (síncrono), mas os ladrilhos do
+// OpenStreetMap ainda levam um tempo pra baixar da rede, e até lá só dava
+// pra ver o fundo cinza vazio. O "load" do tileLayer dispara quando os
+// ladrilhos visíveis terminaram (sucesso ou erro); o setTimeout é só uma
+// rede de segurança pra não deixar a caixa presa pra sempre se a conexão
+// cair bem no meio do carregamento.
+const hideMapLoadingOverlay = () => { const o = el("mapLoadingOverlay"); if(o) o.remove(); };
+if(layer && typeof layer.on === "function"){
+layer.on("load", () => { applyDarkFilter(); hideMapLoadingOverlay(); });
+} else {
+hideMapLoadingOverlay();
+}
 applyDarkFilter();
+setTimeout(hideMapLoadingOverlay, 6000);
 }
 
 export function destroyLeafletMap(){
@@ -139,7 +153,16 @@ leafletMap.flyTo([lat, lng], 17, { duration: 0.8 });
 }
 }
 
-export function initLineRouteMap(){
+// "allPatterns" (opcional) é a lista completa de trajetos dessa linha — tipo
+// vem direto de /pattern/{busServiceId}/{cidade}. Quando passado, a gente
+// desenha os OUTROS sentidos da linha também, com a mesma linha normal do
+// sentido selecionado — assim dá pra ver o trajeto "fechando", ida e volta
+// ao mesmo tempo, em vez de só metade do circuito. (Chegamos a diferenciar
+// sólido/tracejado por sentido com ônibus ao vivo, mas voltamos atrás: sem
+// saber com certeza qual sentido está realmente ativo o tempo todo, a
+// distinção criava mais confusão do que ajudava — melhor os dois sempre
+// iguais.)
+export function initLineRouteMap(allPatterns, selectedPatternId){
 const mapEl = el("mapContainer");
 if(!mapEl) return;
 leafletMap = L.map('mapContainer', {
@@ -148,10 +171,20 @@ touchRotate: state.rotationEnabled, bearing: 0
 });
 addBaseMapLayers(leafletMap);
 busMarkersGroup = L.layerGroup().addTo(leafletMap);
+const otherPatterns = (Array.isArray(allPatterns) ? allPatterns : [])
+.filter(p => String(p.id) !== String(selectedPatternId) && Array.isArray(p.polyLine) && p.polyLine.length > 1);
+const allBoundsLatLngs = [];
+const lineStyle = { color: routeLineColor(), weight: 5, opacity: 0.8 };
+otherPatterns.forEach(p => {
+const latLngs = p.polyLine.map(pt => [pt.lat, pt.lng]);
+L.polyline(latLngs, lineStyle).addTo(leafletMap);
+allBoundsLatLngs.push(...latLngs);
+});
 if(state.route && state.route.length > 0){
 const latLngs = state.route.map(p => [p.lat, p.lng]);
-const routePoly = L.polyline(latLngs, { color: routeLineColor(), weight: 5, opacity: 0.8 }).addTo(leafletMap);
-leafletMap.fitBounds(routePoly.getBounds(), { padding: [20, 20] });
+const routePoly = L.polyline(latLngs, lineStyle).addTo(leafletMap);
+allBoundsLatLngs.push(...latLngs);
+leafletMap.fitBounds(L.latLngBounds(allBoundsLatLngs.length ? allBoundsLatLngs : routePoly.getBounds()), { padding: [20, 20] });
 } else {
 leafletMap.setView([-1.4558, -48.4902], 14);
 }

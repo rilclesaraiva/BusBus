@@ -4,7 +4,7 @@
 
 import L from "leaflet";
 import { state, CITY, isFavorite } from "./state.js";
-import { el, jsStr, pick, fmtEta, statusHTML, errMsg, render, mapLoadingHTML } from "./utils.js";
+import { el, jsStr, pick, fmtEta, statusHTML, errMsg, render, mapLoadingHTML, isOfflineError, OFFLINE_MSG } from "./utils.js";
 import { api } from "./api.js";
 import { pinIcon, starIconFilled, starIconOutline, busIcon } from "./icons.js";
 import { getDepartureSchedule, fetchScheduledLinesAtStop } from "./api.js";
@@ -98,6 +98,7 @@ subtitleEl.textContent = state.coord
 render(`
 <div class="mainMapContainer">
 <div id="mapContainer"></div>
+<div class="mapLoadingOverlay" id="mapLoadingOverlay">${mapLoadingHTML("Carregando mapa…")}</div>
 <div class="weatherChip" id="weatherChip" style="display:none;" onclick="toggleWeatherDetail()" title="Previsão do tempo"></div>
 <div class="mapBtnStack">
 <button class="mapBtn" id="locateBtn" onclick="recenterMap()" title="Ir para minha localização">
@@ -147,7 +148,8 @@ renderStopsListOnly();
 } catch(e){
 console.error("[BusBus] erro ao buscar paradas:", e);
 const list = el("stopList");
-if(list) list.innerHTML = renderFavoritesSection() + statusHTML("Erro ao buscar paradas: " + errMsg(e), false, true);
+const msg = isOfflineError(e) ? OFFLINE_MSG : ("Erro ao buscar paradas: " + errMsg(e));
+if(list) list.innerHTML = renderFavoritesSection() + statusHTML(msg, false, true);
 }
 }
 
@@ -182,6 +184,8 @@ ${html || `<div class="empty">${pinIcon}<div>Nenhuma parada encontrada no raio. 
 `;
 }
 
+export let savedStopsScrollY = 0; // guarda a posição de rolagem da home (lista de paradas) pra restaurar ao voltar de uma parada
+
 export let savedLinesScrollY = 0; // guarda a posição de rolagem da lista de linhas pra restaurar ao voltar do mapa do ônibus
 
 export function skeletonLineRows(n = 4){
@@ -213,6 +217,11 @@ selectStop(id);
 }
 
 export async function selectStop(id){
+// guarda onde a pessoa estava rolada na home ANTES de sair dela — só faz
+// sentido quando ela realmente está vindo da home (toque num resultado de
+// busca ou numa favorita vindo de outra tela não deve sobrescrever isso
+// com a rolagem de uma tela diferente).
+if(state.view === "stops") savedStopsScrollY = window.scrollY;
 destroyLeafletMap();
 savedLinesScrollY = 0; // parada nova: a lista deve abrir do topo, não restaurar rolagem de uma parada anterior
 const stop = state.stops.find(s => String(s.id) === String(id)) || { name: "Parada " + id, id: id };
@@ -303,7 +312,7 @@ try{
 const pat = await api(`/pattern/${state.lineSel.busServiceId}/${CITY}`);
 const seg = (Array.isArray(pat) ? pat : []).find(p => String(p.id) === String(state.lineSel.patternId)) || pat[0];
 state.route = seg ? seg.polyLine : [];
-initLineRouteMap();
+initLineRouteMap(pat, state.lineSel.patternId);
 await refreshBusesOnMap();
 startPolling();
 pushNav("map");
@@ -395,7 +404,7 @@ ${lineFullName}
 secEl.innerHTML = `
 <div class="sectionTitleRow">
 <div class="sectionTitle">Veículos nesta linha</div>
-<button class="infoBtn" onclick="showRouteStreetsModal(state.lineSel.busServiceId, state.lineSel.patternId, state.route)" title="Ver ruas desta linha">i</button>
+<button class="infoBtn" onclick="showRouteStreetsModal(state.lineSel.busServiceId, state.lineSel.patternId, state.route, state.lineSel.number)" title="Ver ruas desta linha">i</button>
 </div>
 ${busList}
 `;
@@ -404,7 +413,7 @@ return;
 secEl.innerHTML = `
 <div class="sectionTitleRow">
 <div class="sectionTitle">Veículos nesta linha</div>
-<button class="infoBtn" onclick="showRouteStreetsModal(state.lineSel.busServiceId, state.lineSel.patternId, state.route)" title="Ver ruas desta linha">i</button>
+<button class="infoBtn" onclick="showRouteStreetsModal(state.lineSel.busServiceId, state.lineSel.patternId, state.route, state.lineSel.number)" title="Ver ruas desta linha">i</button>
 </div>
 <div class="empty" style="padding:24px 20px 10px;">Nenhum ônibus ativo com GPS nesta linha no momento.</div>
 <div class="sectionTitle">Horário programado</div>
