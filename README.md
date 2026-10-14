@@ -7,6 +7,7 @@ Rastreamento de ônibus em tempo real para Belém (PA) — de graça, sem anúnc
 
 [![Licença: GPLv3](https://img.shields.io/badge/licença-GPLv3-146B49?style=flat-square)](./LICENSE)
 [![Plataforma: Android](https://img.shields.io/badge/plataforma-Android-146B49?style=flat-square)](#)
+[![Plataforma: iPhone (web)](https://img.shields.io/badge/plataforma-iPhone%20(web)-146B49?style=flat-square)](#-testar-no-iphone-ou-em-qualquer-navegador)
 [![Feito em Belém](https://img.shields.io/badge/feito%20em-Belém%20(PA)-146B49?style=flat-square)](#)
 [![Código com apoio de IA](https://img.shields.io/badge/código-com%20apoio%20de%20IA-146B49?style=flat-square)](#-feito-com-apoio-de-ia)
 
@@ -17,6 +18,19 @@ Rastreamento de ônibus em tempo real para Belém (PA) — de graça, sem anúnc
 BusBus é um projeto pessoal e independente, feito por [rilclesaraiva](https://github.com/rilclesaraiva). Não tem vínculo com nenhuma operadora de transporte ou órgão público — existe pelo direito de quem mora e trabalha em Belém de saber quando o próximo ônibus chega.
 
 > 🤖 O código deste projeto foi escrito com apoio de ferramentas de IA, sob direção e revisão de rilclesaraiva. Mais detalhes [aqui embaixo](#-feito-com-apoio-de-ia).
+
+## 📲 Testar no iPhone (ou em qualquer navegador)
+
+O app originalmente roda como Android (APK), mas a mesma versão também está publicada como site, então dá pra usar — e instalar — em qualquer aparelho com navegador, iPhone incluído:
+
+**🔗 [bus-bus-qdmb.vercel.app](https://bus-bus-qdmb.vercel.app)**
+
+Pra instalar no iPhone como se fosse um app (ícone na tela, tela cheia, sem barra do navegador):
+1. Abra o link acima no **Safari** (precisa ser o Safari, não funciona por outro navegador no iOS)
+2. Toque no ícone de compartilhar (o quadrado com a seta pra cima)
+3. Escolha **"Adicionar à Tela de Início"**
+
+> ⚠️ Essa versão web está em fase de teste — pode receber atualizações frequentes e o link pode mudar conforme o projeto evolui.
 
 ## ✨ O que o app faz
 
