@@ -1,0 +1,96 @@
+apply plugin: 'com.android.application'
+
+// Fonte única da versão: o "version" do package.json, igual já funciona pro
+// build web (ver vite.config.js → %APP_VERSION%). Nunca editar versionCode/
+// versionName aqui direto — muda o package.json (que já segue a regra do
+// CLAUDE.md de bump + CHANGELOG juntos) e os dois builds (site e APK) saem
+// sincronizados sozinhos.
+//
+// Esquema do versionCode: MAJOR*10000 + MINOR*100 + PATCH — o mesmo esquema
+// que o AppMint já vinha usando nos APKs publicados até agora (confirmado
+// abrindo o APK da v1.2.0: versionCode 10200). Mantido de propósito pra não
+// quebrar a sequência que o Android usa pra saber se um APK novo é "mais
+// recente" que o instalado.
+def packageJson = new groovy.json.JsonSlurper().parseText(file('../../package.json').text)
+def appVersionName = packageJson.version
+def versionParts = appVersionName.tokenize('.')
+def appVersionCode = (versionParts[0].toInteger() * 10000) + (versionParts[1].toInteger() * 100) + versionParts[2].toInteger()
+
+// Assinatura de release: NUNCA commitado. "keystore.properties" só existe
+// localmente (se alguém quiser gerar um release build na própria máquina) ou
+// é criado na hora pela Action do GitHub (ver .github/workflows/android.yml),
+// a partir dos Secrets do repositório — nunca escrito em texto no código.
+// Sem esse arquivo, "release" simplesmente sai sem assinatura (normal pra
+// quem só quer compilar localmente pra testar, sem publicar nada).
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+def hasKeystoreProperties = keystorePropertiesFile.exists()
+def keystoreProperties = new Properties()
+if (hasKeystoreProperties) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+android {
+    namespace = "com.busbus.app"
+    compileSdk = rootProject.ext.compileSdkVersion
+    defaultConfig {
+        applicationId "com.busbus.app"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode appVersionCode
+        versionName appVersionName
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        aaptOptions {
+             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
+             // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
+            ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+    signingConfigs {
+        if (hasKeystoreProperties) {
+            release {
+                storeFile rootProject.file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+            }
+        }
+    }
+    buildTypes {
+        release {
+            if (hasKeystoreProperties) {
+                signingConfig signingConfigs.release
+            }
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+repositories {
+    flatDir{
+        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
+    implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
+    implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
+    implementation project(':capacitor-android')
+    testImplementation "junit:junit:$junitVersion"
+    androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
+    implementation project(':capacitor-cordova-android-plugins')
+}
+
+apply from: 'capacitor.build.gradle'
+
+try {
+    def servicesJSON = file('google-services.json')
+    if (servicesJSON.text) {
+        apply plugin: 'com.google.gms.google-services'
+    }
+} catch(Exception e) {
+    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+}

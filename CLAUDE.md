@@ -19,10 +19,21 @@ Isso existe porque sessões de conversa têm memória limitada: o changelog é a
 ## Estrutura do projeto
 
 - `src/` — código-fonte modular (Vite). `src/modules/itinerarios.js` tem os dados oficiais de itinerário por linha (Prefeitura de Belém / SEGBEL), extraídos de um PDF fornecido pelo rilclesaraiva + do site da SEGBEL pras linhas do BRT. Linhas fora desse acervo caem no modo antigo (geocodificação reversa ao vivo) em `trip-planner.js`.
-- Build (`vite build`, com `vite-plugin-singlefile`) gera um único `dist/index.html` autocontido — usado tanto como PWA (deploy automático no Vercel a cada push em `main`) quanto renomeado pra `busbus.html` e convertido em APK via AppMint pelo próprio rilclesaraiva (etapa manual, fora desta sessão).
+- Build (`vite build`, com `vite-plugin-singlefile`) gera um único `dist/index.html` autocontido — é o que é publicado como PWA (deploy automático no Vercel a cada push em `main`) e também o que o Capacitor empacota no APK (ver abaixo).
 - `worker.js` / `wrangler.toml` — proxy em Cloudflare Workers que esconde a API real de dados de transporte.
-- Releases do GitHub (`gh api repos/rilclesaraiva/BusBus/releases`) guardam os APKs publicados. **Importante**: esta sessão consegue *ler* releases via API, mas não consegue criar, editar nem deletar releases (403 bloqueado pelo tipo de sessão) — por isso a release note precisa estar pronta (no CHANGELOG) antes do rilclesaraiva publicar, porque não dá pra editar depois.
-- Deletar branches remotas também é bloqueado (403) — precisa ser feito manualmente pelo rilclesaraiva na interface do GitHub.
+- Deletar branches remotas é bloqueado (403) pra esta sessão — precisa ser feito manualmente pelo rilclesaraiva na interface do GitHub.
+
+## Build do APK (Android/Capacitor) — desde a v1.3.2
+
+O APK deixou de ser gerado manualmente no AppMint: desde a v1.3.2 o projeto usa [Capacitor](https://capacitorjs.com) (`android/`, pasta de projeto Gradle nativo de verdade, versionada no repo) + uma Action do GitHub (`.github/workflows/android.yml`) que builda e assina o APK sozinha a cada push na `main` — espelhando o que o Vercel já fazia pro site.
+
+- **applicationId**: `com.busbus.app` — igual ao APK que o AppMint já vinha publicando, de propósito, pra não quebrar a identidade do app.
+- **Assinatura**: reaproveita a MESMA chave que o AppMint usava (exportada pelo rilclesaraiva via "Signing Key → Save my signing key" no painel do AppMint, confirmada byte a byte contra o certificado do APK publicado — fingerprint SHA-256 `5E:18:2D:AE:6F:F3:A9:EF:B2:99:87:29:A6:78:C0:CB:FE:C9:FA:6F:9B:89:5E:25:8C:DC:06:B9:E7:B7:83:75`, alias `release_key`). Isso é o que garante que quem já tem o BusBus instalado continua recebendo atualização normal, em vez de precisar reinstalar.
+- **A chave NUNCA é commitada**. Ela vive só como 4 Secrets do repositório no GitHub (`ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`), cadastrados manualmente pelo rilclesaraiva — **a API de Secrets do GitHub Actions também é bloqueada (403) pra esta sessão**, igual a de Releases, então eu nunca vou conseguir cadastrar/trocar isso sozinho, só pedir pro rilclesaraiva fazer pelo painel (Settings → Secrets and variables → Actions).
+- **versionCode/versionName** do `android/app/build.gradle` são lidos automaticamente do `"version"` do `package.json` (mesma fonte única de sempre) — nunca editar isso direto no `build.gradle`. Esquema do versionCode: `MAJOR*10000 + MINOR*100 + PATCH` (mesmo esquema que o AppMint já usava).
+- A Action também **cria/atualiza a Release do GitHub sozinha**, com o APK anexado e a nota tirada automaticamente da seção correspondente do `CHANGELOG.md` — isso funciona porque a Action usa o `GITHUB_TOKEN` gerado automaticamente pelo próprio GitHub a cada execução (com permissão `contents: write` concedida no workflow), que é diferente e não tem a mesma restrição do acesso desta sessão.
+- **Não dá pra testar o build do Android dentro desta sessão**: o SDK do Android só é baixado dos servidores do Google (`dl.google.com`, `maven.google.com`), que estão fora da lista de permissão de rede deste ambiente. Qualquer mudança no `android/` só é validada de verdade quando a Action roda no GitHub — acompanhar a execução (`gh run watch` ou a aba Actions) depois de qualquer alteração nessa pasta.
+- O build local antigo (`busbus.html` manual pro AppMint) continua funcionando como fallback caso essa esteira pare de funcionar por algum motivo — nada foi removido do fluxo antigo, só passou a não ser mais o caminho principal.
 
 ## Regra fixa: entregar a build com a versão no nome do arquivo
 

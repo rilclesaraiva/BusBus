@@ -1,0 +1,118 @@
+name: Build APK do Android
+
+# Espelha o que o Vercel já faz pro site: toda vez que algo entra na main, um
+# build novo sai sozinho — só que aqui o resultado é o APK assinado, em vez
+# do site. Também pode ser disparado manualmente (aba "Actions" do GitHub).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+# Precisa de permissão de escrita pra Action conseguir criar/atualizar a
+# Release do GitHub sozinha (algo que a sessão do Claude usada neste projeto
+# NÃO consegue fazer por conta própria — ver CLAUDE.md). O GITHUB_TOKEN usado
+# aqui é gerado automaticamente pelo próprio GitHub a cada execução, não tem
+# relação nenhuma com os Secrets de assinatura.
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v4
+
+      - name: Ler a versão do package.json
+        id: version
+        run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Rodar os testes
+        run: npm test
+
+      - name: Build do site (gera dist/, que o Capacitor empacota no APK)
+        run: npm run build
+
+      - name: Sincronizar o projeto Android com o build mais recente
+        run: npx cap sync android
+
+      - name: Configurar Java (exigido pelo Android Gradle Plugin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Configurar o SDK do Android
+        uses: android-actions/setup-android@v3
+
+      # A chave de assinatura (mesma que o AppMint já usa nos APKs
+      # publicados até agora — ver CLAUDE.md) nunca fica no repositório.
+      # Ela é decodificada aqui, só durante o build, a partir do Secret
+      # ANDROID_KEYSTORE_BASE64, e o arquivo some junto com a máquina
+      # efêmera da Action assim que o job termina.
+      - name: Preparar a chave de assinatura
+        working-directory: android
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > release.p12
+          cat > keystore.properties <<EOF
+          storeFile=release.p12
+          storePassword=$ANDROID_KEYSTORE_PASSWORD
+          keyAlias=$ANDROID_KEY_ALIAS
+          keyPassword=$ANDROID_KEY_PASSWORD
+          EOF
+
+      - name: Buildar o APK assinado
+        working-directory: android
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Renomear o APK com a versão (busbus_v{versão}.apk)
+        id: apk
+        run: |
+          SRC=android/app/build/outputs/apk/release/app-release.apk
+          OUT="busbus_v${{ steps.version.outputs.version }}.apk"
+          cp "$SRC" "$OUT"
+          echo "path=$OUT" >> "$GITHUB_OUTPUT"
+
+      - name: Guardar o APK como artefato do build
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.apk.outputs.path }}
+          path: ${{ steps.apk.outputs.path }}
+
+      # Puxa só a seção dessa versão do CHANGELOG.md pra virar a nota da
+      # release — é a mesma regra fixa do CLAUDE.md (changelog pronto ANTES
+      # do push), só que agora aplicada automaticamente em vez de precisar
+      # copiar/colar na hora de publicar.
+      - name: Extrair a nota de versão do CHANGELOG.md
+        id: changelog
+        run: |
+          awk -v ver="## [${{ steps.version.outputs.version }}]" '
+            index($0, ver) == 1 { found=1; next }
+            found && /^## \[/ { exit }
+            found { print }
+          ' CHANGELOG.md > release_notes.md
+          echo "path=release_notes.md" >> "$GITHUB_OUTPUT"
+
+      # Cria (ou atualiza, se já existir pra essa versão) a Release do GitHub
+      # com o APK já anexado.
+      - name: Publicar/atualizar a Release do GitHub
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: BusBus v${{ steps.version.outputs.version }}
+          files: ${{ steps.apk.outputs.path }}
+          body_path: ${{ steps.changelog.outputs.path }}

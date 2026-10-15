@@ -4,6 +4,13 @@ Todas as mudanças notáveis do BusBus (B.E.M.) ficam registradas aqui, por vers
 
 Formato livremente inspirado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/). Versionamento: [SemVer](https://semver.org/lang/pt-BR/) — `MAJOR.MINOR.PATCH`, onde incompatibilidades/mudanças grandes de comportamento sobem o `MAJOR`, funcionalidades novas sem quebrar nada sobem o `MINOR`, e correções sobem o `PATCH`.
 
+## [1.3.2] — 2026-10-15
+
+Sem mudanças de comportamento pra quem usa o app — essa versão existe só pra marcar a troca de como o APK é gerado.
+
+### 🔧 Infraestrutura
+- **O APK deixou de ser gerado manualmente no AppMint**: o projeto agora tem um projeto Android de verdade (Capacitor, pasta `android/`) e uma Action do GitHub que builda e assina o APK sozinha a cada push na `main`, com a MESMA chave de assinatura que o AppMint já usava (exportada do próprio painel do AppMint) — então quem já tem o app instalado continua recebendo atualização normal, sem precisar reinstalar nada. Detalhes técnicos no `CLAUDE.md`.
+
 ## [1.3.1] — 2026-10-14
 
 ### 🐛 Correções
