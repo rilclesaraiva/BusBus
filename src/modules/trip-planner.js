@@ -306,10 +306,14 @@ handleTripGeo(field, "");
 
 // Apaga a rota traçada/os resultados da tela (mapa, cartões, índice
 // selecionado) sem mexer no que a pessoa digitou nos campos de origem e
-// destino — quem decide isso é quem chama. Usado em três lugares: ao
-// apagar o texto de um dos campos (handleTripGeo), ao esquecer a aba de
-// rota aberta por tempo demais (scheduleRouteIdleClear) e, no futuro,
-// qualquer outro gatilho de "essa rota não vale mais".
+// destino — quem decide isso é quem chama. Usado ao apagar o texto de um
+// dos campos (handleTripGeo) e ao traçar uma rota nova (planTrip).
+//
+// Até a v1.4.0 também era usado por scheduleRouteIdleClear(), que apagava
+// a rota sozinha depois de 90s com a aba fora de vista. Removido a pedido
+// do rilclesaraiva, junto com o mesmo mecanismo em search.js: persistência
+// total em todas as abas agora — a rota só é esquecida por ação explícita
+// (campo apagado, rota nova traçada), nunca sozinha por tempo.
 export function resetRouteResults(){
 destroyTripMap();
 lastTripResults = [];
@@ -318,42 +322,6 @@ const wrap = el("tripMapWrap");
 if(wrap) wrap.style.display = "none";
 const area = el("tripResultsArea");
 if(area) area.innerHTML = "";
-}
-
-export let routeIdleTimer = null;
-
-export const ROUTE_IDLE_CLEAR_MS = 90000;
-
-// Mesma ideia do scheduleSearchIdleClear() em search.js: se a pessoa já
-// tinha uma rota traçada (ou meio preenchida) e sai pra outra aba, depois de
-// um tempo esquecida lá ela volta limpa — em vez de ficar presa mostrando
-// uma rota antiga de sessões passadas. Só conta o tempo enquanto a aba de
-// rota NÃO está selecionada: updateHeaderAndNav() (nav.js) chama
-// scheduleRouteIdleClear() ao sair da aba "route" e cancelRouteIdleClear()
-// ao entrar nela.
-export function scheduleRouteIdleClear(){
-if((!tripOrigin && !tripDestination && !lastTripResults.length) || routeIdleTimer) return;
-routeIdleTimer = setTimeout(() => {
-routeIdleTimer = null;
-tripOrigin = null;
-tripDestination = null;
-resetRouteResults();
-// só mexe no resto do DOM se por algum motivo a tela de rota ainda
-// estiver montada (ex.: chamado de outro contexto) — o caso normal é
-// ela já não existir mais, porque a pessoa está em outra aba.
-const oInput = el("tripOriginInput");
-if(oInput) oInput.value = "";
-const dInput = el("tripDestInput");
-if(dInput) dInput.value = "";
-updateTripClearBtn("o");
-updateTripClearBtn("d");
-refreshPlanBtn();
-}, ROUTE_IDLE_CLEAR_MS);
-}
-
-export function cancelRouteIdleClear(){
-clearTimeout(routeIdleTimer);
-routeIdleTimer = null;
 }
 
 export function handleTripGeo(field, q){

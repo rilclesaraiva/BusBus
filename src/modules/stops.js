@@ -10,7 +10,7 @@ import { pinIcon, starIconFilled, starIconOutline, busIcon } from "./icons.js";
 import { getDepartureSchedule, fetchScheduledLinesAtStop } from "./api.js";
 import {
   destroyLeafletMap, initLeafletMapOnce, updateMapUserPosition, focusStopOnMap,
-  updateStopMarkersOnMap, initLineRouteMap, fitMapToBusAndStop, getBusBearing,
+  updateStopMarkersOnMap, initLineRouteMap, fitMapToBusAndStop,
   busMarkersGroup, leafletMap,
 } from "./map.js";
 // Importação circular de propósito: a navegação (voltar/avançar de aba)
@@ -403,6 +403,71 @@ if(btn) btn.classList.toggle("followActive", state.followBusEnabled);
 if(state.followBusEnabled) fitMapToBusAndStop();
 }
 
+// Até aqui o ícone do ônibus também tinha uma setinha indicando o sentido
+// do movimento (calculada em getBusBearing(), map.js, a partir do ponto
+// mais próximo no traçado da linha). Removida a pedido do rilclesaraiva:
+// a heurística (pegar o ponto do traçado mais próximo e olhar o próximo
+// ponto adiante) acerta a direção visual do veículo na maior parte do
+// tempo, mas erra perto de cruzamentos, retornos e trechos onde a linha
+// passa duas vezes próxima (ida e volta coladas) — e não tem um jeito
+// confiável de corrigir isso só com a posição pontual de cada leitura,
+// sem rastrear o veículo ao longo de várias leituras seguidas. Melhor não
+// ter a seta do que ter uma errada; a pessoa passa a contar só com o
+// ônibus se movendo no mapa pra perceber o sentido — e com a animação
+// abaixo, esse movimento agora é visível e suave, não mais um "pulo"
+// seco a cada atualização.
+//
+// Marcadores de ônibus já desenhados no mapa, indexados pela placa —
+// permite comparar a leitura nova (a cada 10s) com a anterior e, se o
+// veículo já tinha marcador, DESLIZAR ele suavemente até a posição nova
+// (animateBusMarker, abaixo) em vez de apagar tudo e redesenhar do zero,
+// que é o que fazia o ônibus "piscar"/teleportar de ponto em ponto a cada
+// atualização. Só ônibus com placa conhecida entram aqui — sem placa não
+// dá pra garantir que é o "mesmo" veículo entre uma leitura e outra (fica
+// numa lista à parte, busMarkersNoPlate, sempre redesenhada do zero).
+// clearBusMarkerTracking() zera as duas sempre que uma tela de GPS de
+// linha nova é montada (ver initLineRouteMap em map.js), pra nunca ficar
+// com uma referência presa a um marcador de uma tela/linha anterior.
+let busMarkersByPlate = {};
+let busMarkersNoPlate = [];
+
+export function clearBusMarkerTracking(){
+Object.values(busMarkersByPlate).forEach(m => { if(m._busAnimFrame) cancelAnimationFrame(m._busAnimFrame); });
+busMarkersByPlate = {};
+busMarkersNoPlate = [];
+}
+
+// Dura bem menos que o intervalo de 10s do auto-update (startPolling), pra
+// sempre terminar de deslizar com folga antes da próxima leitura chegar —
+// não tem por que a animação ainda estar rolando quando o próximo ponto já
+// chegou.
+const BUS_SLIDE_MS = 2500;
+
+function animateBusMarker(marker, from, to){
+if(marker._busAnimFrame) cancelAnimationFrame(marker._busAnimFrame);
+const start = performance.now();
+function step(now){
+const t = Math.min(1, (now - start) / BUS_SLIDE_MS);
+// easeOutQuad: começa mais rápido e desacelera no fim — parece mais um
+// ônibus de verdade freando/ajustando do que um ponto correndo a
+// velocidade constante e parando seco.
+const eased = 1 - (1 - t) * (1 - t);
+marker.setLatLng([from.lat + (to.lat - from.lat) * eased, from.lng + (to.lng - from.lng) * eased]);
+marker._busAnimFrame = t < 1 ? requestAnimationFrame(step) : null;
+}
+marker._busAnimFrame = requestAnimationFrame(step);
+}
+
+function busSvgIcon(){
+return L.divIcon({
+className: 'bus-pin-marker',
+html: `<div style="width:26px;height:26px;background:#D64545;border:2px solid #ffffff;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#ffffff;box-shadow:0 2px 8px rgba(0,0,0,0.4);">
+<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="11" rx="2"/><path d="M3 12h18M7 17v2M17 17v2"/></svg>
+</div>`,
+iconSize: [26, 26], iconAnchor: [13, 13]
+});
+}
+
 export async function refreshBusesOnMap(){
 try{
 const data = await api(`/all/forecast/${state.stopSel.id}/${state.lineSel.patternId}/${CITY}`);
@@ -410,24 +475,34 @@ state.buses = (Array.isArray(data) ? data : []).map(b => ({
 plate: b.codVehicle, lat: b.latLng && b.latLng.lat, lng: b.latLng && b.latLng.lng,
 eta: b.arrivalTime, dest: b.destination
 })).filter(b => b.lat && b.lng);
-if(busMarkersGroup) busMarkersGroup.clearLayers();
+if(!busMarkersGroup) return;
+// Sem placa não tem como saber se é "o mesmo" veículo da leitura
+// anterior — redesenha esses do zero sempre.
+busMarkersNoPlate.forEach(m => busMarkersGroup.removeLayer(m));
+busMarkersNoPlate = [];
+const seenPlates = new Set();
 state.buses.forEach(b => {
-const angle = getBusBearing(state.route, b.lat, b.lng);
-const busSvgIcon = L.divIcon({
-className: 'bus-pin-marker',
-html: `<div style="position:relative;width:36px;height:36px;display:flex;align-items:center;justify-content:center;">
-<div style="position:absolute;width:36px;height:36px;top:0;left:0;transform:rotate(${angle}deg);transform-origin:18px 18px;pointer-events:none;">
-<svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-<path d="M 12 8 L 18 2 L 24 8" stroke="#D64545" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>
-</div>
-<div style="width:26px;height:26px;background:#D64545;border:2px solid #ffffff;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#ffffff;box-shadow:0 2px 8px rgba(0,0,0,0.4);z-index:2;">
-<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="11" rx="2"/><path d="M3 12h18M7 17v2M17 17v2"/></svg>
-</div>
-</div>`,
-iconSize: [36, 36], iconAnchor: [18, 18]
+if(b.plate && busMarkersByPlate[b.plate]){
+seenPlates.add(b.plate);
+const marker = busMarkersByPlate[b.plate];
+const from = marker.getLatLng();
+if(from.lat !== b.lat || from.lng !== b.lng){
+animateBusMarker(marker, from, { lat: b.lat, lng: b.lng });
+}
+} else {
+const marker = L.marker([b.lat, b.lng], { icon: busSvgIcon() }).addTo(busMarkersGroup);
+if(b.plate){ busMarkersByPlate[b.plate] = marker; seenPlates.add(b.plate); }
+else { busMarkersNoPlate.push(marker); }
+}
 });
-L.marker([b.lat, b.lng], { icon: busSvgIcon }).addTo(busMarkersGroup);
+// Ônibus que sumiram dessa leitura (saíram da linha, por exemplo) — tira
+// o marcador e para de rastrear a placa.
+Object.keys(busMarkersByPlate).forEach(plate => {
+if(seenPlates.has(plate)) return;
+const marker = busMarkersByPlate[plate];
+if(marker._busAnimFrame) cancelAnimationFrame(marker._busAnimFrame);
+busMarkersGroup.removeLayer(marker);
+delete busMarkersByPlate[plate];
 });
 fitMapToBusAndStop();
 renderBusListOnly();

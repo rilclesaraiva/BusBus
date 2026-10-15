@@ -12,7 +12,7 @@ import { metersBetween } from "./utils.js";
 // tocado. Módulos ES lidam bem com isso desde que a chamada só aconteça
 // dentro de uma função (como este callback de clique), nunca no topo do
 // módulo — nesse ponto os dois módulos já terminaram de carregar.
-import { selectStop } from "./stops.js";
+import { selectStop, clearBusMarkerTracking } from "./stops.js";
 
 export let leafletMap = null;
 
@@ -181,6 +181,12 @@ addBaseMapLayers(leafletMap);
 // evento de rotação, por isso o botão não reagia nem aparecia certo aqui.
 leafletMap.on('rotate', () => updateCompassIcon());
 busMarkersGroup = L.layerGroup().addTo(leafletMap);
+// Zera o rastreamento de marcadores de ônibus (busMarkersByPlate, em
+// stops.js) toda vez que uma tela de GPS de linha nova é montada — sem
+// isso, a primeira leitura dessa linha nova poderia comparar com um
+// marcador de uma linha/tela ANTERIOR (já removida desse mapa) e tentar
+// deslizar algo que não existe mais aqui.
+clearBusMarkerTracking();
 const otherPatterns = (Array.isArray(allPatterns) ? allPatterns : [])
 .filter(p => String(p.id) !== String(selectedPatternId) && Array.isArray(p.polyLine) && p.polyLine.length > 1);
 const allBoundsLatLngs = [];
@@ -228,28 +234,3 @@ leafletMap.fitBounds(bounds, { padding: [50, 50], maxZoom });
 }catch(e){ /* sem mapa ainda (ex.: tela recém trocada) — ignora */ }
 }
 
-export function getBusBearing(pts, lat, lng){
-if(!pts || pts.length < 2) return 0;
-let minDist = Infinity, closestIdx = 0;
-for(let i=0; i<pts.length; i++){
-const d = Math.hypot(pts[i].lat - lat, pts[i].lng - lng);
-if(d < minDist){ minDist = d; closestIdx = i; }
-}
-const p1 = pts[closestIdx];
-const MIN_METERS = 12;
-let p2 = null;
-for(let i = closestIdx + 1; i < pts.length; i++){
-if(metersBetween(p1, pts[i]) >= MIN_METERS){ p2 = pts[i]; break; }
-}
-if(!p2){
-for(let i = closestIdx - 1; i >= 0; i--){
-if(metersBetween(p1, pts[i]) >= MIN_METERS){
-const b = Math.atan2((p1.lng - pts[i].lng) * Math.cos(p1.lat*Math.PI/180), p1.lat - pts[i].lat) * (180/Math.PI);
-return (b + 360) % 360;
-}
-}
-return 0;
-}
-const bearing = Math.atan2((p2.lng - p1.lng) * Math.cos(p1.lat*Math.PI/180), p2.lat - p1.lat) * (180 / Math.PI);
-return (bearing + 360) % 360;
-}

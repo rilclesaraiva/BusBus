@@ -1,8 +1,9 @@
 // Testes de src/modules/trip-planner.js: bugs reais reportados pela pessoa
-// testando o B.E.M. no celular, ausentes na versão monólito, mais as duas
-// melhorias de UX pedidas em seguida (card selecionado marcado, e a aba de
-// rota esquecida em segundo plano se limpando sozinha, do jeito que a aba de
-// pesquisa já fazia).
+// testando o B.E.M. no celular, ausentes na versão monólito, mais a
+// melhoria de UX pedida em seguida (card selecionado marcado). A aba de
+// rota já teve um temporizador que limpava a rota sozinha depois de um
+// tempo em segundo plano — removido na v1.4.0+ (persistência total, ver
+// resetRouteResults em trip-planner.js e test/scroll-persistence.test.js).
 //
 // 1) O ícone 🗺 de cada card de resultado é desenhado como HTML puro
 //    (onclick="...") — isso só consegue chamar algo que exista em
@@ -23,8 +24,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import {
   renderRouteScreen, renderTripResults, getTripResult, selectTripResult,
-  selectTripGeo, selectedTripResultIndex, scheduleRouteIdleClear,
-  cancelRouteIdleClear, ROUTE_IDLE_CLEAR_MS, tripOrigin, handleTripGeo,
+  selectTripGeo, selectedTripResultIndex, tripOrigin, handleTripGeo,
 } from "../src/modules/trip-planner.js";
 import * as tripPlannerModule from "../src/modules/trip-planner.js";
 import { el } from "../src/modules/utils.js";
@@ -123,38 +123,6 @@ describe("renderRouteScreen — não perde os resultados já calculados ao volta
     renderTripResults([]);
     expect(() => renderRouteScreen()).not.toThrow();
     expect(el("tripResultsArea").innerHTML).toBe("");
-  });
-});
-
-describe("scheduleRouteIdleClear/cancelRouteIdleClear — a aba de rota esquecida em outra aba volta limpa sozinha", () => {
-  beforeEach(() => { vi.useFakeTimers(); });
-  afterEach(() => { cancelRouteIdleClear(); vi.useRealTimers(); });
-
-  it("depois de ROUTE_IDLE_CLEAR_MS parado em outra aba, zera origem/destino/resultados", () => {
-    renderTripResults([resultA]);
-    expect(tripOrigin).not.toBeNull(); // veio do selectTripGeo() no beforeEach de fora
-
-    scheduleRouteIdleClear();
-    vi.advanceTimersByTime(ROUTE_IDLE_CLEAR_MS);
-
-    expect(getTripResult(0)).toBeUndefined(); // lastTripResults virou []
-    expect(selectedTripResultIndex).toBe(0);
-  });
-
-  it("cancelRouteIdleClear() impede a limpeza se a pessoa voltar pra aba antes do tempo passar (simula updateHeaderAndNav('route'))", () => {
-    renderTripResults([resultA]);
-    scheduleRouteIdleClear();
-    cancelRouteIdleClear(); // é isso que updateHeaderAndNav('route') chama ao reentrar na aba
-    vi.advanceTimersByTime(ROUTE_IDLE_CLEAR_MS);
-
-    expect(getTripResult(0)).toBe(resultA); // continua lá, não foi limpo
-  });
-
-  it("não agenda nada (e não quebra) quando não há nenhuma busca em andamento", () => {
-    renderTripResults([]);
-    expect(() => scheduleRouteIdleClear()).not.toThrow();
-    vi.advanceTimersByTime(ROUTE_IDLE_CLEAR_MS);
-    expect(getTripResult(0)).toBeUndefined();
   });
 });
 

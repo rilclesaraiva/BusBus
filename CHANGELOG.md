@@ -4,6 +4,15 @@ Todas as mudanças notáveis do BusBus (B.E.M.) ficam registradas aqui, por vers
 
 Formato livremente inspirado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/). Versionamento: [SemVer](https://semver.org/lang/pt-BR/) — `MAJOR.MINOR.PATCH`, onde incompatibilidades/mudanças grandes de comportamento sobem o `MAJOR`, funcionalidades novas sem quebrar nada sobem o `MINOR`, e correções sobem o `PATCH`.
 
+## [1.5.0] — 2026-10-15
+
+### ✨ Novidades
+- **Ônibus desliza no mapa em vez de "piscar"**: antes, cada atualização (a cada 10s) apagava e redesenhava o marcador do ônibus direto na posição nova, dando a impressão de um salto seco de ponto em ponto. Agora o marcador desliza suavemente até a posição nova, com uma leve desaceleração no final.
+- **Abas de Pesquisa e Rota com persistência total**: o temporizador que apagava a busca ou a rota traçada sozinha depois de 90s fora da aba foi removido — nenhuma das 4 abas (Pesquisa, Paradas, Rota, Ajustes) perde mais conteúdo por tempo, só por ação explícita (limpar, apagar um campo, traçar rota nova).
+
+### 🐛 Correções
+- **Seta de direção do ônibus removida**: calculada a partir do ponto mais próximo no traçado da linha, a seta errava perto de cruzamentos, retornos e trechos onde a linha passa duas vezes colada (ida e volta) — sem um jeito confiável de corrigir isso com uma leitura pontual. Melhor não mostrar do que mostrar errado; com o deslizamento suave do marcador (acima), dá pra perceber o sentido pelo próprio movimento.
+
 ## [1.4.0] — 2026-10-15
 
 Quarta leva de correções do APK por Capacitor, a partir de mais testes reais no aparelho — e a volta de uma funcionalidade que não era viável até agora.

@@ -5,9 +5,9 @@
 import { state } from "./state.js";
 import { el, scrollToTopFast } from "./utils.js";
 import { destroyLeafletMap } from "./map.js";
-import { destroyTripMap, renderRouteScreen, scheduleRouteIdleClear, cancelRouteIdleClear, savedRouteScrollY, saveRouteScroll } from "./trip-planner.js";
+import { destroyTripMap, renderRouteScreen, savedRouteScrollY, saveRouteScroll } from "./trip-planner.js";
 import { stopPolling, stopLinesPolling, startLinesPolling, fetchLinesForStop, renderStopsScreenStructure, savedStopsScrollY, savedLinesScrollY, renderLines, saveStopsScroll } from "./stops.js";
-import { renderSearchScreen, setPendingSearchScrollRestore, scheduleSearchIdleClear, cancelSearchIdleClear, saveSearchScroll } from "./search.js";
+import { renderSearchScreen, setPendingSearchScrollRestore, saveSearchScroll } from "./search.js";
 import { renderConfigScreen, closeModal, savedConfigScrollY, saveConfigScroll } from "./settings.js";
 import { renderMessagesScreen } from "./messages.js";
 import { startGpsTracking } from "./gps.js";
@@ -151,12 +151,11 @@ window.addEventListener("popstate", handlePopState);
 export function updateHeaderAndNav(viewName){
 // Ponto único por onde toda troca de tela passa (inclusive as que nem
 // usam pushNav/navTo diretamente, como abrir uma parada vinda da busca ou
-// um ônibus vindo do planejador de rota) — por isso é o lugar certo pra
-// ligar/desligar os temporizadores de "esqueceu essa aba aberta": sai da
-// aba de busca ou de rota → agenda a limpeza por inatividade; volta pra
-// ela → cancela, porque a pessoa ainda está olhando.
-if(viewName === "search") cancelSearchIdleClear(); else scheduleSearchIdleClear();
-if(viewName === "route") cancelRouteIdleClear(); else scheduleRouteIdleClear();
+// um ônibus vindo do planejador de rota). Até a v1.4.0, também era onde
+// se ligava/desligava os temporizadores de "esqueceu essa aba aberta"
+// (busca e rota se apagavam sozinhas depois de 90s fora de vista) —
+// removido: persistência total em todas as abas agora, sem limpeza
+// automática por tempo em nenhuma delas.
 const backBtn = el("globalBackBtn");
 const bottomNav = el("bottomNav");
 const bellBtn = el("bellBtn");

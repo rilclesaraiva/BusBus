@@ -72,7 +72,6 @@ if(btn) btn.style.display = state.searchQuery ? "flex" : "none";
 }
 
 export function clearSearchInput(){
-cancelSearchIdleClear();
 state.searchQuery = "";
 const input = el("searchInput");
 if(input){ input.value = ""; input.focus(); }
@@ -141,37 +140,15 @@ pendingSearchScrollRestore = false;
 requestAnimationFrame(() => window.scrollTo(0, savedSearchScrollY));
 }
 
-export let searchIdleTimer = null;
-
-export const SEARCH_IDLE_CLEAR_MS = 90000;
-
-// Antes esse temporizador começava a contar a cada tecla digitada e
-// descartava a busca depois de 90s parado — mesmo que a pessoa estivesse
-// olhando os resultados na tela o tempo todo, o que apagava a busca debaixo
-// dela sem aviso. Agora só conta o tempo enquanto a pessoa está em OUTRA
-// aba: scheduleSearchIdleClear() é chamado (via updateHeaderAndNav, lá em
-// nav.js) toda vez que a tela muda pra algo que não é "search", e
-// cancelSearchIdleClear() toda vez que ela volta pra essa aba — então o
-// relógio só corre de verdade enquanto a busca ficou "esquecida" fora de
-// vista.
-export function scheduleSearchIdleClear(){
-if(!state.searchQuery || searchIdleTimer) return;
-searchIdleTimer = setTimeout(() => {
-searchIdleTimer = null;
-state.searchQuery = "";
-const input = el("searchInput");
-if(input) input.value = "";
-toggleSearchClearBtn();
-const resEl = el("searchResults");
-if(resEl) resEl.innerHTML = renderSearchHistoryHTML(state.searchType);
-}, SEARCH_IDLE_CLEAR_MS);
-}
-
-export function cancelSearchIdleClear(){
-clearTimeout(searchIdleTimer);
-searchIdleTimer = null;
-}
-
+// Até a v1.4.0, ficar fora dessa aba por 90s apagava a busca sozinha
+// (scheduleSearchIdleClear/cancelSearchIdleClear, chamadas via
+// updateHeaderAndNav em nav.js). Removido a pedido do rilclesaraiva: a
+// busca não mostra nada "ao vivo" que realmente fique desatualizado (é só
+// parada/linha, dado estático) — limpar sozinha só causava a sensação de
+// "cadê minha busca" se a pessoa ficasse fora por pouco tempo (checar uma
+// notificação, por exemplo). Agora a busca persiste indefinidamente, igual
+// Home e Ajustes — só é limpa por ação explícita (botão de limpar, ou
+// apagar o campo).
 export function handleSearch(q){
 state.searchQuery = q;
 toggleSearchClearBtn();
