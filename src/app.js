@@ -103,6 +103,7 @@ import {
 import {
   setRadius, setTheme, setMapTheme,
   closeModal, openSupportModal, copyPixCode, openLicensesModal, openPrivacyModal,
+  checkForUpdate,
 } from "./modules/settings.js";
 import { saveRotationEnabled } from "./modules/state.js";
 
@@ -123,4 +124,5 @@ Object.assign(window, {
   planTrip, useMyLocationForTrip, handleTripGeo, selectTripGeo, selectTripResult, clearTripField,
   setRadius, saveRotationEnabled, setTheme, setMapTheme,
   closeModal, openSupportModal, copyPixCode, openLicensesModal, openPrivacyModal,
+  checkForUpdate,
 });

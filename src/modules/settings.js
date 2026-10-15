@@ -3,11 +3,11 @@
 // Texto completo: https://github.com/rilclesaraiva/BusBus/blob/main/LICENSE
 
 import { state, ALLOWED_RADII, applyTheme, APP_VERSION } from "./state.js";
-import { el, render } from "./utils.js";
+import { el, render, isOfflineError } from "./utils.js";
 import { updateHeaderAndNav } from "./nav.js";
 import {
   paletteIcon, locIcon, rotateSettingIcon, mapThemeIcon, githubIcon, coffeeIcon,
-  licenseIcon, shieldIcon, heartIcon, favicon, osmLogoDataUri,
+  licenseIcon, shieldIcon, heartIcon, favicon, osmLogoDataUri, updateIcon,
 } from "./icons.js";
 import { destroyLeafletMap, leafletMap } from "./map.js";
 import { initLeafletMapOnce } from "./map.js";
@@ -89,6 +89,14 @@ Ativar rotação do mapa (padrão: desligado)
 </div>
 <div class="sectionLabel">Sobre</div>
 <div class="settingsGroup">
+<div class="settingsRow link" onclick="checkForUpdate()">
+<div class="settingsIcon">${updateIcon}</div>
+<div class="rowBody">
+<div class="rowTitle">Verificar atualizações</div>
+<div class="rowDesc" id="updateStatus">Você está na versão v${APP_VERSION}. Toque para ver se já tem uma mais nova.</div>
+</div>
+<div class="chev">›</div>
+</div>
 <div class="settingsRow link" onclick="window.open('${GITHUB_URL}', '_blank')">
 <div class="settingsIcon">${githubIcon}</div>
 <div class="rowBody">
@@ -209,6 +217,55 @@ export const GITHUB_URL = "https://github.com/rilclesaraiva/BusBus";
 export const GITHUB_PROFILE_URL = "https://github.com/rilclesaraiva";
 
 export const PRIVACY_URL = "https://busbus.saraivarilcle.workers.dev/privacy";
+
+export const RELEASES_API_URL = "https://api.github.com/repos/rilclesaraiva/BusBus/releases/latest";
+
+export const RELEASES_PAGE_URL = `${GITHUB_URL}/releases`;
+
+// Compara duas versões "MAJOR.MINOR.PATCH" (sem o "v" na frente). Devolve
+// >0 se "a" é mais nova que "b", <0 se mais velha, 0 se igual. Pedaço
+// faltando ou não numérico conta como 0 (ex.: comparar com "dev", a versão
+// de desenvolvimento local, nunca trava a comparação).
+function compareSemver(a, b){
+const pa = String(a).split(".").map(n => parseInt(n, 10) || 0);
+const pb = String(b).split(".").map(n => parseInt(n, 10) || 0);
+for(let i = 0; i < 3; i++){
+const diff = (pa[i] || 0) - (pb[i] || 0);
+if(diff !== 0) return diff;
+}
+return 0;
+}
+
+// Fluxo "manual mas funcional" combinado com o rilclesaraiva: sem uma ponte
+// JS documentada pelo AppMint pra baixar/instalar/apagar arquivo (ver
+// conversa sobre isso), o app não consegue automatizar o download+instalação
+// — só pode levar a pessoa até o APK certo e deixar o Android cuidar do
+// resto (download nativo do navegador/WebView + abrir o instalador, ambos
+// fora do alcance do JS daqui).
+export async function checkForUpdate(){
+const statusEl = el("updateStatus");
+if(statusEl) statusEl.textContent = "Verificando se tem uma versão mais nova…";
+try{
+const res = await fetch(RELEASES_API_URL);
+if(!res.ok) throw new Error("GitHub releases respondeu " + res.status);
+const data = await res.json();
+const remoteVersion = String(data.tag_name || "").replace(/^v/i, "").trim();
+const apkAsset = (data.assets || []).find(a => /\.apk$/i.test(a.name || ""));
+if(!remoteVersion || !apkAsset){
+if(statusEl) statusEl.innerHTML = `Não encontrei um APK publicado na última versão. <a class="licenseLink" href="${RELEASES_PAGE_URL}" target="_blank" rel="noopener">Ver releases no GitHub &rarr;</a>`;
+return;
+}
+if(compareSemver(remoteVersion, APP_VERSION) > 0){
+window.open(apkAsset.browser_download_url, "_blank");
+if(statusEl) statusEl.innerHTML = `Nova versão v${remoteVersion} disponível — o download começou (você está na v${APP_VERSION}). Quando terminar, abra o arquivo baixado pra instalar (o Android pode pedir pra permitir instalação de fontes desconhecidas). <a class="licenseLink" href="${apkAsset.browser_download_url}" target="_blank" rel="noopener">Baixar de novo &rarr;</a>`;
+} else {
+if(statusEl) statusEl.textContent = `Você já está na versão mais recente (v${APP_VERSION}).`;
+}
+}catch(e){
+console.error("[BusBus] erro ao verificar atualização:", e);
+if(statusEl) statusEl.innerHTML = `Não consegui verificar agora${isOfflineError(e) ? " — você está sem conexão" : ""}. <a class="licenseLink" href="${RELEASES_PAGE_URL}" target="_blank" rel="noopener">Ver releases no GitHub &rarr;</a>`;
+}
+}
 
 export const PIX_CODE = "00020126580014br.gov.bcb.pix013675eadc64-11f6-4883-a059-9f05670af82d5204000053039865802BR5914RILCLE_SARAIVA6009Sao Paulo610901227-20062230519daqr640397992297291630413B8";
 

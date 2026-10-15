@@ -33,6 +33,8 @@ export const shieldIcon = `<svg width="19" height="19" viewBox="0 0 24 24" fill=
 
 export const licenseIcon = `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M8.5 12.5 6 21l6-3 6 3-2.5-8.5"/></svg>`;
 
+export const updateIcon = `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 19h16"/></svg>`;
+
 export function favicon(domain){ return `https://www.google.com/s2/favicons?sz=64&domain=${domain}`; }
 
 // Logo oficial do OpenStreetMap (a mesma arte usada no site deles —

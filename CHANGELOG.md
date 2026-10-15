@@ -4,6 +4,14 @@ Todas as mudanças notáveis do BusBus (B.E.M.) ficam registradas aqui, por vers
 
 Formato livremente inspirado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/). Versionamento: [SemVer](https://semver.org/lang/pt-BR/) — `MAJOR.MINOR.PATCH`, onde incompatibilidades/mudanças grandes de comportamento sobem o `MAJOR`, funcionalidades novas sem quebrar nada sobem o `MINOR`, e correções sobem o `PATCH`.
 
+## [1.2.0] — 2026-10-14
+
+### ✨ Novidades
+- **Verificar atualizações nos Ajustes**: novo botão em Ajustes → Sobre que consulta a última release publicada no GitHub e, se houver uma versão mais nova que a instalada, já abre o download do APK (o Android cuida do resto — abrir o instalador e apagar o arquivo depois ficam por conta da pessoa, tocando no arquivo baixado). Ficou nesse formato "manual, mas funcional" porque o gerador usado pra empacotar o app em APK (AppMint) não documenta nenhuma ponte JavaScript pra automatizar download/instalação/exclusão de arquivo a partir do código do app — só expõe isso como permissão do Android, sem função JS associada, então automatizar o fluxo inteiro está fora do alcance por enquanto.
+
+### 🐛 Correções
+- **Lista de linhas de uma parada sem auto-update**: a tela que mostra as linhas (com previsão de chegada) de uma parada escolhida não se atualizava sozinha — um ônibus que passava da parada continuava aparecendo na lista até a pessoa sair da tela e voltar pra ela. Agora essa tela atualiza a previsão a cada 10s automaticamente, igual já acontecia no mapa de GPS de uma linha, parando o auto-update ao sair da tela (ou quando o app vai pra segundo plano) pra não gastar bateria/dados à toa.
+
 ## [1.1.2] — 2026-10-14
 
 ### 🐛 Correções

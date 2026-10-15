@@ -6,7 +6,7 @@ import { state } from "./state.js";
 import { el, scrollToTopFast } from "./utils.js";
 import { destroyLeafletMap } from "./map.js";
 import { destroyTripMap, renderRouteScreen, scheduleRouteIdleClear, cancelRouteIdleClear, savedRouteScrollY } from "./trip-planner.js";
-import { stopPolling, renderStopsScreenStructure, savedStopsScrollY, savedLinesScrollY, renderLines } from "./stops.js";
+import { stopPolling, stopLinesPolling, startLinesPolling, fetchLinesForStop, renderStopsScreenStructure, savedStopsScrollY, savedLinesScrollY, renderLines } from "./stops.js";
 import { renderSearchScreen, setPendingSearchScrollRestore, scheduleSearchIdleClear, cancelSearchIdleClear } from "./search.js";
 import { renderConfigScreen } from "./settings.js";
 import { renderMessagesScreen } from "./messages.js";
@@ -53,6 +53,7 @@ catch(e){ console.error("[BusBus] pushState bloqueado:", e); navStack.pop(); }
 
 export function handlePopState(e){
 stopPolling();
+stopLinesPolling();
 bumpNavToken(); // invalida qualquer carregamento em andamento da tela que está sendo deixada
 isPopping = true;
 // O "finally" aqui é uma rede de segurança: sem ele, se qualquer coisa
@@ -74,10 +75,16 @@ destroyLeafletMap();
 state.view = "lines";
 updateHeaderAndNav("lines");
 el("subtitle").textContent = state.stopSel.name;
-renderLines();
+renderLines(); // redesenha com os dados que já tínhamos (pode estar desatualizado — ver fetch abaixo)
 if(savedLinesScrollY){
 requestAnimationFrame(() => window.scrollTo(0, savedLinesScrollY));
 }
+// a pessoa pode ter ficado um tempo fora dessa tela (vendo o mapa do
+// ônibus, por exemplo) — busca na hora em vez de esperar os 10s do
+// próximo ciclo, e só então liga o auto-update de novo
+fetchLinesForStop(state.stopSel.id, navToken, { silent: true }).finally(() => {
+if(state.view === "lines") startLinesPolling();
+});
 } else if(label === "search"){
 destroyLeafletMap();
 setPendingSearchScrollRestore(true);
@@ -163,6 +170,7 @@ return;
 }
 bumpNavToken(); // invalida qualquer carregamento em andamento da aba que está sendo deixada
 stopPolling();
+stopLinesPolling();
 if(tab !== 'route') destroyTripMap();
 if(tab === 'stops') {
 renderStopsScreenStructure();

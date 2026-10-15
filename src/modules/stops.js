@@ -244,10 +244,21 @@ updateHeaderAndNav("lines");
 pushNav("lines");
 el("subtitle").textContent = stop.name;
 render(`<section><div class="sectionTitle">Buscando linhas no ponto…</div>${skeletonLineRows()}</section>`);
+const ok = await fetchLinesForStop(id, myToken);
+if(ok) startLinesPolling(); // só liga o auto-update se a pessoa ainda estiver nessa tela quando a primeira busca terminar
+}
+
+// Busca as linhas (com previsão ao vivo) de uma parada e, se houver sucesso,
+// atualiza state.lines + redesenha. Usada tanto na primeira carga (selectStop)
+// quanto no auto-update periódico (startLinesPolling) — por isso aceita
+// "silent": no polling, um erro passageiro não deve substituir a lista que já
+// está na tela por uma mensagem de erro, só fica registrado no console e
+// tenta de novo no próximo ciclo.
+export async function fetchLinesForStop(id, myToken, { silent = false } = {}){
 try{
 let data = await api(`/forecast/lines/fromPoint/${id}/${CITY}`);
 let list = Array.isArray(data) ? data : (data.items || data.result || []);
-state.lines = list.map(l => ({
+let lines = list.map(l => ({
 busServiceId: pick(l, ["busServiceId","idLinha","lineId"]),
 patternId: pick(l, ["patternId","idPadrao","patternID"]),
 number: pick(l, ["busServiceNumber","numero","number"], "—"),
@@ -258,21 +269,39 @@ schedTime: pick(l, ["scheduleTime","horario","time","horaProgramada"]),
 scheduled: false,
 raw: l
 }));
-if(state.lines.length === 0){
+if(lines.length === 0){
 const scheduled = await fetchScheduledLinesAtStop(id);
-state.lines = scheduled.map(l => ({
+lines = scheduled.map(l => ({
 busServiceId: l.busServiceId, patternId: l.patternId,
 number: l.numero, name: l.name, dest: l.dest,
 etaMin: null, schedTime: null, scheduled: true
 }));
 }
-if(myToken !== navToken) return; // a pessoa já saiu dessa tela enquanto isso carregava
+if(myToken !== navToken) return false; // a pessoa já saiu dessa tela enquanto isso carregava
+state.lines = lines;
 renderLines();
+return true;
 }catch(e){
-if(myToken !== navToken) return;
+if(myToken !== navToken) return false;
+if(silent){ console.error("[BusBus] auto-update de linhas falhou:", e); return false; }
 render(`${statusHTML("Erro ao buscar linhas: " + errMsg(e), false, true)}`);
+return false;
 }
 }
+
+// Mesmo problema que o auto-update do mapa de ônibus (ver startPolling mais
+// abaixo): sem isso, um ônibus que passa da parada (ou um novo que entra na
+// previsão) só some/aparece na lista se a pessoa sair da tela e voltar — a
+// tela de "linhas em uma parada" nunca se atualizava sozinha.
+export function startLinesPolling(){
+stopLinesPolling();
+state.linesTimer = setInterval(() => {
+if(!state.stopSel || state.view !== "lines") { stopLinesPolling(); return; }
+fetchLinesForStop(state.stopSel.id, navToken, { silent: true });
+}, 10000);
+}
+
+export function stopLinesPolling(){ if(state.linesTimer) clearInterval(state.linesTimer); state.linesTimer = null; }
 
 export function renderLines(){
 const anyScheduled = state.lines.some(l => l.scheduled);
@@ -309,6 +338,7 @@ ${rows || `<div class="empty">Nenhuma linha cadastrada pra essa parada.</div>`}
 
 export async function selectLine(i){
 const myToken = bumpNavToken(); // ver selectStop() acima
+stopLinesPolling(); // saindo da tela de linhas — não faz sentido continuar atualizando essa lista em segundo plano
 savedLinesScrollY = window.scrollY; // guarda onde a pessoa estava na lista antes de abrir o GPS do ônibus
 destroyLeafletMap();
 state.lineSel = state.lines[i];
@@ -449,6 +479,7 @@ export function startPolling(){ stopPolling(); state.timer = setInterval(refresh
 export function stopPolling(){ if(state.timer) clearInterval(state.timer); state.timer = null; }
 
 document.addEventListener("visibilitychange", () => {
-if (document.hidden) stopPolling();
+if (document.hidden) { stopPolling(); stopLinesPolling(); }
 else if (state.view === "map") startPolling();
+else if (state.view === "lines") startLinesPolling();
 });
