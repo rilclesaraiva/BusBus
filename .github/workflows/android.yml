@@ -43,7 +43,23 @@ jobs:
         run: npm run build
 
       - name: Sincronizar o projeto Android com o build mais recente
-        run: npx cap sync android
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node --version
+          set +e
+          npx cap sync android > /tmp/cap_sync.log 2>&1
+          STATUS=$?
+          set -e
+          cat /tmp/cap_sync.log
+          if [ $STATUS -ne 0 ]; then
+            gh api "repos/${{ github.repository }}/commits/${{ github.sha }}/comments" -f body="cap sync android falhou (debug temporário):
+
+          \`\`\`
+          $(cat /tmp/cap_sync.log)
+          \`\`\`"
+          fi
+          exit $STATUS
 
       - name: Configurar Java (exigido pelo Android Gradle Plugin)
         uses: actions/setup-java@v4
