@@ -4,6 +4,17 @@ Todas as mudanças notáveis do BusBus (B.E.M.) ficam registradas aqui, por vers
 
 Formato livremente inspirado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/). Versionamento: [SemVer](https://semver.org/lang/pt-BR/) — `MAJOR.MINOR.PATCH`, onde incompatibilidades/mudanças grandes de comportamento sobem o `MAJOR`, funcionalidades novas sem quebrar nada sobem o `MINOR`, e correções sobem o `PATCH`.
 
+## [1.3.5] — 2026-10-15
+
+Terceira leva de correções do APK por Capacitor, a partir de mais testes reais no aparelho.
+
+### 🐛 Correções
+- **Auto-update com dado velho depois do celular voltar de repouso**: ao apagar a tela (ou o app ir pra segundo plano) e voltar, o GPS do ônibus e a lista de linhas de uma parada continuavam mostrando a informação de antes de apagar por até 10s, até o próximo ciclo normal do auto-update — dava a impressão de "não atualizou ainda" bem na hora de ir atrás do ônibus. Agora, ao voltar de segundo plano, a tela força uma busca imediata em vez de só esperar o próximo ciclo.
+- **Botão de reorientar ao norte só existia no mapa da Home**: com a rotação do mapa ativada nos Ajustes, só o mapa da Home ganhava o botão de bússola — o mapa de GPS ao vivo de uma linha (a partir de uma parada ou do planejador de rota) e o mapa de visão geral da rota traçada ficavam sem jeito de voltar a apontar pro norte. Agora os três mapas ganham o botão quando a rotação está ativada.
+
+### 🎨 Ajustes visuais
+- **Destaque azul ao tocar em qualquer botão/aba/card**: o WebView do Android desenha por padrão um flash/contorno de destaque (geralmente azul) sempre que algo clicável é tocado — um comportamento de navegador, não algo que o app já controlava. Desligado via CSS (`-webkit-tap-highlight-color`), junto com a seleção de texto por toque longo nos elementos de interface (abas, botões, cards), que também disparava esse tipo de destaque indesejado fora de campos de texto.
+
 ## [1.3.4] — 2026-10-15
 
 Segunda leva de correções do APK por Capacitor, a partir de testes reais no aparelho.

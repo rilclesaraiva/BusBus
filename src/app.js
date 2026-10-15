@@ -101,6 +101,7 @@ import { recenterMap, resetOrientation, focusStopOnMap } from "./modules/map.js"
 import {
   planTrip, useMyLocationForTrip, handleTripGeo, selectTripGeo,
   openLegLive, showRouteStreetsModal, selectTripResult, clearTripField,
+  resetTripMapOrientation,
 } from "./modules/trip-planner.js";
 import {
   setRadius, setTheme, setMapTheme,
@@ -124,6 +125,7 @@ Object.assign(window, {
   recenterMap, resetOrientation, toggleFollowBus, openLegLive, showRouteStreetsModal,
   toggleWeatherDetail,
   planTrip, useMyLocationForTrip, handleTripGeo, selectTripGeo, selectTripResult, clearTripField,
+  resetTripMapOrientation,
   setRadius, saveRotationEnabled, setTheme, setMapTheme,
   closeModal, openSupportModal, copyPixCode, openLicensesModal, openPrivacyModal,
   checkForUpdate, confirmDownloadUpdate,

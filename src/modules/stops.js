@@ -371,10 +371,22 @@ render(`${statusHTML("Erro ao carregar a rota", false, true)}`);
 }
 
 export function followBtnHTML(){
+// O botão de reorientar ao norte (compassBtn) tinha sido implementado só
+// na Home (ver initLeafletMapOnce/updateCompassIcon em map.js) — as telas
+// de GPS ao vivo de uma linha (tanto a partir de uma parada quanto a
+// partir do planejador de rota, que reaproveita esta mesma função) usam
+// o mesmo #mapContainer/leafletMap por baixo, então o botão funciona
+// igual aqui, só faltava aparecer na marcação. Reaproveitando a mesma
+// condição/id da Home: com a rotação desligada, nenhuma tela ganha o
+// botão; com ela ligada, todas ganham.
 return `
 <button class="mapBtn ${state.followBusEnabled ? 'followActive' : ''}" id="followBusBtn" onclick="toggleFollowBus()" title="Seguir ônibus">
 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke-linecap="round"/><rect x="2.5" y="2.5" width="4" height="4" rx="1" fill="none" stroke="none"/></svg>
-</button>`;
+</button>
+${state.rotationEnabled ? `
+<button class="mapBtn" id="compassBtn" onclick="resetOrientation()" title="Reorientar o mapa para o norte">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 L12 6 M9 4 L12 2 L15 4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="13" r="8"/><polygon points="12 9 14 13 12 17 10 13" fill="currentColor" stroke="none"/></svg>
+</button>` : ""}`;
 }
 
 export function toggleFollowBus(){
@@ -478,8 +490,16 @@ export function startPolling(){ stopPolling(); state.timer = setInterval(refresh
 
 export function stopPolling(){ if(state.timer) clearInterval(state.timer); state.timer = null; }
 
+// Ao voltar de segundo plano (celular apagado/app em repouso e depois
+// reaberto), startPolling()/startLinesPolling() sozinhos NÃO bastam: eles
+// armam um novo setInterval, mas o primeiro disparo só acontece 10s depois
+// — ou seja, a tela continua mostrando dado velho (ônibus/parada de antes
+// de apagar a tela) até esse primeiro tick, o que dava a impressão de "o
+// app não atualizou ainda" bem na hora que mais importa (chegando no
+// ponto). Por isso, ao voltar, força uma busca imediata ANTES de rearmar
+// o timer, em vez de só confiar no próximo ciclo normal de 10s.
 document.addEventListener("visibilitychange", () => {
 if (document.hidden) { stopPolling(); stopLinesPolling(); }
-else if (state.view === "map") startPolling();
-else if (state.view === "lines") startLinesPolling();
+else if (state.view === "map" && state.stopSel && state.lineSel) { refreshBusesOnMap(); startPolling(); }
+else if (state.view === "lines" && state.stopSel) { fetchLinesForStop(state.stopSel.id, navToken, { silent: true }); startLinesPolling(); }
 });

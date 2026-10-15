@@ -11,6 +11,16 @@ Este arquivo é lido automaticamente no início de cada sessão — é como eu (
 
 Isso existe porque sessões de conversa têm memória limitada: o changelog é a fonte de verdade que sobrevive a isso.
 
+## Regra fixa: agrupar bugs antes de commitar/dar push (nada de releases picadas)
+
+**Quando o rilclesaraiva for reportando bugs um a um numa sessão de testes** (ex.: testando o APK depois de uma leva de correções), eu NÃO devo corrigir e já commitar/dar push a cada bug individual. Cada push dispara a Action do Android (build+assinatura+Release) e o deploy do Vercel — ou seja, cada commit vira uma chamada de verdade pro rilclesaraiva acompanhar, e isso incomoda quando são vários bugs pequenos seguidos.
+
+O jeito certo:
+1. Vou corrigindo os bugs no código normalmente, conforme ele for reportando.
+2. Só faço commit + push (e só aí bumpo versão/changelog, já que isso tem que acontecer junto) quando ele sinalizar que terminou a leva de bugs daquela rodada — um "agora sim" / "pode mandar" / ele parar de reportar novos / ele pedir a build explicitamente.
+3. Se não estiver claro se ele já terminou de reportar, pergunto antes de commitar, em vez de assumir.
+4. Exceção: um bug isolado reportado fora de uma sessão de "vou testar e te falo tudo que achar" (ex.: ele volta dias depois com um problema específico) pode seguir o fluxo normal de corrigir → commitar → avisar, sem precisar represar.
+
 ## Versionamento
 
 - Fonte única da versão: campo `"version"` do `package.json`, injetado no build (`vite.config.js` → `%APP_VERSION%` no HTML final e `import.meta.env.APP_VERSION`).

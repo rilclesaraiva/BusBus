@@ -75,7 +75,7 @@ touchRotate: state.rotationEnabled, bearing: keepPrevView ? (state.lastMapView.b
 }).setView(center, zoom);
 addBaseMapLayers(leafletMap);
 if(keepPrevView) initialCenterSet = true; // não deixa o próximo fix de GPS recentralizar e perder o enquadramento restaurado
-leafletMap.on('rotate', updateCompassIcon);
+leafletMap.on('rotate', () => updateCompassIcon());
 const saveMapView = () => {
 state.lastMapView = {
 center: leafletMap.getCenter(), zoom: leafletMap.getZoom(),
@@ -113,16 +113,21 @@ leafletMap.flyTo([state.coord.lat, state.coord.lng], leafletMap.getZoom(), { dur
 }
 }
 
-export function resetOrientation(){
-if(leafletMap && typeof leafletMap.setBearing === "function"){
-leafletMap.setBearing(0);
+// "map" é opcional e serve só pro mapa de visão geral do planejador de
+// rota (tripMap, em trip-planner.js), que é uma instância Leaflet
+// separada do "leafletMap" global daqui — Home e GPS ao vivo de uma linha
+// usam o mesmo #mapContainer/leafletMap, então pra eles o padrão (sem
+// argumento) já resolve.
+export function resetOrientation(map = leafletMap){
+if(map && typeof map.setBearing === "function"){
+map.setBearing(0);
 }
 }
 
-export function updateCompassIcon(){
-const btn = el("compassBtn");
-if(!btn || !leafletMap) return;
-const bearing = (typeof leafletMap.getBearing === "function") ? leafletMap.getBearing() : 0;
+export function updateCompassIcon(map = leafletMap, btnId = "compassBtn"){
+const btn = el(btnId);
+if(!btn || !map) return;
+const bearing = (typeof map.getBearing === "function") ? map.getBearing() : 0;
 const svg = btn.querySelector("svg");
 if(svg) svg.style.transform = `rotate(${-bearing}deg)`;
 btn.classList.toggle("off", Math.abs(bearing % 360) < 0.5);
@@ -170,6 +175,11 @@ zoomControl: false, attributionControl: false, rotate: state.rotationEnabled, ro
 touchRotate: state.rotationEnabled, bearing: 0
 });
 addBaseMapLayers(leafletMap);
+// Mesmo botão/ícone de bússola da Home (updateCompassIcon olha o
+// #compassBtn que a tela atual tiver renderizado em followBtnHTML, em
+// stops.js) — faltava ligar esse mapa (GPS ao vivo de uma linha) ao
+// evento de rotação, por isso o botão não reagia nem aparecia certo aqui.
+leafletMap.on('rotate', () => updateCompassIcon());
 busMarkersGroup = L.layerGroup().addTo(leafletMap);
 const otherPatterns = (Array.isArray(allPatterns) ? allPatterns : [])
 .filter(p => String(p.id) !== String(selectedPatternId) && Array.isArray(p.polyLine) && p.polyLine.length > 1);

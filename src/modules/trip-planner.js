@@ -7,7 +7,7 @@ import { state, CITY } from "./state.js";
 import { el, jsStr, pick, statusHTML, errMsg, metersBetween, bearingBetween, mapLoadingHTML, friendlyErrMsg } from "./utils.js";
 import { walkIcon, busIcon, locIcon } from "./icons.js";
 import { api, getPatternSegments, fetchLinesAtStop, fetchScheduledLinesAtStop, ensureAllPoints, ensureAllLines, nominatimReverse, nominatimSearch, patternCache } from "./api.js";
-import { addBaseMapLayers } from "./map.js";
+import { addBaseMapLayers, updateCompassIcon, resetOrientation } from "./map.js";
 import { destroyLeafletMap, initLineRouteMap } from "./map.js";
 // Importação circular de propósito: abrir uma linha a partir do resultado
 // do planejador de rota usa a mesma tela de GPS em tempo real das outras
@@ -162,7 +162,14 @@ render(`
 </div>
 <p class="routeSearchHint">Pra achar o lugar certo, digite o nome completo — a busca ainda não funciona bem com o nome pela metade.</p>
 <button class="planBtn" id="planBtn" onclick="planTrip()" ${(!tripOrigin || !tripDestination) ? "disabled" : ""}>Traçar rota</button>
-<div class="mainMapContainer" id="tripMapWrap" style="height:240px;display:none;margin-bottom:14px;"><div id="tripMapContainer" style="height:100%;"></div></div>
+<div class="mainMapContainer" id="tripMapWrap" style="height:240px;display:none;margin-bottom:14px;">
+<div id="tripMapContainer" style="height:100%;"></div>
+${state.rotationEnabled ? `<div class="mapBtnStack">
+<button class="mapBtn" id="tripCompassBtn" onclick="resetTripMapOrientation()" title="Reorientar o mapa para o norte">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 L12 6 M9 4 L12 2 L15 4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="13" r="8"/><polygon points="12 9 14 13 12 17 10 13" fill="currentColor" stroke="none"/></svg>
+</button>
+</div>` : ""}
+</div>
 <div id="tripResultsArea"></div>
 </section>
 `);
@@ -191,7 +198,17 @@ tripMap = L.map('tripMapContainer', {
 zoomControl: false, attributionControl: false, rotate: state.rotationEnabled, rotateControl: false, touchRotate: state.rotationEnabled
 }).setView([-1.4558, -48.4902], 13);
 addBaseMapLayers(tripMap);
+// Igual ao botão de bússola da Home/GPS ao vivo (map.js), mas essa visão
+// geral da rota usa seu próprio mapa (tripMap) e botão (#tripCompassBtn,
+// pra não colidir com o #compassBtn das outras telas) — por isso não
+// reaproveita leafletMap/#compassBtn direto, só as mesmas funções
+// genéricas de map.js, passando o mapa/id certos.
+tripMap.on('rotate', () => updateCompassIcon(tripMap, "tripCompassBtn"));
 tripMapLayer = L.layerGroup().addTo(tripMap);
+}
+
+export function resetTripMapOrientation(){
+resetOrientation(tripMap);
 }
 
 export function dotMarker(lat, lng, color, label){

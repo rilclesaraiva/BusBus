@@ -53,6 +53,19 @@ html[data-theme="amoled"]{
 html{ background:var(--bg); scrollbar-width:none; -ms-overflow-style:none; overscroll-behavior:none; }
 html[data-theme], html:not([data-theme]) { transition: background-color .15s ease; }
 *{box-sizing:border-box;}
+/* Tira o flash/contorno azul (ou do tema) que o WebView/Chrome do Android
+desenha por padrão ao tocar em qualquer elemento clicável — é um efeito
+nativo do sistema, não algo que o CSS já controlava antes; sem isso toda
+aba, botão etc. "pisca" essa cor ao toque, o que lembra site mobile, não
+app nativo. "-webkit-tap-highlight-color" é o jeito padrão de desligar;
+"user-select:none" tira a seleção de texto por toque longo nos elementos
+de interface (abas, botões, cards), que também abre esse tipo de
+destaque/seleção indesejada em telas feitas pra toque, não pra texto.
+Inputs de texto (onde selecionar/colar faz sentido) ficam de fora. */
+*{ -webkit-tap-highlight-color:transparent; }
+button, a, [onclick], .tabBtn, .mapBtn, .stopCard, .lineCard, .favStar{
+-webkit-user-select:none; user-select:none;
+}
 /* esconde a barra de rolagem nativa (cinza) do navegador/WebView em toda a UI —
 uma barra de scroll visível lembra site, não app */
 html::-webkit-scrollbar, body::-webkit-scrollbar, *::-webkit-scrollbar{ display:none; width:0; height:0; }
