@@ -24,6 +24,10 @@ Isso existe porque sessões de conversa têm memória limitada: o changelog é a
 - Releases do GitHub (`gh api repos/rilclesaraiva/BusBus/releases`) guardam os APKs publicados. **Importante**: esta sessão consegue *ler* releases via API, mas não consegue criar, editar nem deletar releases (403 bloqueado pelo tipo de sessão) — por isso a release note precisa estar pronta (no CHANGELOG) antes do rilclesaraiva publicar, porque não dá pra editar depois.
 - Deletar branches remotas também é bloqueado (403) — precisa ser feito manualmente pelo rilclesaraiva na interface do GitHub.
 
+## Regra fixa: entregar a build com a versão no nome do arquivo
+
+**Toda vez que eu entregar o `dist/index.html` buildado pro rilclesaraiva** (via SendUserFile ou qualquer outro jeito), o arquivo tem que se chamar `busbus_v{versão}.html` — ex.: `busbus_v1.3.1.html` — nunca `index.html` solto. A versão vem do `"version"` do `package.json` (a mesma fonte única de sempre). Na prática: depois de `vite build`, copio/renomeio `dist/index.html` pra um arquivo com esse nome antes de entregar.
+
 ## Deploy
 
 - Site: `https://bus-bus-qdmb.vercel.app` (projeto Vercel `bus-bus-qdmb`, time `saraivainspaces-projects`), com deploy automático a cada push em `main`.
