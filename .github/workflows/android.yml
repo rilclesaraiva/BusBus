@@ -45,11 +45,11 @@ jobs:
       - name: Sincronizar o projeto Android com o build mais recente
         run: npx cap sync android
 
-      - name: Configurar Java (exigido pelo Android Gradle Plugin)
+      - name: Configurar Java (exigido pelo Capacitor Android)
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
 
       # O runner ubuntu-latest já vem com o SDK do Android pré-instalado,
       # incluindo platforms;android-36 e build-tools;36.0.0 (os mesmos que
@@ -83,22 +83,7 @@ jobs:
 
       - name: Buildar o APK assinado
         working-directory: android
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set +e
-          ./gradlew assembleRelease --no-daemon > /tmp/gradle.log 2>&1
-          STATUS=$?
-          set -e
-          tail -c 4000 /tmp/gradle.log
-          if [ $STATUS -ne 0 ]; then
-            gh api "repos/${{ github.repository }}/commits/${{ github.sha }}/comments" -f body="gradlew assembleRelease falhou (debug temporário, fim do log):
-
-          \`\`\`
-          $(tail -c 3500 /tmp/gradle.log)
-          \`\`\`"
-          fi
-          exit $STATUS
+        run: ./gradlew assembleRelease --no-daemon
 
       - name: Renomear o APK com a versão (busbus_v{versão}.apk)
         id: apk
