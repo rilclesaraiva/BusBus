@@ -40,6 +40,13 @@ import "./modules/nav.js"; // registra o listener de popstate como efeito de mó
 loadPersistedSettings();
 applyTheme(state.theme);
 try{ history.replaceState({ label: "stops" }, "", "#stops"); }catch(e){ console.error("[BusBus] replaceState bloqueado:", e); }
+// Empilha uma entrada extra por cima da Home — é a "trava de saída": sem
+// ela, o primeiro voltar (gesto do Android ou botão físico) já sairia do
+// histórico de verdade e fecharia o app sem avisar nada. Com ela, esse
+// voltar cai em handleExitAttempt() (nav.js), que mostra a confirmação em
+// vez de deixar o app fechar na hora. Ver esse arquivo pra como a trava é
+// mantida/consumida depois disso.
+try{ history.pushState({ label: "stops" }, "", "#stops"); }catch(e){ console.error("[BusBus] pushState (trava de saída) bloqueado:", e); }
 renderStopsScreenStructure();
 updateBellDot();
 try{
@@ -86,7 +93,7 @@ if("serviceWorker" in navigator && (location.protocol === "http:" || location.pr
 // alguém tocasse nela, só que nenhum teste anterior tinha exercitado esse
 // caminho pra pegar isso).
 // ---------------------------------------------------------------------
-import { goBack, navTo } from "./modules/nav.js";
+import { goBack, navTo, confirmExitApp } from "./modules/nav.js";
 import {
   clearSearchHistory, clearSearchInput, runHistorySearch, setSearchType, handleSearch,
   searchSelectStop, searchSelectLine, handleSearchInputFocus,
@@ -103,7 +110,7 @@ import {
 import {
   setRadius, setTheme, setMapTheme,
   closeModal, openSupportModal, copyPixCode, openLicensesModal, openPrivacyModal,
-  checkForUpdate,
+  checkForUpdate, confirmDownloadUpdate,
 } from "./modules/settings.js";
 import { saveRotationEnabled } from "./modules/state.js";
 
@@ -115,7 +122,7 @@ Object.assign(window, {
   // nenhum, só não acontecia nada), porque só as funções estavam sendo
   // expostas, nunca o state em si.
   state,
-  goBack, navTo,
+  goBack, navTo, confirmExitApp,
   clearSearchHistory, clearSearchInput, runHistorySearch, setSearchType, handleSearch,
   searchSelectStop, searchSelectLine, handleSearchInputFocus,
   selectStop, selectLine, openFavoriteStop, focusStopOnMap, toggleFavorite,
@@ -124,5 +131,5 @@ Object.assign(window, {
   planTrip, useMyLocationForTrip, handleTripGeo, selectTripGeo, selectTripResult, clearTripField,
   setRadius, saveRotationEnabled, setTheme, setMapTheme,
   closeModal, openSupportModal, copyPixCode, openLicensesModal, openPrivacyModal,
-  checkForUpdate,
+  checkForUpdate, confirmDownloadUpdate,
 });

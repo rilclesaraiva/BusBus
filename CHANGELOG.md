@@ -4,6 +4,12 @@ Todas as mudanças notáveis do BusBus (B.E.M.) ficam registradas aqui, por vers
 
 Formato livremente inspirado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/). Versionamento: [SemVer](https://semver.org/lang/pt-BR/) — `MAJOR.MINOR.PATCH`, onde incompatibilidades/mudanças grandes de comportamento sobem o `MAJOR`, funcionalidades novas sem quebrar nada sobem o `MINOR`, e correções sobem o `PATCH`.
 
+## [1.3.0] — 2026-10-14
+
+### ✨ Novidades
+- **Confirmação ao sair do app**: antes, apertar voltar (gesto ou botão do Android) estando na Home fechava o BusBus na hora, sem avisar nada. Agora aparece um aviso perguntando "Sair do BusBus?" com Cancelar/Sair. Se a pessoa apertar voltar de novo sem tocar em nenhum dos dois, o aviso só fecha (como se fosse Cancelar) — o app nunca fecha sozinho só por voltares repetidos, só mesmo tocando em "Sair".
+- **Aviso de atualização, não download automático**: o botão "Verificar atualizações" dos Ajustes agora mostra um aviso perguntando se quer baixar a nova versão, com Cancelar/Baixar, em vez de já abrir o download sozinho assim que encontrava uma versão nova.
+
 ## [1.2.0] — 2026-10-14
 
 ### ✨ Novidades

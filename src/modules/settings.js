@@ -256,8 +256,8 @@ if(statusEl) statusEl.innerHTML = `Não encontrei um APK publicado na última ve
 return;
 }
 if(compareSemver(remoteVersion, APP_VERSION) > 0){
-window.open(apkAsset.browser_download_url, "_blank");
-if(statusEl) statusEl.innerHTML = `Nova versão v${remoteVersion} disponível — o download começou (você está na v${APP_VERSION}). Quando terminar, abra o arquivo baixado pra instalar (o Android pode pedir pra permitir instalação de fontes desconhecidas). <a class="licenseLink" href="${apkAsset.browser_download_url}" target="_blank" rel="noopener">Baixar de novo &rarr;</a>`;
+if(statusEl) statusEl.textContent = `Nova versão v${remoteVersion} disponível (você está na v${APP_VERSION}).`;
+openUpdateAvailableModal(remoteVersion, apkAsset.browser_download_url);
 } else {
 if(statusEl) statusEl.textContent = `Você já está na versão mais recente (v${APP_VERSION}).`;
 }
@@ -265,6 +265,32 @@ if(statusEl) statusEl.textContent = `Você já está na versão mais recente (v$
 console.error("[BusBus] erro ao verificar atualização:", e);
 if(statusEl) statusEl.innerHTML = `Não consegui verificar agora${isOfflineError(e) ? " — você está sem conexão" : ""}. <a class="licenseLink" href="${RELEASES_PAGE_URL}" target="_blank" rel="noopener">Ver releases no GitHub &rarr;</a>`;
 }
+}
+
+// Guarda a URL do APK entre abrir o aviso e a pessoa tocar em "Baixar" —
+// mais simples que embutir a URL inteira (com barras, dois-pontos etc.)
+// dentro de um atributo onclick="" no HTML gerado.
+let pendingUpdateDownloadUrl = null;
+
+// Antes o toque em "Verificar atualizações" já abria o download sozinho,
+// sem perguntar nada — o rilclesaraiva achou isso ruim (te joga pra fora do
+// app sem escolha). Agora só pergunta: a pessoa decide se quer ir buscar a
+// atualização agora ou deixar pra depois.
+function openUpdateAvailableModal(version, downloadUrl){
+pendingUpdateDownloadUrl = downloadUrl;
+openModal(`
+<div class="modalHead"><h3>Nova versão disponível</h3><button class="modalClose" onclick="closeModal()">✕</button></div>
+<div class="aboutText" style="margin-bottom:18px;">A versão <b>v${version}</b> do BusBus já está disponível (você está na v${APP_VERSION}). Quer baixar agora? Depois de baixar, é só abrir o arquivo pra instalar.</div>
+<div class="modalBtnRow">
+<button class="modalBtnCancel" onclick="closeModal()">Agora não</button>
+<button class="modalBtnConfirm" onclick="confirmDownloadUpdate()">Baixar</button>
+</div>
+`);
+}
+
+export function confirmDownloadUpdate(){
+if(pendingUpdateDownloadUrl) window.open(pendingUpdateDownloadUrl, "_blank");
+closeModal();
 }
 
 export const PIX_CODE = "00020126580014br.gov.bcb.pix013675eadc64-11f6-4883-a059-9f05670af82d5204000053039865802BR5914RILCLE_SARAIVA6009Sao Paulo610901227-20062230519daqr640397992297291630413B8";

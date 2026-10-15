@@ -8,7 +8,7 @@ import { destroyLeafletMap } from "./map.js";
 import { destroyTripMap, renderRouteScreen, scheduleRouteIdleClear, cancelRouteIdleClear, savedRouteScrollY } from "./trip-planner.js";
 import { stopPolling, stopLinesPolling, startLinesPolling, fetchLinesForStop, renderStopsScreenStructure, savedStopsScrollY, savedLinesScrollY, renderLines } from "./stops.js";
 import { renderSearchScreen, setPendingSearchScrollRestore, scheduleSearchIdleClear, cancelSearchIdleClear } from "./search.js";
-import { renderConfigScreen } from "./settings.js";
+import { renderConfigScreen, openModal, closeModal } from "./settings.js";
 import { renderMessagesScreen } from "./messages.js";
 import { startGpsTracking } from "./gps.js";
 
@@ -52,6 +52,21 @@ catch(e){ console.error("[BusBus] pushState bloqueado:", e); navStack.pop(); }
 }
 
 export function handlePopState(e){
+// A Home ("stops") é o fundo da pilha de telas do app — não tem mais
+// nenhuma tela "atrás" dela. Sem esse desvio, um voltar aqui sairia do
+// histórico de verdade e o app fechava na hora, sem avisar nada. Ver
+// handleExitAttempt() mais abaixo pra como isso é resolvido.
+// As duas condições importam: "label" é a tela que esse voltar levaria a
+// pessoa (precisa ser "stops"), e "state.view" é a tela que ela JÁ estava
+// vendo antes desse voltar (também precisa já ser "stops") — só entra
+// nesse desvio quando as duas batem, ou seja, quando a pessoa já estava
+// na Home e apertou voltar de novo. Um voltar vindo de outra tela (ex.:
+// "lines" → "stops") é navegação normal e não deve cair aqui.
+const incomingLabel = (e.state && e.state.label) || "stops";
+if(incomingLabel === "stops" && state.view === "stops"){
+handleExitAttempt();
+return;
+}
 stopPolling();
 stopLinesPolling();
 bumpNavToken(); // invalida qualquer carregamento em andamento da tela que está sendo deixada
@@ -107,6 +122,63 @@ requestAnimationFrame(() => window.scrollTo(0, savedStopsScrollY));
 }finally{
 isPopping = false;
 }
+}
+
+// true só durante o "voltar" programático que confirmExitApp() dispara pra
+// consumir a trava de saída — handleExitAttempt() usa isso pra saber que
+// esse popstate em particular não deve reabrir o aviso.
+let exitInProgress = false;
+
+// Chamado sempre que a pessoa aperta voltar (gesto do Android ou botão do
+// app) estando na Home. A trava funciona assim: a Home sempre fica
+// posicionada numa entrada "extra" do histórico (empilhada aqui mesmo,
+// de novo, toda vez) — por isso um voltar nunca sai do histórico de
+// verdade sozinho, sempre cai de volta aqui, e a gente decide o que fazer.
+function handleExitAttempt(){
+if(exitInProgress){
+// Esse popstate é o que confirmExitApp() mesmo disparou pra consumir a
+// trava (ver lá embaixo) — não é a pessoa pedindo pra voltar de novo.
+// Não reempilha nada: a entrada "extra" fica consumida de propósito,
+// então o PRÓXIMO voltar de verdade não cai mais aqui, e sim sai do
+// histórico — é esse o sinal que faz o WebView entender que não tem
+// mais pra onde voltar e fechar o app.
+exitInProgress = false;
+closeModal();
+// window.close() só funciona em janelas abertas por script (não é o
+// nosso caso aqui) — mas em vários wrappers de WebView ele ainda
+// encerra a activity quando chamado sem erro. Tentativa de graça: se
+// não funcionar, nada acontece, e o próximo voltar de verdade resolve.
+try{ window.close(); }catch(e){}
+return;
+}
+try{ history.pushState({ label: "stops" }, "", "#stops"); }
+catch(e){ console.error("[BusBus] pushState (trava de saída) bloqueado:", e); }
+if(el("activeModal")){
+// A pessoa já estava vendo o aviso de saída e apertou voltar de novo
+// sem escolher nada — conta como "Cancelar": fecha o aviso e segura o
+// app aberto, em vez de deixar isso progredir rumo a sair.
+closeModal();
+} else {
+openExitConfirmModal();
+}
+}
+
+function openExitConfirmModal(){
+openModal(`
+<div class="modalHead"><h3>Sair do BusBus?</h3></div>
+<div class="aboutText" style="margin-bottom:18px;">Quer fechar o app agora?</div>
+<div class="modalBtnRow">
+<button class="modalBtnCancel" onclick="closeModal()">Cancelar</button>
+<button class="modalBtnConfirm" onclick="confirmExitApp()">Sair</button>
+</div>
+`);
+}
+
+export function confirmExitApp(){
+closeModal();
+exitInProgress = true;
+try{ history.back(); }
+catch(e){ exitInProgress = false; console.error("[BusBus] history.back (saída confirmada) bloqueado:", e); }
 }
 
 window.addEventListener("popstate", handlePopState);
