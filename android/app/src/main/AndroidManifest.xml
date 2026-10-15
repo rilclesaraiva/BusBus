@@ -38,4 +38,10 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Sem isso o WebView nunca pergunta localização pra ninguém: o
+         navigator.geolocation da web app (gps.js) simplesmente falha
+         silenciosamente/cai no último ponto conhecido, dando a impressão de
+         "não funciona"/"me joga pra outro lugar". -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 </manifest>

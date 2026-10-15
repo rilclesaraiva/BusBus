@@ -4,6 +4,19 @@ Todas as mudanças notáveis do BusBus (B.E.M.) ficam registradas aqui, por vers
 
 Formato livremente inspirado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/). Versionamento: [SemVer](https://semver.org/lang/pt-BR/) — `MAJOR.MINOR.PATCH`, onde incompatibilidades/mudanças grandes de comportamento sobem o `MAJOR`, funcionalidades novas sem quebrar nada sobem o `MINOR`, e correções sobem o `PATCH`.
 
+## [1.3.3] — 2026-10-15
+
+Primeira leva de correções do APK gerado por Capacitor (v1.3.2) — o AppMint escondia tudo isso por trás do WebView-wrapper dele; agora que o projeto Android é de verdade, cada uma dessas integrações precisa ser ligada explicitamente, e na v1.3.2 nenhuma tinha sido ainda.
+
+### 🐛 Correções
+- **Botão/gesto de voltar fechava o app em qualquer tela**: sair de uma parada e voltar pra Home, por exemplo, fechava o BusBus direto em vez de voltar pra tela anterior. Faltava o app avisar o Android de que o WebView ainda tinha navegação pra desfazer — corrigido ligando o botão voltar nativo à navegação que o app já controla internamente (`navStack`).
+- **Localização não funcionava** (GPS "jogando" pra um lugar que a pessoa não estava, ou preso na última posição conhecida): faltavam as permissões de localização (`ACCESS_FINE_LOCATION`/`ACCESS_COARSE_LOCATION`) declaradas no app — sem isso o WebView nem chega a pedir a localização de verdade.
+- **Título colado na barra de notificação**: a partir do Android 15 os apps passaram a ser desenhados por baixo da status bar por padrão — corrigido avisando o Android que o conteúdo não deve ficar sob a barra, com um reforço por CSS como garantia extra.
+- **Efeito "elástico"/gelatina ao puxar a tela além do limite**: o WebView nativo tem, por padrão, um efeito de esticar o conteúdo que o site/PWA nunca teve — desligado tanto por CSS quanto direto na configuração do WebView.
+
+### 🎨 Ajustes visuais
+- **Ícone do APK**: trocado o placeholder genérico do Capacitor (o robozinho padrão) pelo logo oficial do BusBus (ônibus vermelho com a estrela azul), em todos os tamanhos/densidades.
+
 ## [1.3.2] — 2026-10-15
 
 Sem mudanças de comportamento pra quem usa o app — essa versão existe só pra marcar a troca de como o APK é gerado.

@@ -50,7 +50,7 @@ html[data-theme="amoled"]{
 --card:#0B0B0B; --line:#242424;
 --skeleton-hl:#1a1a1a;
 }
-html{ background:var(--bg); scrollbar-width:none; -ms-overflow-style:none; }
+html{ background:var(--bg); scrollbar-width:none; -ms-overflow-style:none; overscroll-behavior:none; }
 html[data-theme], html:not([data-theme]) { transition: background-color .15s ease; }
 *{box-sizing:border-box;}
 /* esconde a barra de rolagem nativa (cinza) do navegador/WebView em toda a UI —
@@ -58,11 +58,17 @@ uma barra de scroll visível lembra site, não app */
 html::-webkit-scrollbar, body::-webkit-scrollbar, *::-webkit-scrollbar{ display:none; width:0; height:0; }
 html, body, *{ scrollbar-width:none; -ms-overflow-style:none; }
 body{margin:0;background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;
--webkit-font-smoothing:antialiased;}
+-webkit-font-smoothing:antialiased;overscroll-behavior:none;}
 h1,h2,.num{font-family:'Fredoka',sans-serif;}
 #app{max-width:460px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;
 padding-bottom:100px;position:relative;}
-header{padding:20px 20px 12px;display:flex;align-items:center;gap:12px;}
+/* calc() + env(safe-area-inset-top): rede de segurança além do StatusBar.
+setOverlaysWebView({overlay:false}) nativo (src/modules/native.js) — se por
+algum motivo o WebView ainda desenhar o conteúdo embaixo da status bar
+(edge-to-edge é obrigatório a partir do Android 15/API 35), o título não
+cola na barra de notificação mesmo assim. env() resolve pra 0 quando não
+há inset (navegador comum, ou quando o overlay nativo já está desligado). */
+header{padding:calc(20px + env(safe-area-inset-top)) 20px 12px;display:flex;align-items:center;gap:12px;}
 .backBtn{background:var(--card);border:1px solid var(--line);border-radius:12px;width:38px;height:38px;
 display:flex;align-items:center;justify-content:center;color:var(--primary);cursor:pointer;flex:none;
 visibility:hidden;}

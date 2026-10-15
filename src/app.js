@@ -33,6 +33,7 @@ import { startGpsTracking } from "./modules/gps.js";
 import { renderStopsScreenStructure } from "./modules/stops.js";
 import { updateBellDot } from "./modules/messages.js";
 import "./modules/nav.js"; // registra o listener de popstate como efeito de módulo
+import { setupNativeIntegrations } from "./modules/native.js";
 
 // ---------------------------------------------------------------------
 // Sequência de inicialização — igual ao final do busbus.html original.
@@ -53,6 +54,7 @@ try{
   }
 }catch(e){}
 startGpsTracking();
+setupNativeIntegrations();
 
 // Registra o Service Worker só quando faz sentido: quando o arquivo está
 // sendo servido por um site de verdade (http/https), não quando está
