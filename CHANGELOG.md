@@ -4,6 +4,18 @@ Todas as mudanças notáveis do BusBus (B.E.M.) ficam registradas aqui, por vers
 
 Formato livremente inspirado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/). Versionamento: [SemVer](https://semver.org/lang/pt-BR/) — `MAJOR.MINOR.PATCH`, onde incompatibilidades/mudanças grandes de comportamento sobem o `MAJOR`, funcionalidades novas sem quebrar nada sobem o `MINOR`, e correções sobem o `PATCH`.
 
+## [1.4.0] — 2026-10-15
+
+Quarta leva de correções do APK por Capacitor, a partir de mais testes reais no aparelho — e a volta de uma funcionalidade que não era viável até agora.
+
+### ✨ Novidades
+- **Confirmação ao sair do app está de volta**: removida na v1.3.1 por bugs decorrentes do AppMint (não dava pra interceptar o botão voltar de fato, só reagir ao histórico de navegação — e isso perdia a corrida contra um toque duplo rápido, fechando o app sem perguntar nada). Com o Capacitor, o evento nativo de voltar chega antes de qualquer navegação acontecer, sem essa corrida — então a confirmação volta, só no app: na tela inicial, voltar mostra "Sair do BusBus?" com Cancelar/Sair; voltar de novo sem escolher nada só fecha o aviso, nunca sai sozinho.
+
+### 🐛 Correções
+- **Pontos do mapa desalinhados da posição real** depois de o app voltar de repouso: o Leaflet guarda o tamanho do mapa em cache e só recalcula a posição dos marcadores quando alguém manda ele reconferir — como isso não acontecia ao voltar de segundo plano, os pontos (localização, paradas, ônibus) ficavam "grudados" na posição de antes de apagar a tela até um toque manual no mapa corrigir. Agora o mapa sempre reconfere o próprio tamanho ao voltar.
+- **Painel pop-up (Licenças & Atribuições, Ruas da linha etc.) não fechava com o voltar do navegador na versão site/PWA**, só no app — o app consegue interceptar o botão voltar nativo antes dele navegar; o navegador não tem esse gancho prévio, então o voltar já tinha trocado de aba por baixo antes do nosso código conseguir reagir. Corrigido desfazendo essa navegação e só então fechando o painel, com o mesmo resultado do app.
+- **Rolagem da aba de Ajustes não era lembrada** ao trocar de aba e voltar (e, com menos frequência, o mesmo também podia acontecer nas outras abas): o navegador tentava restaurar a posição sozinho, numa corrida imprevisível contra o nosso próprio código reconstruindo a tela — às vezes os dois batiam por acaso, na maioria das vezes a reconstrução vencia e a posição se perdia. Desligada a restauração automática do navegador, e as 4 abas (Pesquisa, Paradas, Rota, Ajustes) agora salvam e restauram a própria posição de forma confiável, tanto trocando de aba quanto pelo botão voltar.
+
 ## [1.3.5] — 2026-10-15
 
 Terceira leva de correções do APK por Capacitor, a partir de mais testes reais no aparelho.

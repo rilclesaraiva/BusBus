@@ -44,11 +44,18 @@
 
 import { Capacitor } from "@capacitor/core";
 
+// Guardado aqui (módulo) em vez de só dentro de setupNativeIntegrations()
+// pra confirmExitApp() (chamado pelo onclick="" do botão "Sair" do aviso,
+// lá embaixo) conseguir chamar App.exitApp() sem precisar reimportar
+// "@capacitor/app" de novo.
+let capacitorApp = null;
+
 export async function setupNativeIntegrations(){
 if(!Capacitor.isNativePlatform()) return;
 
 try{
 const { App } = await import("@capacitor/app");
+capacitorApp = App;
 App.addListener("backButton", () => {
 if(document.getElementById("activeModal")){
 import("./settings.js").then(({ closeModal }) => closeModal());
@@ -60,7 +67,29 @@ import("./nav.js").then(({ navStack }) => {
 if(navStack.length > 1){
 history.back();
 } else {
-App.exitApp();
+// 2.1) Confirmação ao sair do app: a v1.3.0 já tinha tentado isso,
+// mas foi removida na v1.3.1 por dois bugs decorrentes de rodar
+// em cima do AppMint — o WebView-wrapper só deixava REAGIR ao
+// histórico de navegação do navegador, nunca interceptar o botão
+// voltar de fato antes dele agir, o que perdia a corrida contra
+// um toque duplo rápido (o app fechava sem perguntar nada). Com
+// o Capacitor, o evento nativo "backButton" chega ANTES de
+// qualquer navegação acontecer — não tem corrida nenhuma pra
+// perder, então dá pra reintroduzir o aviso direito: só mostra o
+// painel aqui (nunca fecha o app sozinho); se a pessoa apertar
+// voltar de novo com o painel aberto, cai no primeiro "if" lá
+// em cima (tem #activeModal) e só fecha o painel — equivale a um
+// Cancelar, nunca sai sozinho só de voltares repetidos.
+import("./settings.js").then(({ openModal }) => {
+openModal(`
+<div class="modalHead"><h3>Sair do BusBus?</h3></div>
+<div class="aboutText" style="margin-bottom:18px;">Quer fechar o app agora?</div>
+<div class="modalBtnRow">
+<button class="modalBtnCancel" onclick="closeModal()">Cancelar</button>
+<button class="modalBtnConfirm" onclick="confirmExitApp()">Sair</button>
+</div>
+`);
+});
 }
 });
 });
@@ -73,5 +102,13 @@ const { StatusBar } = await import("@capacitor/status-bar");
 await StatusBar.setOverlaysWebView({ overlay: false });
 }catch(e){
 console.error("[BusBus] falha ao configurar a status bar nativa:", e);
+}
+}
+
+// Chamado pelo onclick="" do botão "Sair" do aviso de confirmação acima.
+export function confirmExitApp(){
+import("./settings.js").then(({ closeModal }) => closeModal());
+if(capacitorApp){
+capacitorApp.exitApp();
 }
 }

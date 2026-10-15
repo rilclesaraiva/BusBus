@@ -130,10 +130,17 @@ export let tripOrigin = null, tripDestination = null;
 export let tripGeoDebounce = null;
 
 // Posição de rolagem da tela de rota — mesma ideia do savedLinesScrollY em
-// stops.js: guardada ao sair pra ver um ônibus em tempo real (openLegLive),
-// e restaurada só no caminho de "voltar" (handlePopState, lá em nav.js),
-// nunca numa entrada nova na aba (navTo('route') sempre começa do topo).
+// stops.js: guardada ao sair pra ver um ônibus em tempo real (openLegLive).
+// Também é restaurada ao voltar pra essa aba trocando de aba pela barra de
+// baixo (ver saveRouteScroll/navTo em nav.js) — só NÃO é restaurada quando
+// a pessoa traça uma rota nova (planTrip zera isso: uma busca nova deve
+// abrir do topo, não ficar presa na rolagem de uma busca anterior).
 export let savedRouteScrollY = 0;
+
+// Chamada pela navegação (nav.js) sempre que a pessoa está saindo da aba
+// de Rota — cobre o caso de só trocar de aba e voltar, além do já coberto
+// por openLegLive (ver acima).
+export function saveRouteScroll(){ savedRouteScrollY = window.scrollY; }
 
 export function renderRouteScreen(){
 state.view = "route";

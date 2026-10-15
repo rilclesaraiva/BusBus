@@ -11,7 +11,7 @@ import { getDepartureSchedule, fetchScheduledLinesAtStop } from "./api.js";
 import {
   destroyLeafletMap, initLeafletMapOnce, updateMapUserPosition, focusStopOnMap,
   updateStopMarkersOnMap, initLineRouteMap, fitMapToBusAndStop, getBusBearing,
-  busMarkersGroup,
+  busMarkersGroup, leafletMap,
 } from "./map.js";
 // Importação circular de propósito: a navegação (voltar/avançar de aba)
 // precisa chamar renderStopsScreenStructure/startGpsTracking ao voltar pra
@@ -187,6 +187,13 @@ ${html || `<div class="empty">${pinIcon}<div>Nenhuma parada encontrada no raio. 
 export let savedStopsScrollY = 0; // guarda a posição de rolagem da home (lista de paradas) pra restaurar ao voltar de uma parada
 
 export let savedLinesScrollY = 0; // guarda a posição de rolagem da lista de linhas pra restaurar ao voltar do mapa do ônibus
+
+// Chamada pela navegação (nav.js) sempre que a pessoa está saindo da Home
+// (seja trocando de aba pela barra de baixo, seja indo pra uma parada) —
+// complementa o save específico que já acontecia só dentro de
+// selectStop(), que não cobria o caso de só trocar de aba e voltar sem
+// abrir nenhuma parada.
+export function saveStopsScroll(){ if(state.view === "stops") savedStopsScrollY = window.scrollY; }
 
 export function skeletonLineRows(n = 4){
 return Array.from({length:n}).map(() => `
@@ -500,6 +507,20 @@ export function stopPolling(){ if(state.timer) clearInterval(state.timer); state
 // o timer, em vez de só confiar no próximo ciclo normal de 10s.
 document.addEventListener("visibilitychange", () => {
 if (document.hidden) { stopPolling(); stopLinesPolling(); }
-else if (state.view === "map" && state.stopSel && state.lineSel) { refreshBusesOnMap(); startPolling(); }
+else {
+// O WebView pode ter mudado de tamanho enquanto o app estava em segundo
+// plano (o sistema redesenha a área da status bar ao voltar, troca de
+// orientação, etc.) sem o Leaflet saber — ele guarda o tamanho do
+// container em cache e só recalcula a posição (em pixels) dos
+// marcadores quando algo manda ele redesenhar. Sem isso, os pontos no
+// mapa (sua localização, paradas, ônibus) continuam desenhados na
+// posição do tamanho ANTIGO até o próximo pan/zoom manual — o que
+// aparece como os marcadores "escorregando"/ficando desalinhados do
+// lugar certo no mapa (reportado puxando o app de volta do repouso,
+// parado na Home). invalidateSize() força o Leaflet a reconferir o
+// tamanho e reposicionar tudo certo de novo.
+if(leafletMap) leafletMap.invalidateSize();
+if (state.view === "map" && state.stopSel && state.lineSel) { refreshBusesOnMap(); startPolling(); }
 else if (state.view === "lines" && state.stopSel) { fetchLinesForStop(state.stopSel.id, navToken, { silent: true }); startLinesPolling(); }
+}
 });

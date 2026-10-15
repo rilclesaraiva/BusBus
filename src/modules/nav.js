@@ -5,10 +5,10 @@
 import { state } from "./state.js";
 import { el, scrollToTopFast } from "./utils.js";
 import { destroyLeafletMap } from "./map.js";
-import { destroyTripMap, renderRouteScreen, scheduleRouteIdleClear, cancelRouteIdleClear, savedRouteScrollY } from "./trip-planner.js";
-import { stopPolling, stopLinesPolling, startLinesPolling, fetchLinesForStop, renderStopsScreenStructure, savedStopsScrollY, savedLinesScrollY, renderLines } from "./stops.js";
-import { renderSearchScreen, setPendingSearchScrollRestore, scheduleSearchIdleClear, cancelSearchIdleClear } from "./search.js";
-import { renderConfigScreen } from "./settings.js";
+import { destroyTripMap, renderRouteScreen, scheduleRouteIdleClear, cancelRouteIdleClear, savedRouteScrollY, saveRouteScroll } from "./trip-planner.js";
+import { stopPolling, stopLinesPolling, startLinesPolling, fetchLinesForStop, renderStopsScreenStructure, savedStopsScrollY, savedLinesScrollY, renderLines, saveStopsScroll } from "./stops.js";
+import { renderSearchScreen, setPendingSearchScrollRestore, scheduleSearchIdleClear, cancelSearchIdleClear, saveSearchScroll } from "./search.js";
+import { renderConfigScreen, closeModal, savedConfigScrollY, saveConfigScroll } from "./settings.js";
 import { renderMessagesScreen } from "./messages.js";
 import { startGpsTracking } from "./gps.js";
 
@@ -31,6 +31,21 @@ export let navStack = ["stops"];
 export let navToken = 0;
 export function bumpNavToken(){ return ++navToken; }
 
+// Guarda a posição de rolagem da aba que está sendo deixada, qualquer que
+// seja o jeito de sair dela — trocando de aba pela barra de baixo
+// (navTo) ou pelo botão/gesto voltar (handlePopState). Antes, cada aba só
+// salvava a própria posição em pontos bem específicos (abrir uma parada,
+// abrir o GPS de um ônibus, abrir um resultado de busca); isso cobria
+// bem o caso de "ver um resultado e voltar", mas não o de "só trocar de
+// aba e voltar", que é o jeito mais comum de navegar — daí o efeito
+// relatado de só às vezes lembrar a posição.
+function saveCurrentTabScroll(){
+if(state.view === "stops") saveStopsScroll();
+else if(state.view === "search") saveSearchScroll();
+else if(state.view === "route") saveRouteScroll();
+else if(state.view === "config") saveConfigScroll();
+}
+
 export function pushNav(label){
 if(isPopping) return;
 const existingIdx = navStack.indexOf(label);
@@ -52,6 +67,25 @@ catch(e){ console.error("[BusBus] pushState bloqueado:", e); navStack.pop(); }
 }
 
 export function handlePopState(e){
+// Painéis pop-up (Licenças & Atribuições, Ruas da linha, Verificar
+// atualizações…) não entram no histórico de navegação — são só um <div>
+// sobreposto, sem pushState nenhum (ver openModal/closeModal em
+// settings.js). No app nativo isso já tava coberto (native.js intercepta
+// o botão voltar do Android ANTES dele mexer no histórico, e só fecha o
+// painel se tiver um aberto, sem chamar history.back() nesse caso). Na
+// versão site/PWA não existe esse evento prévio — o botão/gesto voltar do
+// navegador já mexeu no histórico direto antes do popstate disparar aqui.
+// Pra ter o mesmo resultado (só fechar o painel, sem trocar de aba por
+// baixo), a gente desfaz essa navegação que o navegador já fez — empurra
+// de volta a entrada em que a pessoa estava — e só então fecha o painel.
+const modal = document.getElementById("activeModal");
+if(modal){
+const label = navStack[navStack.length - 1];
+history.pushState({ label }, "", "#" + label);
+closeModal();
+return;
+}
+saveCurrentTabScroll(); // guarda onde a pessoa estava na aba que esse voltar está deixando
 stopPolling();
 stopLinesPolling();
 bumpNavToken(); // invalida qualquer carregamento em andamento da tela que está sendo deixada
@@ -96,6 +130,9 @@ requestAnimationFrame(() => window.scrollTo(0, savedRouteScrollY));
 }
 } else if(label === "config"){
 destroyLeafletMap(); renderConfigScreen();
+if(savedConfigScrollY){
+requestAnimationFrame(() => window.scrollTo(0, savedConfigScrollY));
+}
 } else if(label === "messages"){
 destroyLeafletMap(); renderMessagesScreen();
 } else {
@@ -168,6 +205,7 @@ if(tab === state.view){
 scrollToTopFast();
 return;
 }
+saveCurrentTabScroll(); // guarda onde a pessoa estava na aba que está sendo trocada
 bumpNavToken(); // invalida qualquer carregamento em andamento da aba que está sendo deixada
 stopPolling();
 stopLinesPolling();
@@ -175,15 +213,25 @@ if(tab !== 'route') destroyTripMap();
 if(tab === 'stops') {
 renderStopsScreenStructure();
 startGpsTracking();
+if(savedStopsScrollY){
+requestAnimationFrame(() => window.scrollTo(0, savedStopsScrollY));
+}
 } else if(tab === 'search') {
 destroyLeafletMap();
+setPendingSearchScrollRestore(true);
 renderSearchScreen();
 } else if(tab === 'config') {
 destroyLeafletMap();
 renderConfigScreen();
+if(savedConfigScrollY){
+requestAnimationFrame(() => window.scrollTo(0, savedConfigScrollY));
+}
 } else if(tab === 'route') {
 destroyLeafletMap();
 renderRouteScreen();
+if(savedRouteScrollY){
+requestAnimationFrame(() => window.scrollTo(0, savedRouteScrollY));
+}
 } else if(tab === 'messages') {
 destroyLeafletMap();
 renderMessagesScreen();

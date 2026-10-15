@@ -13,6 +13,18 @@ import { destroyLeafletMap, leafletMap } from "./map.js";
 import { initLeafletMapOnce } from "./map.js";
 import { fetchStopsSilent } from "./stops.js";
 
+// Posição de rolagem da aba de Ajustes — guardada ao sair dela (ver
+// saveConfigScroll/navTo/handlePopState em nav.js) e restaurada ao
+// voltar. IMPORTANTE: a restauração NÃO fica aqui dentro de
+// renderConfigScreen(), porque esta função é chamada toda vez que um
+// ajuste muda (setRadius, setTheme, setMapTheme…) pra redesenhar a tela
+// com o novo valor — se a restauração estivesse aqui, trocar um ajuste no
+// meio da tela faria a posição saltar de volta pro valor salvo antigo. A
+// restauração só acontece nos pontos de entrada de navegação (nav.js).
+export let savedConfigScrollY = 0;
+
+export function saveConfigScroll(){ if(state.view === "config") savedConfigScrollY = window.scrollY; }
+
 export function renderConfigScreen(){
 destroyLeafletMap();
 state.view = "config";

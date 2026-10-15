@@ -33,11 +33,23 @@ import { startGpsTracking } from "./modules/gps.js";
 import { renderStopsScreenStructure } from "./modules/stops.js";
 import { updateBellDot } from "./modules/messages.js";
 import "./modules/nav.js"; // registra o listener de popstate como efeito de módulo
-import { setupNativeIntegrations } from "./modules/native.js";
+import { setupNativeIntegrations, confirmExitApp } from "./modules/native.js";
 
 // ---------------------------------------------------------------------
 // Sequência de inicialização — igual ao final do busbus.html original.
 // ---------------------------------------------------------------------
+// Sem isso, o navegador/WebView tenta restaurar a posição de rolagem
+// sozinho (comportamento padrão em popstate) ANTES do nosso código
+// reconstruir a tela — como cada "navegação" aqui é só o #screens inteiro
+// sendo trocado via render(), essa tentativa automática corre contra o
+// nosso próprio restoreScrollY (mais abaixo, em nav.js) de um jeito
+// imprevisível: às vezes os dois batem por acaso e parece funcionar,
+// quase sempre a reconstrução da tela vence a corrida e a posição é
+// perdida — exatamente o padrão "às vezes volta certo, a maioria das
+// vezes não" relatado pelo rilclesaraiva na aba de Ajustes. Com
+// "manual", só o nosso próprio código decide a posição de rolagem depois
+// de cada navegação, sem concorrência nenhuma.
+try{ history.scrollRestoration = "manual"; }catch(e){ console.error("[BusBus] scrollRestoration bloqueado:", e); }
 loadPersistedSettings();
 applyTheme(state.theme);
 try{ history.replaceState({ label: "stops" }, "", "#stops"); }catch(e){ console.error("[BusBus] replaceState bloqueado:", e); }
@@ -129,4 +141,5 @@ Object.assign(window, {
   setRadius, saveRotationEnabled, setTheme, setMapTheme,
   closeModal, openSupportModal, copyPixCode, openLicensesModal, openPrivacyModal,
   checkForUpdate, confirmDownloadUpdate,
+  confirmExitApp,
 });

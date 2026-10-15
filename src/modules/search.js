@@ -127,6 +127,12 @@ export let searchDebounce = null;
 
 export let savedSearchScrollY = 0;
 
+// Chamada pela navegação (nav.js) sempre que a pessoa está saindo da aba
+// de Pesquisa — cobre o caso de só trocar de aba e voltar, que antes só
+// era salvo ao abrir um resultado (searchSelectStop/searchSelectLine, mais
+// abaixo).
+export function saveSearchScroll(){ savedSearchScrollY = window.scrollY; }
+
 export let pendingSearchScrollRestore = false;
 
 export function restoreSearchScrollIfPending(){
