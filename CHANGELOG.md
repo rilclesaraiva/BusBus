@@ -4,6 +4,11 @@ Todas as mudanças notáveis do BusBus (B.E.M.) ficam registradas aqui, por vers
 
 Formato livremente inspirado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/). Versionamento: [SemVer](https://semver.org/lang/pt-BR/) — `MAJOR.MINOR.PATCH`, onde incompatibilidades/mudanças grandes de comportamento sobem o `MAJOR`, funcionalidades novas sem quebrar nada sobem o `MINOR`, e correções sobem o `PATCH`.
 
+## [1.3.1] — 2026-10-14
+
+### 🐛 Correções
+- **Removida a confirmação ao sair do app (volta a fechar direto)**: a confirmação "Sair do BusBus?" adicionada na v1.3.0 saiu com dois problemas sérios — (1) apertar voltar duas vezes rápido ainda fechava o app sem perguntar nada, por causa de uma corrida entre o app nativo e o JavaScript (o WebView não dá pra interceptar o botão voltar diretamente, só reagir ao histórico de navegação do navegador, e isso é lento demais pra correr contra dois toques rápidos); (2) trocar de aba e voltar pra Home às vezes disparava o aviso à toa, achando que era um voltar na Home quando na verdade era só troca de aba. Como não existe (até onde fomos capazes de confirmar) uma função JS documentada do AppMint pra interceptar o botão voltar de verdade — o que resolveria os dois problemas na raiz —, a funcionalidade foi removida por completo até isso mudar. Voltar na Home volta a fechar o app direto, do jeito que era antes da v1.3.0.
+
 ## [1.3.0] — 2026-10-14
 
 ### ✨ Novidades
