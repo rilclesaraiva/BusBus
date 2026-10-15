@@ -51,28 +51,14 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Configurar o SDK do Android
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set +e
-          {
-            echo "--- platforms ---"
-            ls "$ANDROID_HOME/platforms" 2>&1
-            echo "--- build-tools ---"
-            ls "$ANDROID_HOME/build-tools" 2>&1
-            echo "--- cmdline-tools/latest/bin ---"
-            ls "$ANDROID_HOME/cmdline-tools/latest/bin" 2>&1
-            echo "--- sdkmanager --list_installed ---"
-            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --list_installed 2>&1
-          } > /tmp/sdk_debug.log 2>&1
-          cat /tmp/sdk_debug.log
-          gh api "repos/${{ github.repository }}/commits/${{ github.sha }}/comments" -f body="debug SDK 2:
-
-          \`\`\`
-          $(cat /tmp/sdk_debug.log)
-          \`\`\`"
-          exit 1
+      # O runner ubuntu-latest já vem com o SDK do Android pré-instalado,
+      # incluindo platforms;android-36 e build-tools;36.0.0 (os mesmos que
+      # android/variables.gradle pede) — confirmado rodando "sdkmanager
+      # --list_installed" numa execução de diagnóstico. Por isso não existe
+      # mais aqui um passo dedicado de "instalar o SDK": instalar de novo só
+      # adicionava uma dependência a mais (a action android-actions/setup-
+      # android@v3, que chegou a causar falha na primeira tentativa) sem
+      # necessidade nenhuma.
 
       # A chave de assinatura (mesma que o AppMint já usa nos APKs
       # publicados até agora — ver CLAUDE.md) nunca fica no repositório.
