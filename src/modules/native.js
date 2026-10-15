@@ -21,6 +21,17 @@
 //    traduzimos isso pra decisão nativa: tem navegação pra desfazer?
 //    history.back(); senão, estamos na raiz mesmo, aí sim fecha o app.
 //
+// 1.1) Painéis pop-up (Licenças & Atribuições, Ruas da linha, Verificar
+//    atualizações — tudo que passa por openModal()/closeModal() em
+//    settings.js) não entram no histórico de navegação: são só um <div>
+//    sobreposto, sem pushState nenhum. Resultado: antes desta correção, o
+//    voltar nativo ignorava completamente que um painel estava aberto e ia
+//    direto pra lógica do item acima, navegando a aba de baixo enquanto o
+//    painel continuava visível por cima. Por isso aqui a gente SEMPRE
+//    confere primeiro se tem um painel aberto (#activeModal) — se tiver, o
+//    voltar só fecha ele, do mesmo jeito que tocar no X ou fora do painel
+//    já fazia.
+//
 // 2) Título colado na barra de notificação: a partir do Android 15 (API
 //    35), apps são renderizados edge-to-edge por padrão/obrigação — o
 //    conteúdo do WebView passa a ser desenhado POR BAIXO da status bar, a
@@ -39,6 +50,10 @@ if(!Capacitor.isNativePlatform()) return;
 try{
 const { App } = await import("@capacitor/app");
 App.addListener("backButton", () => {
+if(document.getElementById("activeModal")){
+import("./settings.js").then(({ closeModal }) => closeModal());
+return;
+}
 // Importa dinamicamente pra evitar um ciclo de import estático entre
 // native.js e nav.js (nav.js não precisa saber que native.js existe).
 import("./nav.js").then(({ navStack }) => {

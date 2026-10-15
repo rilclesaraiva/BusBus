@@ -4,6 +4,15 @@ Todas as mudanças notáveis do BusBus (B.E.M.) ficam registradas aqui, por vers
 
 Formato livremente inspirado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/). Versionamento: [SemVer](https://semver.org/lang/pt-BR/) — `MAJOR.MINOR.PATCH`, onde incompatibilidades/mudanças grandes de comportamento sobem o `MAJOR`, funcionalidades novas sem quebrar nada sobem o `MINOR`, e correções sobem o `PATCH`.
 
+## [1.3.4] — 2026-10-15
+
+Segunda leva de correções do APK por Capacitor, a partir de testes reais no aparelho.
+
+### 🐛 Correções
+- **Voltar com um painel pop-up aberto** (Licenças & Atribuições, Ruas da linha, Verificar atualizações) **navegava a aba de baixo em vez de fechar o painel**: o botão voltar nativo agora sempre fecha o painel primeiro, se houver um aberto — só depois disso volta a mexer na navegação por trás dele.
+- **Barra de rolagem cinza nativa do Android ainda aparecia**: a v1.3.3 só tinha escondido a barra de rolagem do CSS (`::-webkit-scrollbar`), mas o WebView do Android desenha a dele própria por cima, numa camada separada que o CSS não alcança — desligada agora direto na configuração nativa do WebView.
+- **Ícone mal recortado**: o ícone novo da v1.3.3 usava a arte "de ponta a ponta" (sem margem), e a máscara adaptativa que o Android aplica em cima dos ícones (círculo, quadrado arredondado etc., dependendo do aparelho/launcher) cortava pedaços do ônibus e do texto "BUSBUS". Reduzido e centralizado dentro da "zona segura" (~58% do raio) que o Android garante não cortar, em todos os tamanhos — o mesmo arquivo-fonte também corrige o ícone "maskable" da versão web/PWA quando adicionada à tela inicial no Android.
+
 ## [1.3.3] — 2026-10-15
 
 Primeira leva de correções do APK gerado por Capacitor (v1.3.2) — o AppMint escondia tudo isso por trás do WebView-wrapper dele; agora que o projeto Android é de verdade, cada uma dessas integrações precisa ser ligada explicitamente, e na v1.3.2 nenhuma tinha sido ainda.
