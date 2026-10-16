@@ -592,9 +592,26 @@ else {
 // posição do tamanho ANTIGO até o próximo pan/zoom manual — o que
 // aparece como os marcadores "escorregando"/ficando desalinhados do
 // lugar certo no mapa (reportado puxando o app de volta do repouso,
-// parado na Home). invalidateSize() força o Leaflet a reconferir o
-// tamanho e reposicionar tudo certo de novo.
-if(leafletMap) leafletMap.invalidateSize();
+// parado na Home).
+//
+// A v1.4.0 já chamava invalidateSize() aqui, mas só UMA vez, na hora
+// (síncrono) em que "visibilitychange" dispara — e o bug voltou a
+// acontecer (relatado de novo na v1.5.0). O motivo provável: nesse exato
+// instante o WebView pode ainda não ter terminado de redesenhar a tela
+// de verdade (é um evento do sistema, não uma garantia de que o layout
+// já estabilizou) — invalidateSize() lê o tamanho do container NAQUELE
+// momento, e se ele ainda não tinha assentado no valor final, o Leaflet
+// reprojeta tudo em cima de um tamanho igualmente errado, só que agora
+// "confirmado" (daí não corrigir mais sozinho depois). Por isso dá
+// certo querer às vezes (telefones mais rápidos, ou quando o layout já
+// tinha estabilizado a tempo) e errado na maioria — exatamente o padrão
+// relatado. Chamar de novo mais de uma vez, com atraso crescente, é uma
+// rede de segurança barata (invalidateSize() não tem efeito colateral
+// ruim se o tamanho já estava certo) até cobrir o caso mais lento.
+const refreshMapSize = () => { if(leafletMap) leafletMap.invalidateSize(); };
+requestAnimationFrame(refreshMapSize);
+setTimeout(refreshMapSize, 300);
+setTimeout(refreshMapSize, 800);
 if (state.view === "map" && state.stopSel && state.lineSel) { refreshBusesOnMap(); startPolling(); }
 else if (state.view === "lines" && state.stopSel) { fetchLinesForStop(state.stopSel.id, navToken, { silent: true }); startLinesPolling(); }
 }

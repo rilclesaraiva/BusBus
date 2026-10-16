@@ -4,6 +4,14 @@ Todas as mudanças notáveis do BusBus (B.E.M.) ficam registradas aqui, por vers
 
 Formato livremente inspirado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/). Versionamento: [SemVer](https://semver.org/lang/pt-BR/) — `MAJOR.MINOR.PATCH`, onde incompatibilidades/mudanças grandes de comportamento sobem o `MAJOR`, funcionalidades novas sem quebrar nada sobem o `MINOR`, e correções sobem o `PATCH`.
 
+## [1.6.0] — 2026-10-16
+
+### ✨ Novidades
+- **Setinhas de sentido no traçado da linha**, inspiradas nas setas que a 99 desenha na rota da moto: ao longo do trajeto em destaque (não nos outros sentidos da linha, em cinza), pequenas setinhas marcam pra onde a linha segue. Diferente da seta que existia no ícone do ônibus (removida na v1.5.0), aqui o sentido não é um chute: os pontos do traçado já vêm na ordem certa (início ao fim) direto da API, então é só geometria — bem mais confiável.
+
+### 🐛 Correções
+- **Pontos do mapa descentralizados voltou a acontecer mesmo depois da correção da v1.4.0**: o disparo único de reconferência de tamanho do mapa, feito direto na hora do app voltar de segundo plano, podia ler o tamanho do WebView antes dele terminar de redimensionar de verdade de volta, "confirmando" um tamanho errado que não se autocorrigia depois. Agora a reconferência é repetida (logo no retorno, e de novo em 300ms e 800ms), cobrindo a demora variável do redimensionamento real.
+
 ## [1.5.0] — 2026-10-15
 
 ### ✨ Novidades

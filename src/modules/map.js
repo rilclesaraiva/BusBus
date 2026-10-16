@@ -201,6 +201,12 @@ const latLngs = state.route.map(p => [p.lat, p.lng]);
 const routePoly = L.polyline(latLngs, lineStyle).addTo(leafletMap);
 allBoundsLatLngs.push(...latLngs);
 leafletMap.fitBounds(L.latLngBounds(allBoundsLatLngs.length ? allBoundsLatLngs : routePoly.getBounds()), { padding: [20, 20] });
+// Setinhas de sentido ao longo do traçado — só no sentido selecionado
+// (o que está em destaque), não nos outros sentidos em cinza, pra não
+// poluir. Diferente da seta que tinha no ícone do ônibus (removida —
+// ver stops.js), aqui o sentido não é um chute: os pontos do traçado já
+// vêm na ordem certa (início ao fim) direto da API, é só geometria.
+addDirectionArrows(leafletMap, state.route, routeLineColor());
 } else {
 leafletMap.setView([-1.4558, -48.4902], 14);
 }
@@ -211,6 +217,53 @@ html: `<div style="width:20px;height:20px;background:#1E6B4E;border:3px solid #f
 iconSize: [20, 20], iconAnchor: [10, 10]
 });
 L.marker([state.stopSel.lat, state.stopSel.lng], { icon: stopTargetIcon }).addTo(leafletMap);
+}
+}
+
+// Direção do trecho entre dois pontos do traçado (ordem já garantida pela
+// API — início ao fim), em graus, 0 = norte, sentido horário. Mesma fórmula
+// que a antiga getBusBearing() usava (removida de stops.js), só que aqui
+// aplicada a dois pontos FIXOS do traçado, não à posição instantânea (e por
+// natureza incerta) de um ônibus em movimento.
+function bearingBetween(from, to){
+const lat1 = from.lat * Math.PI / 180, lat2 = to.lat * Math.PI / 180;
+const dLng = (to.lng - from.lng) * Math.PI / 180;
+const y = Math.sin(dLng) * Math.cos(lat2);
+const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+}
+
+// Desenha setinhas de sentido ao longo de um traçado, tipo as da 99 na
+// polilinha da moto — mas aqui usando a ordem (já conhecida, vinda da API)
+// dos pontos do traçado em si, não a direção instantânea de um ônibus, que é
+// sempre um chute. "points" precisa estar na ordem início → fim.
+function addDirectionArrows(map, points, color){
+if(!Array.isArray(points) || points.length < 2) return;
+const STEP_METERS = 150; // espaçamento entre setinhas — perto o bastante pra guiar, sem poluir o traçado
+let traveled = 0; // distância andada desde o início do traçado, somando segmento a segmento
+let nextArrowAt = STEP_METERS; // só a primeira seta já nasce um pouco adiante do início, não bem na primeira parada
+for(let i = 0; i < points.length - 1; i++){
+const from = points[i], to = points[i + 1];
+const segDist = metersBetween(from, to);
+if(!segDist || segDist <= 0) continue;
+const segStart = traveled, segEnd = traveled + segDist;
+// Um segmento longo pode precisar de mais de uma seta — por isso "while", não "if"
+while(nextArrowAt <= segEnd){
+const t = (nextArrowAt - segStart) / segDist;
+const lat = from.lat + (to.lat - from.lat) * t;
+const lng = from.lng + (to.lng - from.lng) * t;
+const bearing = bearingBetween(from, to);
+const arrowIcon = L.divIcon({
+className: 'route-direction-arrow',
+html: `<div style="width:12px;height:12px;transform:rotate(${bearing}deg);display:flex;align-items:center;justify-content:center;"><svg width="11" height="11" viewBox="0 0 11 11"><path d="M5.5 0 L10 9.5 L5.5 7.2 L1 9.5 Z" fill="${color}" stroke="#ffffff" stroke-width="0.6"/></svg></div>`,
+iconSize: [12, 12], iconAnchor: [6, 6]
+});
+// interactive/keyboard desligados: são só indicação visual, não devem
+// roubar cliques das paradas nem entrar na ordem de tabulação
+L.marker([lat, lng], { icon: arrowIcon, interactive: false, keyboard: false }).addTo(map);
+nextArrowAt += STEP_METERS;
+}
+traveled = segEnd;
 }
 }
 
