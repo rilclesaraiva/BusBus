@@ -4,6 +4,12 @@ Todas as mudanças notáveis do BusBus (B.E.M.) ficam registradas aqui, por vers
 
 Formato livremente inspirado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/). Versionamento: [SemVer](https://semver.org/lang/pt-BR/) — `MAJOR.MINOR.PATCH`, onde incompatibilidades/mudanças grandes de comportamento sobem o `MAJOR`, funcionalidades novas sem quebrar nada sobem o `MINOR`, e correções sobem o `PATCH`.
 
+## [1.6.1] — 2026-10-16
+
+### 🐛 Correções
+- **Setinhas de sentido poluindo e travando a tela em visão geral do traçado**: na v1.6.0 elas apareciam sempre, no zoom que fosse — com a linha inteira pequena na tela, ficavam densas demais e pesavam no desempenho. Agora só aparecem a partir de um certo zoom (de perto), que é justamente quando ajudam de verdade a indicar o sentido.
+- **Setinhas só apareciam no sentido selecionado**: faziam parte do traçado em si (a ordem dos pontos já vem certa da API), não deveriam depender de qual sentido estava em destaque nem de qual parada foi escolhida. Agora aparecem nos dois sentidos da linha, igual ao resto do desenho do traçado.
+
 ## [1.6.0] — 2026-10-16
 
 ### ✨ Novidades

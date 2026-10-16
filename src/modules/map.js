@@ -191,25 +191,40 @@ const otherPatterns = (Array.isArray(allPatterns) ? allPatterns : [])
 .filter(p => String(p.id) !== String(selectedPatternId) && Array.isArray(p.polyLine) && p.polyLine.length > 1);
 const allBoundsLatLngs = [];
 const lineStyle = { color: routeLineColor(), weight: 5, opacity: 0.8 };
+// Setinhas de sentido: fazem parte do desenho do traçado em si — a ordem
+// dos pontos já vem certa da API —, não de qual sentido está em destaque
+// nem de qual parada foi escolhida. Por isso valem pros dois sentidos
+// (iguais ao resto da linha, nem sólido/tracejado diferencia um do outro
+// — ver comentário acima). Ficam numa camada à parte (arrowsGroup) que só
+// é ligada ao mapa a partir de um certo zoom: em visão geral, com o
+// traçado inteiro pequeno na tela, elas ficavam densas e pesavam no
+// desempenho — de perto é que ajudam de verdade a indicar o sentido.
+const ARROWS_MIN_ZOOM = 15;
+const arrowsGroup = L.layerGroup();
+const updateArrowsVisibility = () => {
+if(!leafletMap) return;
+const shouldShow = leafletMap.getZoom() >= ARROWS_MIN_ZOOM;
+const isShown = leafletMap.hasLayer(arrowsGroup);
+if(shouldShow && !isShown) arrowsGroup.addTo(leafletMap);
+else if(!shouldShow && isShown) leafletMap.removeLayer(arrowsGroup);
+};
+leafletMap.on('zoomend', updateArrowsVisibility);
 otherPatterns.forEach(p => {
 const latLngs = p.polyLine.map(pt => [pt.lat, pt.lng]);
 L.polyline(latLngs, lineStyle).addTo(leafletMap);
 allBoundsLatLngs.push(...latLngs);
+addDirectionArrows(arrowsGroup, p.polyLine, routeLineColor());
 });
 if(state.route && state.route.length > 0){
 const latLngs = state.route.map(p => [p.lat, p.lng]);
 const routePoly = L.polyline(latLngs, lineStyle).addTo(leafletMap);
 allBoundsLatLngs.push(...latLngs);
 leafletMap.fitBounds(L.latLngBounds(allBoundsLatLngs.length ? allBoundsLatLngs : routePoly.getBounds()), { padding: [20, 20] });
-// Setinhas de sentido ao longo do traçado — só no sentido selecionado
-// (o que está em destaque), não nos outros sentidos em cinza, pra não
-// poluir. Diferente da seta que tinha no ícone do ônibus (removida —
-// ver stops.js), aqui o sentido não é um chute: os pontos do traçado já
-// vêm na ordem certa (início ao fim) direto da API, é só geometria.
-addDirectionArrows(leafletMap, state.route, routeLineColor());
+addDirectionArrows(arrowsGroup, state.route, routeLineColor());
 } else {
 leafletMap.setView([-1.4558, -48.4902], 14);
 }
+updateArrowsVisibility();
 if(state.stopSel && state.stopSel.lat){
 const stopTargetIcon = L.divIcon({
 className: 'target-stop-pin',
@@ -236,8 +251,11 @@ return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
 // Desenha setinhas de sentido ao longo de um traçado, tipo as da 99 na
 // polilinha da moto — mas aqui usando a ordem (já conhecida, vinda da API)
 // dos pontos do traçado em si, não a direção instantânea de um ônibus, que é
-// sempre um chute. "points" precisa estar na ordem início → fim.
-function addDirectionArrows(map, points, color){
+// sempre um chute. "points" precisa estar na ordem início → fim. "targetLayer"
+// é o L.layerGroup que controla a visibilidade por zoom (ver
+// updateArrowsVisibility em initLineRouteMap) — as setinhas nunca vão direto
+// pro mapa.
+function addDirectionArrows(targetLayer, points, color){
 if(!Array.isArray(points) || points.length < 2) return;
 const STEP_METERS = 150; // espaçamento entre setinhas — perto o bastante pra guiar, sem poluir o traçado
 let traveled = 0; // distância andada desde o início do traçado, somando segmento a segmento
@@ -260,7 +278,7 @@ iconSize: [12, 12], iconAnchor: [6, 6]
 });
 // interactive/keyboard desligados: são só indicação visual, não devem
 // roubar cliques das paradas nem entrar na ordem de tabulação
-L.marker([lat, lng], { icon: arrowIcon, interactive: false, keyboard: false }).addTo(map);
+L.marker([lat, lng], { icon: arrowIcon, interactive: false, keyboard: false }).addTo(targetLayer);
 nextArrowAt += STEP_METERS;
 }
 traveled = segEnd;

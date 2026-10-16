@@ -1,7 +1,7 @@
 {
   "name": "busbus-experimental-modular",
   "private": true,
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "BusBus Experimental Modular (B.E.M.) — reconstrução do BusBus com Vite + vite-plugin-singlefile, ainda gerando um único arquivo HTML no final (pro AppMint e pro PWA), mas com o código-fonte organizado em módulos.",
   "type": "module",
   "scripts": {
