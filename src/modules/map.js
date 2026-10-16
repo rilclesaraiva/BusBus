@@ -195,36 +195,54 @@ const lineStyle = { color: routeLineColor(), weight: 5, opacity: 0.8 };
 // dos pontos já vem certa da API —, não de qual sentido está em destaque
 // nem de qual parada foi escolhida. Por isso valem pros dois sentidos
 // (iguais ao resto da linha, nem sólido/tracejado diferencia um do outro
-// — ver comentário acima). Ficam numa camada à parte (arrowsGroup) que só
-// é ligada ao mapa a partir de um certo zoom: em visão geral, com o
-// traçado inteiro pequeno na tela, elas ficavam densas e pesavam no
-// desempenho — de perto é que ajudam de verdade a indicar o sentido.
+// — ver comentário acima).
+//
+// Só a POSIÇÃO de cada setinha é calculada aqui (geometria pura, barata)
+// — os marcadores de verdade só nascem sob demanda, em renderVisibleArrows,
+// e só pros pontos que estão dentro da área visível do mapa no momento.
+// Antes todas as setinhas do traçado inteiro eram criadas de uma vez (só a
+// CAMADA ficava escondida em visão geral) — resolvia a poluição visual, mas
+// de perto, numa linha longa, ainda existiam centenas de marcadores no DOM
+// o tempo todo, mesmo fora da tela, e isso é o que seguia pesando e
+// travando enquanto a pessoa navegava sem soltar o zoom.
 const ARROWS_MIN_ZOOM = 15;
+const allArrowPoints = [
+...otherPatterns.flatMap(p => computeDirectionArrowPoints(p.polyLine)),
+...(state.route && state.route.length > 0 ? computeDirectionArrowPoints(state.route) : [])
+];
 const arrowsGroup = L.layerGroup();
-const updateArrowsVisibility = () => {
+const arrowColor = routeLineColor();
+const renderVisibleArrows = () => {
 if(!leafletMap) return;
-const shouldShow = leafletMap.getZoom() >= ARROWS_MIN_ZOOM;
-const isShown = leafletMap.hasLayer(arrowsGroup);
-if(shouldShow && !isShown) arrowsGroup.addTo(leafletMap);
-else if(!shouldShow && isShown) leafletMap.removeLayer(arrowsGroup);
+arrowsGroup.clearLayers();
+if(leafletMap.getZoom() < ARROWS_MIN_ZOOM){
+if(leafletMap.hasLayer(arrowsGroup)) leafletMap.removeLayer(arrowsGroup);
+return;
+}
+if(!leafletMap.hasLayer(arrowsGroup)) arrowsGroup.addTo(leafletMap);
+// Uma margem de sobra (25%) em volta da área visível, pra setinha não
+// "piscar" sumindo e voltando bem na borda da tela a cada pan pequeno.
+const bounds = leafletMap.getBounds().pad(0.25);
+allArrowPoints.forEach(pt => {
+if(!bounds.contains([pt.lat, pt.lng])) return;
+arrowsGroup.addLayer(buildArrowMarker(pt.lat, pt.lng, pt.bearing, arrowColor));
+});
 };
-leafletMap.on('zoomend', updateArrowsVisibility);
+leafletMap.on('zoomend moveend', renderVisibleArrows);
 otherPatterns.forEach(p => {
 const latLngs = p.polyLine.map(pt => [pt.lat, pt.lng]);
 L.polyline(latLngs, lineStyle).addTo(leafletMap);
 allBoundsLatLngs.push(...latLngs);
-addDirectionArrows(arrowsGroup, p.polyLine, routeLineColor());
 });
 if(state.route && state.route.length > 0){
 const latLngs = state.route.map(p => [p.lat, p.lng]);
 const routePoly = L.polyline(latLngs, lineStyle).addTo(leafletMap);
 allBoundsLatLngs.push(...latLngs);
 leafletMap.fitBounds(L.latLngBounds(allBoundsLatLngs.length ? allBoundsLatLngs : routePoly.getBounds()), { padding: [20, 20] });
-addDirectionArrows(arrowsGroup, state.route, routeLineColor());
 } else {
 leafletMap.setView([-1.4558, -48.4902], 14);
 }
-updateArrowsVisibility();
+renderVisibleArrows();
 if(state.stopSel && state.stopSel.lat){
 const stopTargetIcon = L.divIcon({
 className: 'target-stop-pin',
@@ -248,16 +266,17 @@ const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Ma
 return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
 }
 
-// Desenha setinhas de sentido ao longo de um traçado, tipo as da 99 na
-// polilinha da moto — mas aqui usando a ordem (já conhecida, vinda da API)
-// dos pontos do traçado em si, não a direção instantânea de um ônibus, que é
-// sempre um chute. "points" precisa estar na ordem início → fim. "targetLayer"
-// é o L.layerGroup que controla a visibilidade por zoom (ver
-// updateArrowsVisibility em initLineRouteMap) — as setinhas nunca vão direto
-// pro mapa.
-function addDirectionArrows(targetLayer, points, color){
-if(!Array.isArray(points) || points.length < 2) return;
+// Calcula AS POSIÇÕES das setinhas de sentido ao longo de um traçado, tipo
+// as da 99 na polilinha da moto — usando a ordem (já conhecida, vinda da
+// API) dos pontos do traçado em si, não a direção instantânea de um ônibus,
+// que é sempre um chute. "points" precisa estar na ordem início → fim.
+// Só geometria aqui (sem criar L.marker nenhum) — fica barato rodar pra um
+// traçado inteiro de uma vez só; quem decide QUAIS pontos viram marcador de
+// verdade na tela é renderVisibleArrows, em initLineRouteMap.
+function computeDirectionArrowPoints(points){
+if(!Array.isArray(points) || points.length < 2) return [];
 const STEP_METERS = 150; // espaçamento entre setinhas — perto o bastante pra guiar, sem poluir o traçado
+const result = [];
 let traveled = 0; // distância andada desde o início do traçado, somando segmento a segmento
 let nextArrowAt = STEP_METERS; // só a primeira seta já nasce um pouco adiante do início, não bem na primeira parada
 for(let i = 0; i < points.length - 1; i++){
@@ -268,9 +287,23 @@ const segStart = traveled, segEnd = traveled + segDist;
 // Um segmento longo pode precisar de mais de uma seta — por isso "while", não "if"
 while(nextArrowAt <= segEnd){
 const t = (nextArrowAt - segStart) / segDist;
-const lat = from.lat + (to.lat - from.lat) * t;
-const lng = from.lng + (to.lng - from.lng) * t;
-const bearing = bearingBetween(from, to);
+result.push({
+lat: from.lat + (to.lat - from.lat) * t,
+lng: from.lng + (to.lng - from.lng) * t,
+bearing: bearingBetween(from, to)
+});
+nextArrowAt += STEP_METERS;
+}
+traveled = segEnd;
+}
+return result;
+}
+
+// Cria o L.marker de UMA setinha de sentido — só é chamado pros pontos que
+// já passaram pelo filtro de "está dentro da área visível do mapa" (ver
+// renderVisibleArrows em initLineRouteMap), nunca pro traçado inteiro de
+// uma vez.
+function buildArrowMarker(lat, lng, bearing, color){
 const arrowIcon = L.divIcon({
 className: 'route-direction-arrow',
 html: `<div style="width:12px;height:12px;transform:rotate(${bearing}deg);display:flex;align-items:center;justify-content:center;"><svg width="11" height="11" viewBox="0 0 11 11"><path d="M5.5 0 L10 9.5 L5.5 7.2 L1 9.5 Z" fill="${color}" stroke="#ffffff" stroke-width="0.6"/></svg></div>`,
@@ -278,11 +311,7 @@ iconSize: [12, 12], iconAnchor: [6, 6]
 });
 // interactive/keyboard desligados: são só indicação visual, não devem
 // roubar cliques das paradas nem entrar na ordem de tabulação
-L.marker([lat, lng], { icon: arrowIcon, interactive: false, keyboard: false }).addTo(targetLayer);
-nextArrowAt += STEP_METERS;
-}
-traveled = segEnd;
-}
+return L.marker([lat, lng], { icon: arrowIcon, interactive: false, keyboard: false });
 }
 
 export function fitMapToBusAndStop(){

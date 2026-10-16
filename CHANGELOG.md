@@ -4,6 +4,14 @@ Todas as mudanças notáveis do BusBus (B.E.M.) ficam registradas aqui, por vers
 
 Formato livremente inspirado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/). Versionamento: [SemVer](https://semver.org/lang/pt-BR/) — `MAJOR.MINOR.PATCH`, onde incompatibilidades/mudanças grandes de comportamento sobem o `MAJOR`, funcionalidades novas sem quebrar nada sobem o `MINOR`, e correções sobem o `PATCH`.
 
+## [1.6.2] — 2026-10-16
+
+### 🐛 Correções
+- **Setinhas ainda travando de perto, mesmo sem soltar o zoom pra visão geral**: elas continuavam todas criadas (só escondidas) assim que o zoom passava do limite — numa linha longa, isso significava centenas de setinhas existindo ao mesmo tempo, inclusive fora da área visível. Agora só as que estão dentro da área visível do mapa no momento são de fato desenhadas, recalculado a cada movimento/zoom — bem mais leve navegando de perto.
+
+### 🎨 Ajustes visuais
+- **Ícone do app pequeno demais dentro do quadrado/círculo**, tanto no atalho do PWA quanto no ícone instalado do Android (inclusive na tela "Informações do app"): a arte (ônibus + "BUSBUS") tinha margem sobrando demais ao redor. Aumentada em todos os tamanhos — o ícone adaptativo do Android (o que aparece na tela inicial) foi aumentado até perto do limite seguro recomendado, pra não arriscar cortar pontas em formatos de máscara mais agressivos de alguns fabricantes.
+
 ## [1.6.1] — 2026-10-16
 
 ### 🐛 Correções
