@@ -1,8 +1,12 @@
 name: Build APK do Android
 
-# Espelha o que o Vercel já faz pro site: toda vez que algo entra na main, um
-# build novo sai sozinho — só que aqui o resultado é o APK assinado, em vez
-# do site. Também pode ser disparado manualmente (aba "Actions" do GitHub).
+# Todo push pra main builda e assina o APK sozinho (artefato baixável da
+# própria execução), igual ao Vercel faz pro site — MAS, diferente do site,
+# não vira Release pública automaticamente (ver o passo "Publicar/atualizar a
+# Release do GitHub", mais abaixo): isso só acontece quando o workflow é
+# disparado manualmente (aba "Actions" → "Run workflow", ou "gh workflow run
+# android.yml"), sinalizando que aquele build já pode ser publicado de
+# verdade.
 on:
   push:
     branches: [main]
@@ -114,8 +118,17 @@ jobs:
           echo "path=release_notes.md" >> "$GITHUB_OUTPUT"
 
       # Cria (ou atualiza, se já existir pra essa versão) a Release do GitHub
-      # com o APK já anexado.
+      # com o APK já anexado — SÓ quando essa execução foi disparada manualmente
+      # (aba Actions → "Run workflow", ou "gh workflow run"), nunca sozinho a
+      # cada push. Regra fixa pedida pelo rilclesaraiva: a partir daqui, todo
+      # push pra main gera só o build + o APK como artefato do próprio run
+      # (passo "Guardar o APK como artefato do build", acima — baixável direto
+      # da página da execução), pra validar/testar sem virar lançamento
+      # público sozinho. Vira Release de verdade só quando ele disparar esse
+      # workflow manualmente, sinalizando que aquele build específico já pode
+      # ser publicado.
       - name: Publicar/atualizar a Release do GitHub
+        if: github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.version.outputs.version }}

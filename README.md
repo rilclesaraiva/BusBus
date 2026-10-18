@@ -116,13 +116,17 @@ O código do BusBus — o app (pasta `src/`), o proxy (`worker.js`) e os própri
 
 O cuidado pra manter o BusBus polido e livre de problemas é constante, mas, como em qualquer software, alguma coisa pode passar despercebida — principalmente numa fase inicial de testes com poucos usuários. Encontrou algo estranho? Abra uma [issue](https://github.com/rilclesaraiva/BusBus/issues) ou mande um e-mail (contato abaixo).
 
+## ☕ Apoie o projeto
+
+O BusBus é mantido de graça, sem anúncios e sem conta — e vai continuar assim. Se quiser ajudar a manter o projeto no ar (custos de acesso aos dados, hospedagem, tempo de desenvolvimento), dá pra contribuir por Pix ou cartão através do [buymeacoffee.com/saraivarilcle](https://buymeacoffee.com/saraivarilcle). Totalmente opcional — nenhuma parte do app depende disso pra funcionar, hoje ou no futuro.
+
 ## 📄 Licença
 
 Este projeto é distribuído sob a [GNU General Public License v3.0](./LICENSE). Isso significa que qualquer cópia, modificação ou redistribuição — inclusive como app publicado — precisa continuar com o código aberto, sob a mesma licença.
 
 ## ✉️ Contato
 
-Dúvidas, sugestões ou problemas: [saraivarilcle@gmail.com](mailto:saraivarilcle@gmail.com) ou [buymeacoffee.com/saraivarilcle](https://buymeacoffee.com/saraivarilcle)
+Dúvidas, sugestões ou problemas: [saraivarilcle@gmail.com](mailto:saraivarilcle@gmail.com)
 
 ---
 

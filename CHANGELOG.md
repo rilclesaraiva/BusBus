@@ -4,6 +4,15 @@ Todas as mudanças notáveis do BusBus (B.E.M.) ficam registradas aqui, por vers
 
 Formato livremente inspirado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/). Versionamento: [SemVer](https://semver.org/lang/pt-BR/) — `MAJOR.MINOR.PATCH`, onde incompatibilidades/mudanças grandes de comportamento sobem o `MAJOR`, funcionalidades novas sem quebrar nada sobem o `MINOR`, e correções sobem o `PATCH`.
 
+## [1.7.0] — 2026-10-18
+
+### ✨ Novidades
+- **Aviso de atualização automático** (Android): ao abrir o app, ele confere sozinho se tem uma versão nova, sem precisar tocar em "Verificar atualizações". Em Ajustes, nova opção "Avisar sobre atualização" (Nunca / 1 dia / 3 dias / 1 semana) controla por quanto tempo ele fica quieto depois que você toca "Agora não" nesse aviso automático.
+- **Botão "Apoie o projeto" (Pix e Buy Me a Coffee) saiu do build Android**, ficando só no site/PWA: a política de pagamentos da Play Store não permite link pra pagamento fora do Google Play Billing num app distribuído por lá, e nem Pix nem Buy Me a Coffee se encaixam na exceção de "doação isenta de impostos" (que exige entidade reconhecida tipo 501(c)(3) — casos recentes como WireGuard e AnkiDroid confirmam que não é só teoria). A linha do GitHub nos Ajustes agora convida a conhecer e ajudar o projeto por lá; o apoio financeiro (Buy Me a Coffee) ficou só no README do GitHub, fora do alcance da política da loja.
+
+### 🔧 Infraestrutura
+- **A Action do Android para de publicar Release sozinha a cada push**: continua testando, buildando e assinando o APK normalmente a cada push na `main` (artefato baixável direto da página da execução), mas só cria/atualiza a Release pública do GitHub quando o workflow é disparado manualmente.
+
 ## [1.6.2] — 2026-10-16
 
 ### 🐛 Correções

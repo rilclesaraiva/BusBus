@@ -68,6 +68,12 @@ try{
 startGpsTracking();
 setupNativeIntegrations();
 
+// Checagem automática de atualização (só no Android nativo — ver IS_NATIVE
+// em settings.js), disparada sem bloquear o resto da inicialização e com um
+// pequeno atraso: deixa a tela inicial (mapa, GPS) terminar de aparecer
+// antes de, só então, competir por atenção com um aviso de atualização.
+setTimeout(() => { checkForUpdateOnStartup(); }, 1500);
+
 // Registra o Service Worker só quando faz sentido: quando o arquivo está
 // sendo servido por um site de verdade (http/https), não quando está
 // aberto como arquivo local ou dentro do WebView do APK (onde a API de
@@ -116,9 +122,9 @@ import {
   resetTripMapOrientation,
 } from "./modules/trip-planner.js";
 import {
-  setRadius, setTheme, setMapTheme,
+  setRadius, setTheme, setMapTheme, setUpdateSnoozeDays,
   closeModal, openSupportModal, copyPixCode, openLicensesModal, openPrivacyModal,
-  checkForUpdate, confirmDownloadUpdate,
+  checkForUpdate, checkForUpdateOnStartup, confirmDownloadUpdate, dismissUpdateModal,
 } from "./modules/settings.js";
 import { saveRotationEnabled } from "./modules/state.js";
 
@@ -138,8 +144,8 @@ Object.assign(window, {
   toggleWeatherDetail,
   planTrip, useMyLocationForTrip, handleTripGeo, selectTripGeo, selectTripResult, clearTripField,
   resetTripMapOrientation,
-  setRadius, saveRotationEnabled, setTheme, setMapTheme,
+  setRadius, saveRotationEnabled, setTheme, setMapTheme, setUpdateSnoozeDays,
   closeModal, openSupportModal, copyPixCode, openLicensesModal, openPrivacyModal,
-  checkForUpdate, confirmDownloadUpdate,
+  checkForUpdate, confirmDownloadUpdate, dismissUpdateModal,
   confirmExitApp,
 });

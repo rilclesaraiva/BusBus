@@ -2,7 +2,7 @@
 // Copyright (C) 2026 rilclesaraiva — licenciado sob GNU GPLv3.
 // Texto completo: https://github.com/rilclesaraiva/BusBus/blob/main/LICENSE
 
-import { state, ALLOWED_RADII, applyTheme, APP_VERSION } from "./state.js";
+import { state, ALLOWED_RADII, ALLOWED_UPDATE_SNOOZE_DAYS, applyTheme, APP_VERSION } from "./state.js";
 import { el, render, isOfflineError } from "./utils.js";
 import { updateHeaderAndNav } from "./nav.js";
 import {
@@ -12,6 +12,17 @@ import {
 import { destroyLeafletMap, leafletMap } from "./map.js";
 import { initLeafletMapOnce } from "./map.js";
 import { fetchStopsSilent } from "./stops.js";
+// Usado pra decidir tanto se mostra o botão "Apoie o projeto" (ver
+// SHOW_DONATION_OPTION, logo abaixo — a política de pagamentos da Play
+// Store não permite link/botão pra fora do Google Play Billing num app
+// distribuído por lá; no site/PWA essa regra não vale, só se aplica a apps
+// distribuídos PELA Play Store) quanto se a checagem automática de
+// atualização roda ao abrir o app (ver IS_NATIVE, mais abaixo — no
+// site/PWA a atualização já é automática via Vercel, não faz sentido
+// avisar sobre baixar um APK lá).
+import { Capacitor } from "@capacitor/core";
+
+const IS_NATIVE = Capacitor.isNativePlatform();
 
 // Posição de rolagem da aba de Ajustes — guardada ao sair dela (ver
 // saveConfigScroll/navTo/handlePopState em nav.js) e restaurada ao
@@ -24,6 +35,10 @@ import { fetchStopsSilent } from "./stops.js";
 export let savedConfigScrollY = 0;
 
 export function saveConfigScroll(){ if(state.view === "config") savedConfigScrollY = window.scrollY; }
+
+// Doação (Pix e Buy Me a Coffee) só aparece fora do build nativo do
+// Android — ver comentário no import do Capacitor, acima.
+const SHOW_DONATION_OPTION = !IS_NATIVE;
 
 export function renderConfigScreen(){
 destroyLeafletMap();
@@ -51,6 +66,15 @@ const mapThemeOptions = [
 ];
 const mapThemeBtns = mapThemeOptions.map(t => `
 <button class="radioBtn ${state.mapTheme === t.id ? 'selected' : ''}" onclick="setMapTheme('${t.id}')">${t.label}</button>
+`).join("");
+const updateSnoozeOptions = [
+{ days: 0, label: "Nunca" },
+{ days: 1, label: "1 dia" },
+{ days: 3, label: "3 dias" },
+{ days: 7, label: "1 semana" },
+];
+const updateSnoozeBtns = updateSnoozeOptions.map(o => `
+<button class="radioBtn ${state.updateSnoozeDays === o.days ? 'selected' : ''}" onclick="setUpdateSnoozeDays(${o.days})">${o.label}</button>
 `).join("");
 render(`
 <section>
@@ -109,14 +133,24 @@ Ativar rotação do mapa (padrão: desligado)
 </div>
 <div class="chev">›</div>
 </div>
+${IS_NATIVE ? `
+<div class="settingsRow">
+<div class="settingsIcon">${updateIcon}</div>
+<div class="rowBody">
+<div class="rowTitle">Avisar sobre atualização</div>
+<div class="rowDesc">O app confere sozinho, ao abrir, se tem uma versão nova. Escolha depois de quanto tempo lembrar de novo se você tocar em "Agora não" — ou desligue com "Nunca" (ainda dá pra checar na mão, no botão acima).</div>
+<div class="rowControl radioGroup">${updateSnoozeBtns}</div>
+</div>
+</div>` : ``}
 <div class="settingsRow link" onclick="window.open('${GITHUB_URL}', '_blank')">
 <div class="settingsIcon">${githubIcon}</div>
 <div class="rowBody">
 <div class="rowTitle">Código-fonte no GitHub</div>
-<div class="rowDesc">BusBus é feito por rilclesaraiva. Código aberto pra quem quiser ver, usar ou contribuir.</div>
+<div class="rowDesc">Quer conhecer mais do projeto e ajudar? Visite nosso GitHub!</div>
 </div>
 <div class="chev">›</div>
 </div>
+${SHOW_DONATION_OPTION ? `
 <div class="settingsRow link" onclick="openSupportModal()">
 <div class="settingsIcon">${coffeeIcon}</div>
 <div class="rowBody">
@@ -124,7 +158,7 @@ Ativar rotação do mapa (padrão: desligado)
 <div class="rowDesc">Pix ou cartão (débito/crédito internacional).</div>
 </div>
 <div class="chev">›</div>
-</div>
+</div>` : ``}
 <div class="settingsRow link" onclick="openLicensesModal()">
 <div class="settingsIcon">${licenseIcon}</div>
 <div class="rowBody">
@@ -150,6 +184,13 @@ BusBus · dados em tempo real de Belém · v${APP_VERSION}<br>
 </div>
 </section>
 `);
+}
+
+export function setUpdateSnoozeDays(days){
+if(!ALLOWED_UPDATE_SNOOZE_DAYS.includes(days)) return;
+state.updateSnoozeDays = days;
+try{ localStorage.setItem("busbus_update_snooze_days", String(days)); }catch(e){}
+renderConfigScreen();
 }
 
 export function setRadius(r){
@@ -248,6 +289,20 @@ if(diff !== 0) return diff;
 return 0;
 }
 
+// Busca a última Release no GitHub e já separa versão + APK anexado —
+// usado tanto pela checagem manual (checkForUpdate, botão em Ajustes)
+// quanto pela automática (checkForUpdateOnStartup, ao abrir o app). Deixa
+// pra quem chama decidir o que fazer com erro/resultado: a manual mostra
+// status na tela, a automática fica calada se der errado.
+async function fetchLatestApkRelease(){
+const res = await fetch(RELEASES_API_URL);
+if(!res.ok) throw new Error("GitHub releases respondeu " + res.status);
+const data = await res.json();
+const remoteVersion = String(data.tag_name || "").replace(/^v/i, "").trim();
+const apkAsset = (data.assets || []).find(a => /\.apk$/i.test(a.name || ""));
+return { remoteVersion, apkAsset };
+}
+
 // Fluxo "manual mas funcional" combinado com o rilclesaraiva: sem uma ponte
 // JS documentada pelo AppMint pra baixar/instalar/apagar arquivo (ver
 // conversa sobre isso), o app não consegue automatizar o download+instalação
@@ -258,11 +313,7 @@ export async function checkForUpdate(){
 const statusEl = el("updateStatus");
 if(statusEl) statusEl.textContent = "Verificando se tem uma versão mais nova…";
 try{
-const res = await fetch(RELEASES_API_URL);
-if(!res.ok) throw new Error("GitHub releases respondeu " + res.status);
-const data = await res.json();
-const remoteVersion = String(data.tag_name || "").replace(/^v/i, "").trim();
-const apkAsset = (data.assets || []).find(a => /\.apk$/i.test(a.name || ""));
+const { remoteVersion, apkAsset } = await fetchLatestApkRelease();
 if(!remoteVersion || !apkAsset){
 if(statusEl) statusEl.innerHTML = `Não encontrei um APK publicado na última versão. <a class="licenseLink" href="${RELEASES_PAGE_URL}" target="_blank" rel="noopener">Ver releases no GitHub &rarr;</a>`;
 return;
@@ -279,6 +330,33 @@ if(statusEl) statusEl.innerHTML = `Não consegui verificar agora${isOfflineError
 }
 }
 
+// Checagem automática ao abrir o app — pedida pelo rilclesaraiva depois de
+// ver esse comportamento em outro app (Mihon/Tachiyomi). Só roda no Android
+// nativo (no site/PWA a atualização já é automática via Vercel, avisar
+// sobre baixar um APK não faz sentido lá — ver IS_NATIVE), e respeita tanto
+// o "Nunca" quanto o adiamento em Ajustes → "Avisar sobre atualização": se
+// a pessoa tocou "Agora não" há pouco tempo, fica calada até o prazo
+// escolhido passar. Silenciosa de propósito em qualquer erro — isso roda
+// sem ninguém ter pedido nada, não faz sentido incomodar com erro de rede
+// logo ao abrir o app (quem quiser saber o motivo, confere na mão em
+// Ajustes).
+export async function checkForUpdateOnStartup(){
+if(!IS_NATIVE) return;
+if(state.updateSnoozeDays === 0) return;
+try{
+const snoozedUntil = parseInt(localStorage.getItem("busbus_update_snoozed_until"), 10);
+if(snoozedUntil && Date.now() < snoozedUntil) return;
+}catch(e){}
+try{
+const { remoteVersion, apkAsset } = await fetchLatestApkRelease();
+if(remoteVersion && apkAsset && compareSemver(remoteVersion, APP_VERSION) > 0){
+openUpdateAvailableModal(remoteVersion, apkAsset.browser_download_url, { automatic: true });
+}
+}catch(e){
+console.error("[BusBus] checagem automática de atualização falhou (silenciosa de propósito):", e);
+}
+}
+
 // Guarda a URL do APK entre abrir o aviso e a pessoa tocar em "Baixar" —
 // mais simples que embutir a URL inteira (com barras, dois-pontos etc.)
 // dentro de um atributo onclick="" no HTML gerado.
@@ -288,16 +366,35 @@ let pendingUpdateDownloadUrl = null;
 // sem perguntar nada — o rilclesaraiva achou isso ruim (te joga pra fora do
 // app sem escolha). Agora só pergunta: a pessoa decide se quer ir buscar a
 // atualização agora ou deixar pra depois.
-function openUpdateAvailableModal(version, downloadUrl){
+//
+// "automatic" diz se esse aviso apareceu sozinho (checkForUpdateOnStartup)
+// ou foi pedido na mão (botão "Verificar atualizações") — só no primeiro
+// caso o "Agora não" aplica o adiamento escolhido em Ajustes (ver
+// dismissUpdateModal, abaixo): quem checou na mão já tá prestando atenção,
+// não faz sentido um adiamento de dias pra uma recusa feita ali na hora.
+let updateModalIsAutomatic = false;
+
+function openUpdateAvailableModal(version, downloadUrl, opts = {}){
 pendingUpdateDownloadUrl = downloadUrl;
+updateModalIsAutomatic = !!opts.automatic;
 openModal(`
-<div class="modalHead"><h3>Nova versão disponível</h3><button class="modalClose" onclick="closeModal()">✕</button></div>
+<div class="modalHead"><h3>Nova versão disponível</h3><button class="modalClose" onclick="dismissUpdateModal()">✕</button></div>
 <div class="aboutText" style="margin-bottom:18px;">A versão <b>v${version}</b> do BusBus já está disponível (você está na v${APP_VERSION}). Quer baixar agora? Depois de baixar, é só abrir o arquivo pra instalar.</div>
 <div class="modalBtnRow">
-<button class="modalBtnCancel" onclick="closeModal()">Agora não</button>
+<button class="modalBtnCancel" onclick="dismissUpdateModal()">Agora não</button>
 <button class="modalBtnConfirm" onclick="confirmDownloadUpdate()">Baixar</button>
 </div>
 `);
+}
+
+export function dismissUpdateModal(){
+if(updateModalIsAutomatic){
+try{
+const days = ALLOWED_UPDATE_SNOOZE_DAYS.includes(state.updateSnoozeDays) ? state.updateSnoozeDays : 3;
+localStorage.setItem("busbus_update_snoozed_until", String(Date.now() + days * 86400000));
+}catch(e){}
+}
+closeModal();
 }
 
 export function confirmDownloadUpdate(){
@@ -352,13 +449,14 @@ uma crítica a uma empresa ou pessoa específica: é uma crítica construtiva, f
 de transporte da cidade continuem melhorando. O app não cobra, não vai cobrar e não tem planos pagos escondidos —
 essa é uma promessa, não um período de teste.</div>
 </div>
+${SHOW_DONATION_OPTION ? `
 <div class="aboutSection">
 <div class="aboutTitle">Sobre as doações</div>
 <div class="aboutText">O botão "Apoie o projeto" (Pix ou cartão) é só isso: apoio voluntário, de quem quiser e puder. Nenhuma doação
 é necessária pra usar qualquer parte do app, hoje ou no futuro. O dinheiro recebido serve unicamente pra manter o
 BusBus funcionando e evoluindo — custos como manter o acesso aos dados, hospedagem e o tempo de desenvolvimento —
 nunca pra criar cobranças, assinaturas ou recursos trancados atrás de pagamento.</div>
-</div>
+</div>` : ``}
 <div class="aboutSection">
 <div class="aboutTitle">Um app que nunca para de melhorar</div>
 <div class="aboutText">O BusBus é construído com a ideia de que ele nunca vai estar realmente "pronto". Sempre vai
@@ -388,7 +486,12 @@ export const LICENSE_ITEMS = [
 ];
 
 export function openLicensesModal(){
-const items = LICENSE_ITEMS.map(it => `
+// No build nativo (Android), o Buy Me a Coffee não é usado em lugar nenhum
+// do app (ver SHOW_DONATION_OPTION) — então nem faz sentido creditar aqui.
+const visibleLicenseItems = SHOW_DONATION_OPTION
+? LICENSE_ITEMS
+: LICENSE_ITEMS.filter(it => it.name !== "Buy Me a Coffee");
+const items = visibleLicenseItems.map(it => `
 <div class="licenseItem">
 <img class="licenseLogo" src="${it.icon}" alt="" onerror="this.style.display='none'">
 <div class="licenseBody">

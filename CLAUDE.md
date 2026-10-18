@@ -21,6 +21,12 @@ O jeito certo:
 3. Se não estiver claro se ele já terminou de reportar, pergunto antes de commitar, em vez de assumir.
 4. Exceção: um bug isolado reportado fora de uma sessão de "vou testar e te falo tudo que achar" (ex.: ele volta dias depois com um problema específico) pode seguir o fluxo normal de corrigir → commitar → avisar, sem precisar represar.
 
+## Regra fixa: não publicar Release sozinho — só buildar
+
+**A partir de 2026-10-18**, todo push pra `main` continua disparando a Action (`.github/workflows/android.yml`) normalmente — testes, build, APK assinado —, mas o passo que cria/atualiza a **Release pública do GitHub** só roda quando o workflow é disparado **manualmente** (`workflow_dispatch`, pela aba Actions → "Run workflow", ou `gh workflow run android.yml`), nunca sozinho a cada push. O APK de cada push continua disponível como **artefato do próprio run** (baixável na página da execução, na aba Actions), então dá pra validar uma build sem ela virar lançamento público.
+
+Isso existe porque o rilclesaraiva não quer mais que cada push vire Release sozinho — ele quer decidir quando um build específico vira lançamento de verdade. Na prática: eu continuo commitando/buildando normalmente (CHANGELOG + versão + push) seguindo as regras de sempre, mas só disparo o workflow manualmente (`gh workflow run android.yml -f ref=main` ou equivalente) quando ele pedir explicitamente pra publicar aquela versão — nunca por conta própria, mesmo que o build tenha saído limpo.
+
 ## Versionamento
 
 - Fonte única da versão: campo `"version"` do `package.json`, injetado no build (`vite.config.js` → `%APP_VERSION%` no HTML final e `import.meta.env.APP_VERSION`).

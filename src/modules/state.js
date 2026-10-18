@@ -15,12 +15,20 @@ export const BASE = "https://busbus.saraivarilcle.workers.dev";
 
 export const ALLOWED_RADII = [600, 900, 1200];
 
+// Quanto tempo o app espera antes de voltar a incomodar sozinho com o aviso
+// de atualização disponível, depois da pessoa tocar em "Agora não" nesse
+// aviso automático (ver checkForUpdateOnStartup, em settings.js). "0" =
+// desliga a checagem automática ao abrir o app por completo (continua
+// dando pra checar na mão, em Ajustes → Verificar atualizações).
+export const ALLOWED_UPDATE_SNOOZE_DAYS = [0, 1, 3, 7];
+
 export let state = {
 view: "stops",
 coord: null,
 locSource: "Buscando...",
 locTimestamp: null,
 radarRadius: 600,
+updateSnoozeDays: 3,
 rotationEnabled: false,
 theme: "system",
 mapTheme: "light", // padrão de fábrica: mapa sempre claro. "auto" segue o tema do app; "dark" força escuro — o usuário troca em Ajustes
@@ -51,6 +59,10 @@ export function loadPersistedSettings(){
 try{
 const r = parseInt(localStorage.getItem("busbus_radar_radius"), 10);
 if(ALLOWED_RADII.includes(r)) state.radarRadius = r;
+}catch(e){}
+try{
+const usd = parseInt(localStorage.getItem("busbus_update_snooze_days"), 10);
+if(ALLOWED_UPDATE_SNOOZE_DAYS.includes(usd)) state.updateSnoozeDays = usd;
 }catch(e){}
 try{
 state.rotationEnabled = localStorage.getItem("busbus_rotation_enabled") === "1";
