@@ -18,7 +18,7 @@ def appVersionCode = (versionParts[0].toInteger() * 10000) + (versionParts[1].to
 
 // Assinatura de release: NUNCA commitado. "keystore.properties" só existe
 // localmente (se alguém quiser gerar um release build na própria máquina) ou
-// é criado na hora pela Action do GitHub (ver .github/workflows/android.yml),
+// é criado na hora pela Action do GitHub (ver .github/workflows/ci.yml),
 // a partir dos Secrets do repositório — nunca escrito em texto no código.
 // Sem esse arquivo, "release" simplesmente sai sem assinatura (normal pra
 // quem só quer compilar localmente pra testar, sem publicar nada).

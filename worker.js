@@ -53,58 +53,73 @@ const PRIVACY_POLICY_HTML = `<!doctype html>
 </head>
 <body>
 <h1>Política de Privacidade — BusBus</h1>
-<div class="updated">Última atualização: 12 de outubro de 2026</div>
+<div class="updated">Última atualização: 4 de novembro de 2026</div>
 
 <p>O BusBus é um app gratuito e independente de rastreamento de ônibus de Belém (PA), feito por uma
-única pessoa como projeto pessoal. Esta página explica, de forma direta, o que o app faz e não faz
-com os seus dados.</p>
+única pessoa (rilclesaraiva) como projeto pessoal. Esta página descreve, de forma direta, tudo o que o
+app envia pela rede e o que fica guardado no seu aparelho. O código do app e do proxy é aberto:
+<a href="https://github.com/rilclesaraiva/BusBus">github.com/rilclesaraiva/BusBus</a>.</p>
 
 <h2>Localização</h2>
 <p>O BusBus pede permissão de localização só pra mostrar no mapa as paradas e ônibus mais próximos de
-você, e calcular distâncias. Sua localização é usada apenas no seu próprio aparelho, em tempo real,
-pra desenhar o mapa. Ela <strong>não é enviada, guardada ou compartilhada</strong> em nenhum servidor
-nosso. Se você negar ou desativar a permissão, o app continua funcionando, só não consegue te mostrar
-automaticamente o que está perto.</p>
+você e calcular distâncias. Pra isso, <strong>a sua posição é enviada</strong> ao proxy do BusBus e ao
+serviço de previsão do tempo (detalhes abaixo). O código do proxy (público, em worker.js) só repassa a
+consulta e devolve a resposta, e não grava a posição. Se você negar ou desativar a permissão, o app
+continua funcionando, só não consegue mostrar automaticamente o que está perto.</p>
+
+<h2>Pra quem vai o quê</h2>
+<ul>
+  <li><strong>Proxy do BusBus (Cloudflare Workers):</strong> recebe a sua posição (latitude e longitude)
+  ao buscar paradas próximas, além dos códigos das linhas e paradas que você abre, e repassa essas consultas
+  ao serviço de dados de transporte público de Belém. A Cloudflare pode manter uma cópia da resposta por até
+  5 segundos e, como hospedagem, processa o endereço IP das conexões segundo a política dela.</li>
+  <li><strong>Open-Meteo (previsão do tempo):</strong> recebe a latitude e a longitude da sua posição atual
+  (ou da última conhecida) pra devolver a previsão local, além do seu IP, como qualquer site.</li>
+  <li><strong>ipapi.co:</strong> só quando o GPS falha ou é negado e não há posição salva: recebe o seu IP pra
+  estimar um local aproximado.</li>
+  <li><strong>OpenStreetMap, Photon (Komoot) e Nominatim:</strong> o mapa é desenhado com imagens baixadas do
+  servidor de mapas do OpenStreetMap, que vê o seu IP e a região do mapa que você está olhando. Na busca de
+  endereços do planejador de rota, o texto que você digita (junto com um ponto fixo no centro de Belém, não a
+  sua posição) vai pro Photon e pro Nominatim. O Nominatim também recebe pontos do traçado de algumas linhas
+  (não a sua posição) pra descobrir nomes de ruas.</li>
+  <li><strong>Google (ícones):</strong> ao abrir "Licenças &amp; Atribuições", os pequenos logos de alguns
+  serviços vêm do serviço de ícones de sites do Google, que recebe o seu IP e os endereços dos sites mostrados.</li>
+  <li><strong>GitHub (só no app Android):</strong> ao abrir o app e quando você toca em "Verificar
+  atualizações", o app consulta a API pública do GitHub pra saber se existe uma versão nova. O GitHub vê o
+  seu IP.</li>
+</ul>
+<p>Cada um desses serviços trata os dados que recebe conforme a política dele. O BusBus não envia nome,
+e-mail nem qualquer identificador pessoal a nenhum deles.</p>
 
 <h2>O que fica salvo no seu aparelho</h2>
-<p>Paradas favoritas, tema escolhido, histórico de busca e quais avisos você já viu ficam salvos
-apenas localmente no seu celular (armazenamento do próprio navegador/app). Nada disso é enviado pra
-nenhum servidor nosso nem sai do seu aparelho.</p>
-
-<h2>Serviços de terceiros que o app usa</h2>
-<ul>
-  <li><strong>Proxy próprio do BusBus (Cloudflare Workers):</strong> repassa as coordenadas que você
-  está vendo no mapa pra buscar paradas, linhas e ônibus em tempo real de um serviço de dados de
-  transporte público de Belém. Não envia nome, email ou qualquer identificador pessoal — só as
-  coordenadas necessárias pra fazer a busca.</li>
-  <li><strong>Open-Meteo:</strong> serviço público e gratuito de previsão do tempo. Recebe apenas as
-  coordenadas necessárias pra buscar a previsão local.</li>
-  <li><strong>ipapi.co:</strong> usado só como última alternativa, quando o GPS falha ou é negado,
-  pra estimar sua localização aproximada a partir do seu endereço IP.</li>
-  <li><strong>Buy Me a Coffee:</strong> link externo e opcional pra quem quiser apoiar o projeto
-  voluntariamente. Ao clicar, você sai do app e passa a estar sujeito à política de privacidade
-  desse site, não a esta.</li>
-</ul>
+<p>Paradas favoritas, histórico de busca, tema e outras preferências (raio de busca, mapa, aviso de
+atualização), a última posição conhecida e quais avisos você já viu ficam salvos apenas no seu aparelho,
+no armazenamento do próprio navegador ou app. Pra apagar tudo, limpe os dados do app ou desinstale.</p>
 
 <h2>O que o BusBus não faz</h2>
 <ul>
   <li>Não tem cadastro, login ou conta de usuário.</li>
   <li>Não mostra anúncios.</li>
   <li>Não usa ferramentas de análise, rastreamento ou publicidade de terceiros.</li>
-  <li>Não vende, aluga ou compartilha dados pessoais com ninguém.</li>
+  <li>Não vende nem cede os seus dados a terceiros pra outros fins (publicidade, análise ou revenda).</li>
   <li>Não cobra nada pra usar qualquer parte do app.</li>
 </ul>
+
+<h2>Retenção e seus direitos</h2>
+<p>O BusBus não guarda dados pessoais seus em servidor próprio, então não há o que apagar do lado dele.
+Os serviços de terceiros acima seguem as próprias políticas de retenção. Mesmo assim, se quiser perguntar
+algo ou exercer qualquer direito previsto na Lei Geral de Proteção de Dados (Lei nº 13.709/2018), escreva
+pro contato abaixo.</p>
 
 <h2>Crianças</h2>
 <p>O BusBus não é direcionado a crianças e não coleta intencionalmente dados de menores de idade.</p>
 
 <h2>Mudanças nesta política</h2>
-<p>Se algo aqui mudar, esta mesma página será atualizada, e qualquer mudança relevante será avisada
-dentro do próprio app antes de entrar em vigor.</p>
+<p>Se algo aqui mudar, esta mesma página será atualizada e a data acima também.</p>
 
 <h2>Contato</h2>
 <p>Dúvidas, sugestões ou problemas: <a href="mailto:saraivarilcle@gmail.com">saraivarilcle@gmail.com</a>
-ou pelo <a href="https://buymeacoffee.com/saraivarilcle" target="_blank" rel="noopener">buymeacoffee.com/saraivarilcle</a></p>
+ou uma <a href="https://github.com/rilclesaraiva/BusBus/issues">issue no GitHub</a>.</p>
 </body>
 </html>`;
 
@@ -143,8 +158,8 @@ export default {
       );
     }
 
-    // Política de privacidade — página pública estática, exigida pela
-    // Play Store. Não precisa de CORS (não é chamada pelo app, é aberta
+    // Política de privacidade — página pública estática (a Play Store
+    // exigiria uma URL assim). Não precisa de CORS (não é chamada pelo app, é aberta
     // direto no navegador por qualquer pessoa, inclusive pelo revisor da
     // Play Console) nem do Secret UPSTREAM, então fica antes dessa checagem.
     if (url.pathname === "/privacy" || url.pathname === "/privacy-policy") {

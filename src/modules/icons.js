@@ -23,8 +23,6 @@ export const mapThemeIcon = `<svg width="19" height="19" viewBox="0 0 24 24" fil
 
 export const githubIcon = `<svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.7.5.7 5.6.7 12a11.5 11.5 0 0 0 7.9 11c.6.1.8-.3.8-.6v-2c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.4 1 .1-.8.4-1.3.8-1.6-2.6-.3-5.3-1.3-5.3-5.8 0-1.3.5-2.3 1.2-3.2-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11 11 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.8.1 3.1.8.9 1.2 1.9 1.2 3.2 0 4.5-2.7 5.5-5.4 5.8.5.4.9 1.1.9 2.3v3.3c0 .3.2.7.8.6A11.5 11.5 0 0 0 23.3 12C23.3 5.6 18.3.5 12 .5Z"/></svg>`;
 
-export const coffeeIcon = `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a3 3 0 0 1 0 6h-1"/><path d="M2 8h16v6a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V8Z"/><path d="M6 1v2M10 1v2M14 1v2"/></svg>`;
-
 export const heartIcon = `<svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-10-9.3C.4 8.5 2 5 5.4 5c2 0 3.4 1.1 4.1 2.2L12 10.3l2.5-3.1C15.2 6.1 16.6 5 18.6 5 22 5 23.6 8.5 22 11.7 19.5 16.4 12 21 12 21Z"/></svg>`;
 
 export const infoIcon = `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><circle cx="12" cy="7.5" r="0.5" fill="currentColor" stroke="none"/></svg>`;

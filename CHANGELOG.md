@@ -2,7 +2,22 @@
 
 Todas as mudanças notáveis do BusBus (B.E.M.) ficam registradas aqui, por versão — tanto pra quem acompanha o projeto quanto pra mim (Claude) continuar de onde parei em sessões futuras, já que não guardo memória entre conversas.
 
-Formato livremente inspirado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/). Versionamento: [SemVer](https://semver.org/lang/pt-BR/) — `MAJOR.MINOR.PATCH`, onde incompatibilidades/mudanças grandes de comportamento sobem o `MAJOR`, funcionalidades novas sem quebrar nada sobem o `MINOR`, e correções sobem o `PATCH`.
+Formato livremente inspirado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/). Versionamento: [SemVer](https://semver.org/lang/pt-BR/) — `MAJOR.MINOR.PATCH`, onde incompatibilidades/mudanças grandes de comportamento sobem o `MAJOR`, funcionalidades novas sem quebrar nada sobem o `MINOR`, e correções sobem o `PATCH`. O que ainda não virou versão fica em `[Unreleased]`; a versão só sobe (e a seção vira `## [X.Y.Z]`) quando o mantenedor confirma um release.
+
+## [Unreleased]
+
+### Removido
+- **"Apoie o projeto" (Pix e Buy Me a Coffee) saiu do app também no site/PWA**, não só do Android: modal, QR e código Pix, seção "Sobre as doações" na tela de privacidade e crédito do Buy Me a Coffee em "Licenças & Atribuições". O apoio financeiro fica só na seção "Apoie o projeto" do README, no GitHub. Saiu junto o `apoie.png` (print do modal do Pix).
+
+### Alterado
+- **Política de privacidade reescrita a partir do código** (`worker.js`, README e tela de privacidade do app). O texto anterior dizia que a localização "não é enviada a nenhum servidor nosso", mas a posição vai ao proxy do BusBus e ao Open-Meteo (e o IP ao ipapi.co quando o GPS falha). Agora cada serviço aparece com o que recebe: proxy/Cloudflare, Open-Meteo, ipapi.co, OpenStreetMap (mapa, Photon e Nominatim), ícones do Google nas licenças e API do GitHub (só Android). A página `/privacy` é servida pelo Worker, então só muda depois de um novo deploy do Worker.
+- Linha do GitHub nos Ajustes (site e Android): "Quer apoiar o projeto? Entre no repositório do projeto."
+- **CI**: `android.yml` virou `ci.yml`, no modelo do documento de estrutura. Todo push continua testando, buildando e assinando o APK (artefato do build para vistoria); a Release pública agora sai sozinha só quando o `package.json` traz uma versão sem tag e com seção no CHANGELOG, e o APK publicado é o mesmo do build. O disparo manual (`workflow_dispatch`) deixou de existir. `actions/checkout` foi pro v6 e `actions/setup-java` pro v5.
+- **README** reordenado (capturas de tela, funcionalidades, privacidade, IA, instalação, licença, apoio e contato por último), com a seção de IA padronizada e as afirmações conferidas contra o código (163 linhas com itinerário oficial; Android empacotado pelo Capacitor, não mais pelo AppMint).
+- **CLAUDE.md** reescrito pelo template do documento de estrutura. Saíram as regras que o contradiziam (bump de versão a cada push, Release por disparo manual); ficou a regra de agrupar bugs numa sessão de testes.
+
+### Segurança
+- `.gitignore` agora barra `*.p12`, `*.jks`, `*.keystore`, `keystore.properties` e `*-github-secrets.txt`.
 
 ## [1.7.0] — 2026-10-18
 

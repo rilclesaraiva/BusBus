@@ -1,0 +1,151 @@
+name: CI
+
+# Todo push na main roda os testes, builda e assina o APK — o "build para
+# vistoria", baixável como artefato da própria execução (aba Actions), igual o
+# Vercel faz com o site. Isso NÃO vira Release pública: quem publica é o job
+# "release", mais abaixo, e só quando o package.json traz uma versão que ainda
+# não tem tag e que já tem seção no CHANGELOG.md. A versão só muda com a
+# confirmação explícita do mantenedor ("confirmo release vX.Y.Z", ver
+# CLAUDE.md), então nada é publicado sem ela.
+on:
+  push:
+    branches: [main]
+    tags: ['v*']   # reserva: uma tag criada à mão também publica
+
+# Escrita pra o job release conseguir criar a tag e a Release. O GITHUB_TOKEN é
+# gerado pelo próprio GitHub a cada execução e não tem relação nenhuma com os
+# Secrets de assinatura (a sessão do Claude usada neste projeto NÃO consegue
+# criar tag nem Release por conta própria — ver CLAUDE.md).
+permissions:
+  contents: write
+
+env:
+  # Imprime a versão do projeto (fonte única: package.json).
+  VERSION_CMD: node -p "require('./package.json').version"
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v6
+
+      - name: Ler a versão do package.json
+        id: version
+        run: echo "version=$(eval "$VERSION_CMD")" >> "$GITHUB_OUTPUT"
+
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Rodar os testes
+        run: npm test
+
+      - name: Build do site (gera dist/, que o Capacitor empacota no APK)
+        run: npm run build
+
+      - name: Sincronizar o projeto Android com o build mais recente
+        run: npx cap sync android
+
+      - name: Configurar Java (exigido pelo Capacitor Android)
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      # O runner ubuntu-latest já vem com o SDK do Android pré-instalado,
+      # incluindo platforms;android-36 e build-tools;36.0.0 (os mesmos que
+      # android/variables.gradle pede) — por isso não existe um passo dedicado
+      # de "instalar o SDK" (a action android-actions/setup-android@v3 chegou
+      # a causar falha na primeira tentativa, sem necessidade nenhuma).
+
+      # A chave de assinatura (a mesma que o AppMint já usava nos APKs
+      # publicados até então — ver CLAUDE.md) nunca fica no repositório. Ela é
+      # decodificada aqui, só durante o build, a partir do Secret
+      # ANDROID_KEYSTORE_BASE64, e o arquivo some junto com a máquina efêmera
+      # da Action assim que o job termina.
+      - name: Preparar a chave de assinatura
+        working-directory: android
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > release.p12
+          cat > keystore.properties <<EOF
+          storeFile=release.p12
+          storePassword=$ANDROID_KEYSTORE_PASSWORD
+          keyAlias=$ANDROID_KEY_ALIAS
+          keyPassword=$ANDROID_KEY_PASSWORD
+          EOF
+
+      - name: Buildar o APK assinado
+        working-directory: android
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Renomear o APK com a versão (busbus_v{versão}.apk)
+        id: apk
+        run: |
+          SRC=android/app/build/outputs/apk/release/app-release.apk
+          OUT="busbus_v${{ steps.version.outputs.version }}.apk"
+          cp "$SRC" "$OUT"
+          echo "path=$OUT" >> "$GITHUB_OUTPUT"
+
+      - name: Guardar o APK como artefato do build (build para vistoria)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.apk.outputs.path }}
+          path: ${{ steps.apk.outputs.path }}
+
+  release:
+    needs: ci
+    runs-on: ubuntu-latest
+    concurrency: release
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v6
+        with: { fetch-depth: 0 }   # traz as tags existentes
+
+      # Só publica se a versão ainda não tem tag E já tem seção no CHANGELOG.
+      # Nos pushes comuns a versão já tem tag, e este job não faz nada.
+      - name: Decidir se publica
+        id: v
+        run: |
+          V="$(eval "$VERSION_CMD")"
+          [ -n "$V" ] || { echo "VERSION_CMD não retornou a versão"; exit 1; }
+          if [ "$GITHUB_REF_TYPE" = tag ]; then
+            [ "${GITHUB_REF_NAME#v}" = "$V" ] || { echo "Tag $GITHUB_REF_NAME difere da versão $V"; exit 1; }
+          elif git rev-parse -q --verify "refs/tags/v$V" >/dev/null; then
+            echo "v$V já publicada: nada a fazer."; echo "publish=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          awk -v v="$V" '$0 ~ "^## \\[" v "\\]" {f=1; next} /^## \[/ {f=0} f' CHANGELOG.md > notes.md
+          if [ ! -s notes.md ]; then
+            echo "::warning::v$V não tem seção no CHANGELOG: nada publicado."
+            echo "publish=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          echo "version=$V" >> "$GITHUB_OUTPUT"; echo "publish=true" >> "$GITHUB_OUTPUT"
+
+      # Reaproveita o APK que o job ci acabou de buildar e assinar a partir
+      # deste mesmo commit: o que vai pro público é exatamente o que foi
+      # vistoriado, sem um segundo build.
+      - name: Baixar o APK do build
+        if: steps.v.outputs.publish == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: busbus_v${{ steps.v.outputs.version }}.apk
+
+      - name: Publicar a Release do GitHub (cria a tag vX.Y.Z neste commit)
+        if: steps.v.outputs.publish == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.v.outputs.version }}
+          name: BusBus v${{ steps.v.outputs.version }}
+          target_commitish: ${{ github.sha }}
+          body_path: notes.md
+          files: busbus_v${{ steps.v.outputs.version }}.apk

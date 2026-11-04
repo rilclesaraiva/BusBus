@@ -1,62 +1,88 @@
-# Instruções para o Claude neste repositório
+# CLAUDE.md
 
-Este arquivo é lido automaticamente no início de cada sessão — é como eu (Claude) recupero contexto do projeto depois de perder a memória de conversas anteriores. Leia também o `CHANGELOG.md` pra saber o que já foi feito.
+Este arquivo é lido no início de cada sessão: é como a IA recupera o contexto do projeto depois de perder a memória das conversas anteriores. Leia também o `CHANGELOG.md` pra saber o que já foi feito. As regras seguem o documento "Estrutura Universal para Vibe Coding" adotado pelo mantenedor em 2026-11-04; onde uma regra antiga contradizia o documento, o documento venceu e a antiga foi apagada.
 
-## Regra fixa: manter o CHANGELOG.md atualizado
+## Projeto
+BusBus — rastreamento de ônibus em tempo real para Belém (PA), publicado como PWA (site) e como APK Android. Público: regional, Brasil.
 
-**Toda vez que eu fizer uma mudança de código que vá virar uma versão nova** (correção, funcionalidade nova, ajuste visual — não só commits triviais), devo:
-1. Adicionar/atualizar a entrada correspondente no `CHANGELOG.md`, seguindo o formato já estabelecido lá (seções `✨ Novidades`, `🐛 Correções`, `🎨 Ajustes visuais`).
-2. Fazer isso **no mesmo momento em que decido o bump de versão** em `package.json`, não depois.
-3. Nunca esperar o rilclesaraiva pedir a release note na hora de publicar — ela já deve estar pronta no changelog.
+## Mantenedor
+- Nome: rilclesaraiva (usuário do GitHub) · Contato: saraivarilcle@gmail.com
+- Apoio: https://buymeacoffee.com/saraivarilcle · Licença: GPL-3.0
+- Segredos ficam em: a definir pelo mantenedor (sugestão: pasta privada na nuvem ou gerenciador de senhas)
 
-Isso existe porque sessões de conversa têm memória limitada: o changelog é a fonte de verdade que sobrevive a isso.
+## Stack
+- Stack: Vite + JavaScript (módulos ES) + Leaflet; no Android, empacotado com Capacitor (`android/`).
+- Build: `npm run build` · Testes: `npm test`
+- Mapa: projeto existente, mantém os nomes que já tem — código em `src/modules/` (módulos planos: mapa, GPS, busca, paradas, planejador, ajustes…), entrada em `src/app.js`, dados oficiais de itinerário em `src/modules/itinerarios.js`. Sem reestruturar pastas sem pedido do mantenedor.
+- Versão: campo `"version"` do `package.json` (fonte única; injetado no build por `vite.config.js` e lido no CI por `VERSION_CMD`)
+- Release: automático pelo CI quando a versão é nova e tem seção no CHANGELOG (ver Release) → `busbus_v{versão}.apk` na Release do GitHub
+- Pacote Android: `com.busbus.app`, fixo · R8 ainda desligado (`minifyEnabled false`); o documento manda ligar, sem ofuscação (`-dontobfuscate`) — pendente, em rodada própria com vistoria no aparelho
+- Ícone: `public/icon-*.png` e `android/app/src/main/res/mipmap-*`; só muda se o mantenedor pedir
 
-## Regra fixa: agrupar bugs antes de commitar/dar push (nada de releases picadas)
+## Arquitetura
+O build (`vite build`, com `vite-plugin-singlefile`) gera um único `dist/index.html` autocontido. Esse arquivo é o site (deploy automático no Vercel a cada push na `main`) e também o que o Capacitor empacota no APK. `worker.js` / `wrangler.toml` são o proxy em Cloudflare Workers que esconde a API real de dados de transporte e serve a política de privacidade (`/privacy`); o deploy do Worker é manual, feito pelo mantenedor. Linhas fora do acervo de `itinerarios.js` caem no modo antigo (geocodificação reversa ao vivo) em `trip-planner.js`.
 
-**Quando o rilclesaraiva for reportando bugs um a um numa sessão de testes** (ex.: testando o APK depois de uma leva de correções), eu NÃO devo corrigir e já commitar/dar push a cada bug individual. Cada push dispara a Action do Android (build+assinatura+Release) e o deploy do Vercel — ou seja, cada commit vira uma chamada de verdade pro rilclesaraiva acompanhar, e isso incomoda quando são vários bugs pequenos seguidos.
+## Regras de estrutura
+- Seguir as convenções do projeto existente. Nenhuma dependência nova sem justificar.
+- Deletar branches remotas é bloqueado (403) pra esta sessão; se sobrar alguma, o mantenedor apaga pela interface do GitHub.
 
-O jeito certo:
-1. Vou corrigindo os bugs no código normalmente, conforme ele for reportando.
-2. Só faço commit + push (e só aí bumpo versão/changelog, já que isso tem que acontecer junto) quando ele sinalizar que terminou a leva de bugs daquela rodada — um "agora sim" / "pode mandar" / ele parar de reportar novos / ele pedir a build explicitamente.
-3. Se não estiver claro se ele já terminou de reportar, pergunto antes de commitar, em vez de assumir.
-4. Exceção: um bug isolado reportado fora de uma sessão de "vou testar e te falo tudo que achar" (ex.: ele volta dias depois com um problema específico) pode seguir o fluxo normal de corrigir → commitar → avisar, sem precisar represar.
+## Fluxo de trabalho
+- Uma tarefa por vez, mudanças pequenas. Não refatorar fora do escopo.
+- Tudo direto na `main`: sem branches e sem PR. Cada push gera o build para vistoria (artefato `busbus_v{versão}.apk` da execução, aba Actions) e o deploy do site no Vercel.
+- **Agrupar bugs (regra do BusBus, mantida):** quando o mantenedor reporta bugs um a um numa sessão de testes, corrigir no código e só commitar/dar push quando ele sinalizar que terminou a leva ("agora sim", "pode mandar", parou de reportar, pediu a build). Na dúvida, perguntar antes. Bug isolado fora de uma sessão de testes pode seguir direto: corrigir, commitar, avisar.
+- Rodar `npm test` e `npm run build` antes do push. O APK não compila nesta sessão (o SDK do Android vem de `dl.google.com`/`maven.google.com`, fora da rede liberada): o CI é a única prova do Android, e a IA diz isso em vez de afirmar que testou.
+- Só dizer que terminou quando o CI daquele commit passar no GitHub. CI vermelho é corrigido antes de qualquer tarefa nova.
+- Registrar toda mudança em `[Unreleased]` no CHANGELOG. Sem bump de versão fora de release.
+- Preferir remover a acumular: o que não é usado sai.
+- Na dúvida, perguntar. Nunca inventar API.
+- Bloqueio de segurança do ambiente (proxy, permissão, leitura de credencial) nunca é contornado: o passo vai para o CI ou para o mantenedor.
+- Entrega de arquivo buildado: `dist/index.html` vai pro mantenedor como `busbus_v{versão}.html`, nunca como `index.html` solto.
 
-## Regra fixa: não publicar Release sozinho — só buildar
+## Release (regra absoluta)
+- Só com confirmação explícita do mantenedor citando a versão ("confirmo release v1.8.0"), na conversa. "Ok", "beleza" ou silêncio não contam.
+- Sem confirmação: nada de bump de versão nem de mover `[Unreleased]`.
+- A IA nunca cria tag nem Release: o commit `chore(release): vX.Y.Z` na `main` basta, e o CI (`.github/workflows/ci.yml`, job `release`) cria a tag e publica quando vê versão nova com seção no CHANGELOG. Não existe mais disparo manual do workflow.
+- Toda atualização vai para os artefatos do Actions (build para vistoria) e a IA avisa com o link. O mantenedor vistoria e só então pede o release público.
+- Entre a vistoria e o commit de release, só mudam versão e CHANGELOG; mudou código, nova vistoria.
+- Passo a passo depois do "confirmo release vX.Y.Z":
+  0. Revisão com contexto limpo: um subagente (ou sessão nova) lê só este arquivo e o diff desde o último release e procura falhas de segurança, quebra de regras e itens do CHANGELOG que não estão no código; os achados vão pro mantenedor, que decide entre lançar assim ou corrigir antes (o que exige nova vistoria).
+  1. Mover `[Unreleased]` para `## [X.Y.Z] — AAAA-MM-DD` e deixar um `[Unreleased]` vazio.
+  2. Subir `"version"` no `package.json` (SemVer: bugfix = PATCH, novidade compatível = MINOR, quebra = MAJOR). `versionName`/`versionCode` do Android vêm dele sozinhos (`MAJOR*10000 + MINOR*100 + PATCH`); nunca editar no `build.gradle`.
+  3. Commit `chore(release): vX.Y.Z` e push na `main`.
+  4. O CI cria a tag, anexa o mesmo APK que acabou de buildar e usa a seção do CHANGELOG como nota.
 
-**A partir de 2026-10-18**, todo push pra `main` continua disparando a Action (`.github/workflows/android.yml`) normalmente — testes, build, APK assinado —, mas o passo que cria/atualiza a **Release pública do GitHub** só roda quando o workflow é disparado **manualmente** (`workflow_dispatch`, pela aba Actions → "Run workflow", ou `gh workflow run android.yml`), nunca sozinho a cada push. O APK de cada push continua disponível como **artefato do próprio run** (baixável na página da execução, na aba Actions), então dá pra validar uma build sem ela virar lançamento público.
+## Segredos
+- Nunca commitar chaves, keystores, senhas ou `.env`.
+- A chave de assinatura já existe (a mesma que o AppMint usava) e **nunca deve ser trocada**: trocar a chave impede que quem já tem o app instalado receba atualização. Se um dia for preciso gerar outra, parar e perguntar.
+- Secrets de assinatura: a IA nunca lê nem exibe o conteúdo. Cadastrar secrets no GitHub é sempre tarefa manual do mantenedor (a API de Secrets também é bloqueada, 403, pra esta sessão).
 
-Isso existe porque o rilclesaraiva não quer mais que cada push vire Release sozinho — ele quer decidir quando um build específico vira lançamento de verdade. Na prática: eu continuo commitando/buildando normalmente (CHANGELOG + versão + push) seguindo as regras de sempre, mas só disparo o workflow manualmente (`gh workflow run android.yml -f ref=main` ou equivalente) quando ele pedir explicitamente pra publicar aquela versão — nunca por conta própria, mesmo que o build tenha saído limpo.
+## Idioma
+- README e CHANGELOG em português.
+- O README sempre tem a seção de transparência sobre IA. Nunca remover.
 
-## Versionamento
+## Projeto público
+- Política de privacidade: texto em `worker.js` (servida em `https://busbus.saraivarilcle.workers.dev/privacy`), resumo no app (`openPrivacyModal`, em `settings.js`) e no README. Páginas legais em `docs/` (GitHub Pages) e termos de uso ainda não existem; por ora a política fica no Worker, que já está linkado no README e no app.
+- Coleta nova (SDK, permissão, chamada de rede, cookie) → atualizar a política (`worker.js`), o resumo no app e o README no mesmo commit. O texto do Worker só vai ao ar quando o mantenedor faz um novo deploy do Worker.
+- Nenhuma afirmação sem respaldo: o que README, política e loja dizem precisa ser verdade no código. Antes de reescrever a política, fazer o inventário a partir do código (permissões, bibliotecas de terceiros, chamadas de rede, armazenamento local). Na dúvida, não afirmar.
 
-- Fonte única da versão: campo `"version"` do `package.json`, injetado no build (`vite.config.js` → `%APP_VERSION%` no HTML final e `import.meta.env.APP_VERSION`).
-- SemVer: `MAJOR.MINOR.PATCH`. Bugfix only → PATCH. Funcionalidade nova sem quebrar nada → MINOR. Mudança incompatível → MAJOR.
+## Apoio e contato
+- O README termina com a seção de apoio e contato, usando os dados de *Mantenedor*.
+- No app: nunca citar doação ou pagamento. Só "Quer apoiar o projeto? Entre no repositório do projeto." com link pro repositório (o modal do Pix e o Buy Me a Coffee saíram do app, inclusive do site, em `[Unreleased]`).
 
-## Estrutura do projeto
-
-- `src/` — código-fonte modular (Vite). `src/modules/itinerarios.js` tem os dados oficiais de itinerário por linha (Prefeitura de Belém / SEGBEL), extraídos de um PDF fornecido pelo rilclesaraiva + do site da SEGBEL pras linhas do BRT. Linhas fora desse acervo caem no modo antigo (geocodificação reversa ao vivo) em `trip-planner.js`.
-- Build (`vite build`, com `vite-plugin-singlefile`) gera um único `dist/index.html` autocontido — é o que é publicado como PWA (deploy automático no Vercel a cada push em `main`) e também o que o Capacitor empacota no APK (ver abaixo).
-- `worker.js` / `wrangler.toml` — proxy em Cloudflare Workers que esconde a API real de dados de transporte.
-- Deletar branches remotas é bloqueado (403) pra esta sessão — precisa ser feito manualmente pelo rilclesaraiva na interface do GitHub.
-
-## Build do APK (Android/Capacitor) — desde a v1.3.2
-
-O APK deixou de ser gerado manualmente no AppMint: desde a v1.3.2 o projeto usa [Capacitor](https://capacitorjs.com) (`android/`, pasta de projeto Gradle nativo de verdade, versionada no repo) + uma Action do GitHub (`.github/workflows/android.yml`) que builda e assina o APK sozinha a cada push na `main` — espelhando o que o Vercel já fazia pro site.
-
-- **applicationId**: `com.busbus.app` — igual ao APK que o AppMint já vinha publicando, de propósito, pra não quebrar a identidade do app.
-- **Assinatura**: reaproveita a MESMA chave que o AppMint usava (exportada pelo rilclesaraiva via "Signing Key → Save my signing key" no painel do AppMint, confirmada byte a byte contra o certificado do APK publicado — fingerprint SHA-256 `5E:18:2D:AE:6F:F3:A9:EF:B2:99:87:29:A6:78:C0:CB:FE:C9:FA:6F:9B:89:5E:25:8C:DC:06:B9:E7:B7:83:75`, alias `release_key`). Isso é o que garante que quem já tem o BusBus instalado continua recebendo atualização normal, em vez de precisar reinstalar.
-- **A chave NUNCA é commitada**. Ela vive só como 4 Secrets do repositório no GitHub (`ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`), cadastrados manualmente pelo rilclesaraiva — **a API de Secrets do GitHub Actions também é bloqueada (403) pra esta sessão**, igual a de Releases, então eu nunca vou conseguir cadastrar/trocar isso sozinho, só pedir pro rilclesaraiva fazer pelo painel (Settings → Secrets and variables → Actions).
-  - **Detalhe importante sobre o arquivo `.p12`**: o arquivo exportado direto do painel do AppMint usa criptografia legada (algo como RC2-40-CBC) que o JDK moderno (21, o que a Action usa) não consegue abrir — dava `KeytoolException: Tag number over 30 is not supported` bem no fim do build, na hora de assinar o APK (`:app:packageRelease`). A correção não foi trocar a chave: foi reexportar a MESMA chave/certificado (`openssl pkcs12 -legacy` pra ler o arquivo antigo, depois `openssl pkcs12 -export` sem `-legacy` pra regravar em PKCS12 moderno — AES-256-CBC/PBKDF2) — confirmado que o fingerprint SHA-256 do certificado não muda. Então o valor correto pro Secret `ANDROID_KEYSTORE_BASE64` é o base64 desse `.p12` reexportado, não o do export original do AppMint. Alias e senha continuam os mesmos (`release_key` / a senha que o rilclesaraiva definiu no export).
-- **versionCode/versionName** do `android/app/build.gradle` são lidos automaticamente do `"version"` do `package.json` (mesma fonte única de sempre) — nunca editar isso direto no `build.gradle`. Esquema do versionCode: `MAJOR*10000 + MINOR*100 + PATCH` (mesmo esquema que o AppMint já usava).
-- A Action também **cria/atualiza a Release do GitHub sozinha**, com o APK anexado e a nota tirada automaticamente da seção correspondente do `CHANGELOG.md` — isso funciona porque a Action usa o `GITHUB_TOKEN` gerado automaticamente pelo próprio GitHub a cada execução (com permissão `contents: write` concedida no workflow), que é diferente e não tem a mesma restrição do acesso desta sessão.
-- **Não dá pra compilar o APK de verdade dentro desta sessão**: o SDK do Android só é baixado dos servidores do Google (`dl.google.com`, `maven.google.com`), que estão fora da lista de permissão de rede deste ambiente — só dá pra validar aqui o `npm run build`, `npx cap sync android` e a lógica do Gradle até onde ela não precisa baixar nada. A prova de fogo real só acontece na Action, no GitHub. **Logs completos de uma execução da Action também não dão pra ler direto desta sessão** (ficam em blob storage da Azure, fora da lista de permissão de rede) — `gh run view --log` e `gh api .../logs` falham com 403. Quando preciso investigar uma falha, o jeito que funcionou foi adicionar um passo temporário no workflow que captura a saída (`2>&1 > arquivo`) e posta como comentário no commit via `gh api repos/.../commits/$SHA/comments` (API normal do GitHub, essa sim acessível) — e remover esse passo de debug depois de achar a causa.
-- Pontos que já pegaram a primeira execução real da Action (histórico, pra não repetir): Node precisa ser **22+** (Capacitor CLI 8 exige `NodeJS >=22.0.0`); o `capacitor.config` precisa ser `.json`, não `.ts` (exigiria TypeScript instalado, que não existe por padrão no runner); a action `android-actions/setup-android@v3` é **desnecessária e quebrava o build** — o runner `ubuntu-latest` já vem com o SDK todo instalado (confirmado via `sdkmanager --list_installed`: tinha até `android-36`/`build-tools;36.0.0`, o que o projeto pede); o Java tem que ser **JDK 21** (17 não compila o módulo `capacitor-android` do Capacitor 8: "invalid source release: 21").
-- O build local antigo (`busbus.html` manual pro AppMint) continua funcionando como fallback caso essa esteira pare de funcionar por algum motivo — nada foi removido do fluxo antigo, só passou a não ser mais o caminho principal.
-
-## Regra fixa: entregar a build com a versão no nome do arquivo
-
-**Toda vez que eu entregar o `dist/index.html` buildado pro rilclesaraiva** (via SendUserFile ou qualquer outro jeito), o arquivo tem que se chamar `busbus_v{versão}.html` — ex.: `busbus_v1.3.1.html` — nunca `index.html` solto. A versão vem do `"version"` do `package.json` (a mesma fonte única de sempre). Na prática: depois de `vite build`, copio/renomeio `dist/index.html` pra um arquivo com esse nome antes de entregar.
+## Notas do build do Android (Capacitor)
+- **applicationId**: `com.busbus.app` — o mesmo do APK que o AppMint já publicava, de propósito, pra não quebrar a identidade do app.
+- **Assinatura**: a mesma chave do AppMint, confirmada contra o certificado do APK publicado (SHA-256 `5E:18:2D:AE:6F:F3:A9:EF:B2:99:87:29:A6:78:C0:CB:FE:C9:FA:6F:9B:89:5E:25:8C:DC:06:B9:E7:B7:83:75`, alias `release_key`). Vive só como 4 Secrets do repositório (`ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`).
+- **O `.p12` do Secret precisa ser o reexportado**, não o original do painel do AppMint: o original usa criptografia legada (RC2-40-CBC) que o JDK 21 não abre (`KeytoolException: Tag number over 30 is not supported`, no `:app:packageRelease`). A correção foi reexportar a MESMA chave com `openssl pkcs12 -legacy` (leitura) e `openssl pkcs12 -export` sem `-legacy` (gravação, AES-256-CBC/PBKDF2); o fingerprint do certificado não muda.
+- **Logs completos de uma execução da Action não dá pra ler daqui** (ficam em blob storage da Azure, fora da rede liberada: `gh run view --log` falha com 403). Pra investigar uma falha, o que funcionou foi um passo temporário no workflow que captura a saída e posta como comentário no commit via `gh api repos/.../commits/$SHA/comments`, removido depois de achar a causa.
+- **Armadilhas que já pegaram a Action (histórico, pra não repetir)**: Node precisa ser 22+ (Capacitor CLI 8); o `capacitor.config` tem que ser `.json`, não `.ts`; a action `android-actions/setup-android` é desnecessária e quebrava o build (o runner `ubuntu-latest` já traz o SDK com `android-36`/`build-tools;36.0.0`); o Java tem que ser JDK 21 (o 17 não compila o `capacitor-android` do Capacitor 8).
+- O build antigo manual (`busbus.html` pro AppMint) continua como fallback, caso a esteira pare por algum motivo.
 
 ## Deploy
+- Site: `https://bus-bus-qdmb.vercel.app` (projeto Vercel `bus-bus-qdmb`, time `saraivainspaces-projects`), deploy automático a cada push na `main`.
+- Worker: deploy manual pelo mantenedor (painel da Cloudflare ou `wrangler`).
 
-- Site: `https://bus-bus-qdmb.vercel.app` (projeto Vercel `bus-bus-qdmb`, time `saraivainspaces-projects`), com deploy automático a cada push em `main`.
+## Contexto atual
+- Foco: alinhamento ao documento de estrutura (feito em `[Unreleased]`, sem versão nova; a próxima versão só com "confirmo release vX.Y.Z").
+- Ida à Play Store: pausada por tempo indeterminado (talvez cancelada). Existe app criado no Play Console, sem ficha completa.
+- Pendências do documento: R8 ligado sem ofuscação; termos de uso e páginas legais em `docs/` (só se o projeto for pra loja); AAB só se a Play for retomada; definir onde ficam os segredos.
+- Problemas conhecidos: nenhum registrado.

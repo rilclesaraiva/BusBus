@@ -6,20 +6,16 @@ import { state, ALLOWED_RADII, ALLOWED_UPDATE_SNOOZE_DAYS, applyTheme, APP_VERSI
 import { el, render, isOfflineError } from "./utils.js";
 import { updateHeaderAndNav } from "./nav.js";
 import {
-  paletteIcon, locIcon, rotateSettingIcon, mapThemeIcon, githubIcon, coffeeIcon,
+  paletteIcon, locIcon, rotateSettingIcon, mapThemeIcon, githubIcon,
   licenseIcon, shieldIcon, heartIcon, favicon, osmLogoDataUri, updateIcon,
 } from "./icons.js";
 import { destroyLeafletMap, leafletMap } from "./map.js";
 import { initLeafletMapOnce } from "./map.js";
 import { fetchStopsSilent } from "./stops.js";
-// Usado pra decidir tanto se mostra o botão "Apoie o projeto" (ver
-// SHOW_DONATION_OPTION, logo abaixo — a política de pagamentos da Play
-// Store não permite link/botão pra fora do Google Play Billing num app
-// distribuído por lá; no site/PWA essa regra não vale, só se aplica a apps
-// distribuídos PELA Play Store) quanto se a checagem automática de
-// atualização roda ao abrir o app (ver IS_NATIVE, mais abaixo — no
-// site/PWA a atualização já é automática via Vercel, não faz sentido
-// avisar sobre baixar um APK lá).
+// Usado pra decidir se a checagem automática de atualização roda ao abrir o
+// app (ver IS_NATIVE e checkForUpdateOnStartup, mais abaixo) — no site/PWA a
+// atualização já é automática via Vercel, não faz sentido avisar sobre baixar
+// um APK lá.
 import { Capacitor } from "@capacitor/core";
 
 const IS_NATIVE = Capacitor.isNativePlatform();
@@ -35,10 +31,6 @@ const IS_NATIVE = Capacitor.isNativePlatform();
 export let savedConfigScrollY = 0;
 
 export function saveConfigScroll(){ if(state.view === "config") savedConfigScrollY = window.scrollY; }
-
-// Doação (Pix e Buy Me a Coffee) só aparece fora do build nativo do
-// Android — ver comentário no import do Capacitor, acima.
-const SHOW_DONATION_OPTION = !IS_NATIVE;
 
 export function renderConfigScreen(){
 destroyLeafletMap();
@@ -146,19 +138,10 @@ ${IS_NATIVE ? `
 <div class="settingsIcon">${githubIcon}</div>
 <div class="rowBody">
 <div class="rowTitle">Código-fonte no GitHub</div>
-<div class="rowDesc">Quer conhecer mais do projeto e ajudar? Visite nosso GitHub!</div>
+<div class="rowDesc">Quer apoiar o projeto? Entre no repositório do projeto.</div>
 </div>
 <div class="chev">›</div>
 </div>
-${SHOW_DONATION_OPTION ? `
-<div class="settingsRow link" onclick="openSupportModal()">
-<div class="settingsIcon">${coffeeIcon}</div>
-<div class="rowBody">
-<div class="rowTitle">Apoie o projeto</div>
-<div class="rowDesc">Pix ou cartão (débito/crédito internacional).</div>
-</div>
-<div class="chev">›</div>
-</div>` : ``}
 <div class="settingsRow link" onclick="openLicensesModal()">
 <div class="settingsIcon">${licenseIcon}</div>
 <div class="rowBody">
@@ -262,8 +245,6 @@ const ov = el("activeModal");
 if(ov) ov.remove();
 unlockBodyScroll();
 }
-
-export const BUY_COFFEE_URL = "https://buymeacoffee.com/saraivarilcle";
 
 export const GITHUB_URL = "https://github.com/rilclesaraiva/BusBus";
 
@@ -402,43 +383,18 @@ if(pendingUpdateDownloadUrl) window.open(pendingUpdateDownloadUrl, "_blank");
 closeModal();
 }
 
-export const PIX_CODE = "00020126580014br.gov.bcb.pix013675eadc64-11f6-4883-a059-9f05670af82d5204000053039865802BR5914RILCLE_SARAIVA6009Sao Paulo610901227-20062230519daqr640397992297291630413B8";
-
-export const PIX_QR_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMQAAADEAQAAAADo3bPGAAAB/UlEQVR42t2Ysa3dMBAE54yfDzt4/ZelDpYVrAN9J4adkYBhhhKgBanb2TtO+fPaP/jb+rffzMxizcwMe2aGNTPruI4tGwvlQ5od2ws7nQWbbReUgffRWZ0vAFYw6yF8up517c/5YfazZu0H1o06oLYW21qbtLU1Z3WmA/7uHfA5vZ+2TZNiX0nbNqd1aEgaBRJrywWdQmPTVq2g5ryOQi1FMZUQL+ynCTRqGyHADZ0U/SWWICWeP7emIqlJS6tyfj+JpI2xprT2vE9pmiBSKiVIPa3zhYvd1c2Ehx3M3lmc949RIthIY3uhDppQQi3G5D3I8zrSCEhNSILH/fMDwnxohWEtFzdyjjYW9IVPaayez5/9gd2hC9gSFuye798eAu2C0M0sAhfqOuB3oiql4AUeYEoNqWlNmxscfUVsNDWNpBdyIfRXlKoIcoOjNHxLlLR96/u8TtLEJg0VQm/wujDdz2QhGyDrPA++GOnaDcRxI+yu89x5OwLbUk3C28+d9w/Ji+qKxhfh5/sqjQ1CSF7f3vDP94erBJPWCz717awJb3/4cu4Cd97JJ28LD9beyNOZWXvtD7AgZrMIV+ZtMEuyF/AhrHV+Dh7JYnXteWNoD710H6IPGB6Yh3iBB683IWBKKOCNeaEvd7AaDXdyAVSDCZqqPc6d+c/uxX4CcLHkfj3ULf0AAAAASUVORK5CYII=";
-
-export function openSupportModal(){
-openModal(`
-<div class="modalHead"><h3>Apoie o projeto</h3><button class="modalClose" onclick="closeModal()">✕</button></div>
-<div class="aboutText pixHint">Escolha como prefere ajudar a manter o BusBus no ar.</div>
-<div class="supportOptTitle">Pix</div>
-<img class="pixQrImg" src="${PIX_QR_DATA_URI}" alt="QR Pix">
-<div class="aboutText pixHint">Escaneie com seu banco, ou copie o código.</div>
-<div class="pixCodeBox" id="pixCodeBox">${PIX_CODE}</div>
-<button class="pixCopyBtn" id="pixCopyBtn" onclick="copyPixCode()">Copiar código</button>
-<div class="supportDivider">ou</div>
-<div class="supportOptTitle">Cartão (débito ou crédito, internacional)</div>
-<button class="pixCopyBtn cardPayBtn" onclick="window.open('${BUY_COFFEE_URL}','_blank')">Pagar com cartão</button>
-`);
-}
-
-export function copyPixCode(){
-const btn = el("pixCopyBtn");
-const done = () => { if(!btn) return; const old = btn.textContent; btn.textContent = "Copiado!"; setTimeout(() => { btn.textContent = old; }, 1800); };
-const legacy = () => { try{ const ta = document.createElement("textarea"); ta.value = PIX_CODE; ta.style.cssText = "position:fixed;opacity:0"; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove(); done(); }catch(e){ console.error("[BusBus] copiar Pix falhou:", e); } };
-try{ if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(PIX_CODE).then(done).catch(legacy); } else { legacy(); } }catch(e){ legacy(); }
-}
-
 export function openPrivacyModal(){
 openModal(`
 <div class="modalHead"><h3>Política de Privacidade</h3><button class="modalClose" onclick="closeModal()">✕</button></div>
 <div class="aboutSection">
 <div class="aboutTitle">Privacidade e dados</div>
 <div class="aboutText">O BusBus pede permissão de localização só pra mostrar as paradas e ônibus mais próximos de
-você no mapa e calcular distâncias e rotas a pé — essa é a única razão. Sua localização é usada apenas no seu
-aparelho, em tempo real, pra desenhar o mapa; ela não é enviada, guardada ou compartilhada em nenhum servidor
-nosso, e o app não coleta, não armazena e não vende nenhum dado pessoal seu. Favoritos, tema e outras preferências
-ficam salvos só no seu próprio celular. Se isso mudar algum dia, será avisado claramente numa atualização do app,
-antes de qualquer mudança entrar em vigor.</div>
+você e calcular distâncias — essa é a única razão. Pra isso, sua posição é enviada ao proxy do BusBus (que repassa a
+consulta ao serviço de dados de transporte de Belém) e ao Open-Meteo (previsão do tempo); se o GPS falhar, o
+ipapi.co estima um local aproximado pelo seu IP. O código do proxy não grava nada. O app não tem conta nem anúncios,
+não usa ferramentas de análise e não vende nem cede seus dados a terceiros pra outros fins. Favoritos, histórico de
+busca, tema, preferências e a última posição conhecida ficam só no seu aparelho. A política completa lista cada
+serviço e o que ele recebe.</div>
 <a class="licenseLink" href="${PRIVACY_URL}" target="_blank" style="display:inline-block;margin-top:8px;">Ver a política completa &rarr;</a>
 </div>
 <div class="aboutSection">
@@ -449,14 +405,6 @@ uma crítica a uma empresa ou pessoa específica: é uma crítica construtiva, f
 de transporte da cidade continuem melhorando. O app não cobra, não vai cobrar e não tem planos pagos escondidos —
 essa é uma promessa, não um período de teste.</div>
 </div>
-${SHOW_DONATION_OPTION ? `
-<div class="aboutSection">
-<div class="aboutTitle">Sobre as doações</div>
-<div class="aboutText">O botão "Apoie o projeto" (Pix ou cartão) é só isso: apoio voluntário, de quem quiser e puder. Nenhuma doação
-é necessária pra usar qualquer parte do app, hoje ou no futuro. O dinheiro recebido serve unicamente pra manter o
-BusBus funcionando e evoluindo — custos como manter o acesso aos dados, hospedagem e o tempo de desenvolvimento —
-nunca pra criar cobranças, assinaturas ou recursos trancados atrás de pagamento.</div>
-</div>` : ``}
 <div class="aboutSection">
 <div class="aboutTitle">Um app que nunca para de melhorar</div>
 <div class="aboutText">O BusBus é construído com a ideia de que ele nunca vai estar realmente "pronto". Sempre vai
@@ -482,16 +430,10 @@ export const LICENSE_ITEMS = [
 { name: "Open-Meteo", icon: favicon("open-meteo.com"), url: "https://open-meteo.com", desc: "Previsão do tempo gratuita e sem necessidade de cadastro, usada no widget de clima. Licença CC BY 4.0." },
 { name: "ipapi.co", icon: favicon("ipapi.co"), url: "https://ipapi.co", desc: "Estimativa de localização aproximada por IP, usada só quando o GPS falha ou é negado." },
 { name: "Prefeitura de Belém / SEGBEL", icon: favicon("belem.pa.gov.br"), url: "https://seguranca.belem.pa.gov.br/linhas/", desc: "As listas de ruas de \"Ruas da linha\" vêm dos itinerários oficiais publicados pela Prefeitura de Belém, através da Segbel (Segurança, Ordem Pública e Mobilidade)." },
-{ name: "Buy Me a Coffee", icon: favicon("buymeacoffee.com"), url: "https://buymeacoffee.com", desc: "Processa as doações voluntárias feitas por cartão dentro do app." },
 ];
 
 export function openLicensesModal(){
-// No build nativo (Android), o Buy Me a Coffee não é usado em lugar nenhum
-// do app (ver SHOW_DONATION_OPTION) — então nem faz sentido creditar aqui.
-const visibleLicenseItems = SHOW_DONATION_OPTION
-? LICENSE_ITEMS
-: LICENSE_ITEMS.filter(it => it.name !== "Buy Me a Coffee");
-const items = visibleLicenseItems.map(it => `
+const items = LICENSE_ITEMS.map(it => `
 <div class="licenseItem">
 <img class="licenseLogo" src="${it.icon}" alt="" onerror="this.style.display='none'">
 <div class="licenseBody">

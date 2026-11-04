@@ -6,44 +6,16 @@
 Rastreamento de ônibus em tempo real para Belém (PA) — de graça, sem anúncios, sem conta.
 
 [![Licença: GPLv3](https://img.shields.io/badge/licença-GPLv3-146B49?style=flat-square)](./LICENSE)
-[![Plataforma: Android](https://img.shields.io/badge/plataforma-Android-146B49?style=flat-square)](#)
-[![Plataforma: iPhone (web)](https://img.shields.io/badge/plataforma-iPhone%20(web)-146B49?style=flat-square)](#-testar-no-iphone-ou-em-qualquer-navegador)
+[![Plataforma: Android](https://img.shields.io/badge/plataforma-Android-146B49?style=flat-square)](#-instalação)
+[![Plataforma: iPhone (web)](https://img.shields.io/badge/plataforma-iPhone%20(web)-146B49?style=flat-square)](#-instalação)
 [![Feito em Belém](https://img.shields.io/badge/feito%20em-Belém%20(PA)-146B49?style=flat-square)](#)
-[![Código com apoio de IA](https://img.shields.io/badge/código-com%20apoio%20de%20IA-146B49?style=flat-square)](#-feito-com-apoio-de-ia)
+[![Código com apoio de IA](https://img.shields.io/badge/código-com%20apoio%20de%20IA-146B49?style=flat-square)](#-feito-com-apoio-de-ia-vibe-coding)
 
 ![BusBus](./hero.png)
 
 </div>
 
 BusBus é um projeto pessoal e independente, feito por [rilclesaraiva](https://github.com/rilclesaraiva). Não tem vínculo com nenhuma operadora de transporte ou órgão público — existe pelo direito de quem mora e trabalha em Belém de saber quando o próximo ônibus chega.
-
-> 🤖 O código deste projeto foi escrito com apoio de ferramentas de IA, sob direção e revisão de rilclesaraiva. Mais detalhes [aqui embaixo](#-feito-com-apoio-de-ia).
-
-## 📲 Testar no iPhone (ou em qualquer navegador)
-
-O app originalmente roda como Android (APK), mas a mesma versão também está publicada como site, então dá pra usar — e instalar — em qualquer aparelho com navegador, iPhone incluído:
-
-**🔗 [bus-bus-qdmb.vercel.app](https://bus-bus-qdmb.vercel.app)**
-
-Pra instalar no iPhone como se fosse um app (ícone na tela, tela cheia, sem barra do navegador):
-1. Abra o link acima no **Safari** (precisa ser o Safari, não funciona por outro navegador no iOS)
-2. Toque no ícone de compartilhar (o quadrado com a seta pra cima)
-3. Escolha **"Adicionar à Tela de Início"**
-
-> ⚠️ Essa versão web está em fase de teste — pode receber atualizações frequentes e o link pode mudar conforme o projeto evolui.
-
-## ✨ O que o app faz
-
-| | |
-|---|---|
-| 🗺️ **Mapa ao vivo** | Paradas, linhas e veículos em tempo real, com sua localização GPS |
-| 🚶 **Rotas a pé** | Até a parada mais próxima, com raio de busca ajustável |
-| 🛣️ **Itinerário oficial das linhas** | Mais de 160 linhas já com o trajeto oficial (Prefeitura de Belém / SEGBEL) cadastrado — mostra as ruas na hora, sem depender de estimativa por geocodificação |
-| 🌤️ **Clima integrado** | Previsão do tempo (Open-Meteo) direto no mapa |
-| ⭐ **Favoritos e histórico** | Suas paradas e buscas mais usadas, salvas só no seu aparelho |
-| 🎨 **Temas** | Claro, escuro e AMOLED (preto puro, economiza bateria) |
-| 🔔 **Avisos do sistema** | Comunicados mantidos pela equipe do BusBus |
-| 💚 **Apoio opcional** | Pix ou cartão (débito/crédito internacional) — nunca obrigatório |
 
 ## 📱 Capturas de tela
 
@@ -62,28 +34,18 @@ Pra instalar no iPhone como se fosse um app (ícone na tela, tela cheia, sem bar
 </table>
 </div>
 
-## 📦 O que tem no repositório
+## ✨ O que o app faz
 
-```
-BusBus/
-├── src/
-│   ├── app.js              # ponto de entrada
-│   ├── styles.css
-│   └── modules/             # mapa, GPS, busca, paradas, planejador de rota,
-│                            # itinerários oficiais das linhas, ajustes etc.
-├── public/                  # ícones, manifest.json (PWA) e service worker
-├── test/                     # testes automatizados (Vitest)
-├── worker.js                 # proxy em Cloudflare Workers que protege a API
-│                              # de dados de transporte e serve a política de
-│                              # privacidade
-├── wrangler.toml              # configuração de deploy do Worker
-├── vite.config.js
-└── LICENSE
-```
-
-O código-fonte é organizado em módulos (pasta `src/`), mas o build (`vite build`, com `vite-plugin-singlefile`) continua gerando um único arquivo HTML autocontido no final — é esse arquivo que vira o app Android via AppMint, e é o mesmo que está publicado como site (seção acima, "Testar no iPhone").
-
-Pra ver o que mudou em cada versão, tem o [CHANGELOG.md](./CHANGELOG.md).
+| | |
+|---|---|
+| 🗺️ **Mapa ao vivo** | Paradas, linhas e veículos em tempo real, com sua localização GPS |
+| 🚶 **Rotas a pé** | Até a parada mais próxima, com raio de busca ajustável |
+| 🛣️ **Itinerário oficial das linhas** | 163 linhas já com o trajeto oficial (Prefeitura de Belém / SEGBEL) cadastrado — mostra as ruas na hora, sem depender de estimativa por geocodificação |
+| 🌤️ **Clima integrado** | Previsão do tempo (Open-Meteo) direto no mapa |
+| ⭐ **Favoritos e histórico** | Suas paradas e buscas mais usadas, salvas só no seu aparelho |
+| 🎨 **Temas** | Claro, escuro e AMOLED (preto puro, economiza bateria) |
+| 🔔 **Avisos do sistema** | Comunicados mantidos pelo desenvolvedor |
+| 🔄 **Aviso de atualização** | No Android, o app confere sozinho, ao abrir, se há versão nova |
 
 ## ⚙️ Como funciona
 
@@ -101,33 +63,89 @@ O BusBus é construído sobre serviços gratuitos e de código aberto. A lista c
 <img src="./licencas.png" width="220">
 </div>
 
-- [OpenStreetMap](https://www.openstreetmap.org) — mapas e geocodificação (ODbL)
+- [OpenStreetMap](https://www.openstreetmap.org) — mapas e geocodificação, via Nominatim (ODbL)
+- [Photon (Komoot)](https://photon.komoot.io) — busca de endereço enquanto você digita (dados do OpenStreetMap, ODbL)
 - [Leaflet](https://leafletjs.com) — biblioteca de mapa interativo (BSD-2-Clause)
 - [Open-Meteo](https://open-meteo.com) — previsão do tempo (CC BY 4.0)
 - [ipapi.co](https://ipapi.co) — localização aproximada por IP (fallback)
 
-## 🔒 Privacidade
+## 🔒 Privacidade e permissões
 
-Sua localização é usada só no seu aparelho, em tempo real, pra desenhar o mapa — nunca é enviada, guardada ou compartilhada em nenhum servidor nosso. Leia a [política de privacidade completa](https://busbus.saraivarilcle.workers.dev/privacy).
+O app pede permissão de localização só pra mostrar as paradas e ônibus mais próximos de você. Pra isso, sua posição é enviada ao proxy do BusBus (que repassa a consulta ao serviço de dados de transporte de Belém) e ao Open-Meteo (previsão do tempo); se o GPS falhar, o ipapi.co estima um local aproximado pelo seu IP. O código do proxy não grava nada. Não tem conta, anúncios nem ferramentas de análise, e favoritos, histórico e preferências ficam só no seu aparelho. A [política de privacidade](https://busbus.saraivarilcle.workers.dev/privacy) lista cada serviço e o que ele recebe.
 
-## 🤖 Feito com apoio de IA
+## 🤖 Feito com apoio de IA ("vibe coding")
 
-O código do BusBus — o app (pasta `src/`), o proxy (`worker.js`) e os próprios materiais deste repositório — foi escrito com apoio de ferramentas de IA. Cada funcionalidade, correção e decisão de design parte de rilclesaraiva, que dirige, revisa e testa tudo antes de publicar; nada aqui é gerado e colocado no ar sem revisão. É assim que um projeto pessoal e independente, sem equipe por trás, consegue entregar um app deste tamanho.
+Por transparência: **o BusBus é desenvolvido com uso intenso de IA.**
+A maior parte do código é escrita pelo [Claude](https://claude.ai) (Anthropic)
+sob a direção do mantenedor, um jeito de trabalhar conhecido como *vibe coding*.
+O cuidado é para que isso não vire código descartável:
 
-O cuidado pra manter o BusBus polido e livre de problemas é constante, mas, como em qualquer software, alguma coisa pode passar despercebida — principalmente numa fase inicial de testes com poucos usuários. Encontrou algo estranho? Abra uma [issue](https://github.com/rilclesaraiva/BusBus/issues) ou mande um e-mail (contato abaixo).
+- **O mantenedor decide, a IA executa.** Toda funcionalidade parte de uma
+  necessidade real, e cada versão é testada em aparelhos Android reais.
+- **Regras escritas que a IA precisa seguir.** O [`CLAUDE.md`](CLAUDE.md) define
+  arquitetura, limites de privacidade e processo, e é atualizado a cada decisão.
+- **Testes e builds automáticos.** Toda mudança passa pelo GitHub Actions,
+  e teste falhando significa build barrado.
+- **Nenhum release sem aprovação.** Nada é publicado sem a aprovação
+  explícita do mantenedor.
+- **Changelog honesto.** O [`CHANGELOG.md`](CHANGELOG.md) diz o que mudou,
+  inclusive o que ainda está com problema.
 
-## ☕ Apoie o projeto
+Se código feito com IA é uma preocupação para você, agora você sabe, e pode ler
+cada linha. Encontrou algo descuidado? [Abra uma issue](https://github.com/rilclesaraiva/BusBus/issues).
 
-O BusBus é mantido de graça, sem anúncios e sem conta — e vai continuar assim. Se quiser ajudar a manter o projeto no ar (custos de acesso aos dados, hospedagem, tempo de desenvolvimento), dá pra contribuir por Pix ou cartão através do [buymeacoffee.com/saraivarilcle](https://buymeacoffee.com/saraivarilcle). Totalmente opcional — nenhuma parte do app depende disso pra funcionar, hoje ou no futuro.
+## 📥 Instalação
+
+**Android:** baixe o APK mais recente na página de [Releases](https://github.com/rilclesaraiva/BusBus/releases) e instale (o Android pode pedir pra permitir instalar apps de fora da loja). Depois disso, o app avisa sozinho quando sair versão nova.
+
+**iPhone (ou qualquer navegador):** a mesma versão está publicada como site e dá pra instalar como app:
+
+**🔗 [bus-bus-qdmb.vercel.app](https://bus-bus-qdmb.vercel.app)**
+
+1. Abra o link acima no **Safari** (precisa ser o Safari, não funciona por outro navegador no iOS)
+2. Toque no ícone de compartilhar (o quadrado com a seta pra cima)
+3. Escolha **"Adicionar à Tela de Início"**
+
+> ⚠️ A versão web está em fase de teste — pode receber atualizações frequentes e o link pode mudar conforme o projeto evolui.
+
+### O que tem no repositório
+
+```
+BusBus/
+├── src/
+│   ├── app.js              # ponto de entrada
+│   ├── styles.css
+│   └── modules/             # mapa, GPS, busca, paradas, planejador de rota,
+│                            # itinerários oficiais das linhas, ajustes etc.
+├── public/                  # ícones, manifest.json (PWA) e service worker
+├── android/                 # projeto Android nativo (Capacitor) que empacota o site
+├── test/                    # testes automatizados (Vitest)
+├── worker.js                # proxy em Cloudflare Workers que protege a API
+│                            # de dados de transporte e serve a política de
+│                            # privacidade
+├── wrangler.toml            # configuração de deploy do Worker
+├── .github/workflows/ci.yml # testes, build do APK e publicação de versões
+├── CLAUDE.md                # regras que a IA segue neste projeto
+├── CHANGELOG.md
+├── vite.config.js
+└── LICENSE
+```
+
+O código-fonte é organizado em módulos (pasta `src/`), mas o build (`vite build`, com `vite-plugin-singlefile`) gera um único arquivo HTML autocontido — é esse arquivo que vira o app Android (empacotado pelo Capacitor na pasta `android/`) e é o mesmo que está publicado como site.
 
 ## 📄 Licença
 
 Este projeto é distribuído sob a [GNU General Public License v3.0](./LICENSE). Isso significa que qualquer cópia, modificação ou redistribuição — inclusive como app publicado — precisa continuar com o código aberto, sob a mesma licença.
 
-## ✉️ Contato
+## 📑 Documentos legais
 
-Dúvidas, sugestões ou problemas: [saraivarilcle@gmail.com](mailto:saraivarilcle@gmail.com)
+- [Política de privacidade](https://busbus.saraivarilcle.workers.dev/privacy)
 
----
+## ☕ Apoie o projeto
 
-<div align="center"><sub>Feito com carinho por <b>rilclesaraiva</b> — BusBus · dados em tempo real de Belém</sub></div>
+O BusBus é gratuito e mantido de forma independente. Se ele é útil para
+você, dá para apoiar o desenvolvimento com um café:
+
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-apoiar-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/saraivarilcle)
+
+**Contato:** [saraivarilcle@gmail.com](mailto:saraivarilcle@gmail.com)

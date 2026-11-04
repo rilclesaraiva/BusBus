@@ -123,7 +123,7 @@ import {
 } from "./modules/trip-planner.js";
 import {
   setRadius, setTheme, setMapTheme, setUpdateSnoozeDays,
-  closeModal, openSupportModal, copyPixCode, openLicensesModal, openPrivacyModal,
+  closeModal, openLicensesModal, openPrivacyModal,
   checkForUpdate, checkForUpdateOnStartup, confirmDownloadUpdate, dismissUpdateModal,
 } from "./modules/settings.js";
 import { saveRotationEnabled } from "./modules/state.js";
@@ -145,7 +145,7 @@ Object.assign(window, {
   planTrip, useMyLocationForTrip, handleTripGeo, selectTripGeo, selectTripResult, clearTripField,
   resetTripMapOrientation,
   setRadius, saveRotationEnabled, setTheme, setMapTheme, setUpdateSnoozeDays,
-  closeModal, openSupportModal, copyPixCode, openLicensesModal, openPrivacyModal,
+  closeModal, openLicensesModal, openPrivacyModal,
   checkForUpdate, confirmDownloadUpdate, dismissUpdateModal,
   confirmExitApp,
 });

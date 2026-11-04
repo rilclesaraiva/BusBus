@@ -13,3 +13,11 @@ dist/
 # Arquivos de sistema operacional / editor que não têm nada a ver com o
 # projeto em si.
 .DS_Store
+
+# Chaves e segredos de assinatura do Android — nunca vão pro Git (o CI recria
+# release.p12 e keystore.properties só durante o build, a partir dos Secrets).
+*.p12
+*.jks
+*.keystore
+keystore.properties
+*-github-secrets.txt
