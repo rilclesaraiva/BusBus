@@ -5,6 +5,9 @@
   "plugins": {
     "StatusBar": {
       "overlaysWebView": false
+    },
+    "SystemBars": {
+      "initialViewportFitValueHint": "cover"
     }
   }
 }

@@ -7,9 +7,9 @@ Formato livremente inspirado em [Keep a Changelog](https://keepachangelog.com/pt
 ## [Unreleased]
 
 ### Corrigido
-- **Tela dava um "pulo" ao abrir o app pela primeira vez**: a status bar era configurada tarde, depois da primeira imagem. Agora o `capacitor.config.json` já pede `overlaysWebView: false` quando o plugin carrega, e a chamada saiu pro começo de `setupNativeIntegrations`.
+- **Tela dava um "pulo" ao abrir o app pela primeira vez**: o `SystemBars` do Capacitor começava sem saber que a página usa `viewport-fit=cover` (descobria só depois de carregar) e reajustava a janela. Agora `initialViewportFitValueHint: "cover"` no `capacitor.config.json` já entrega isso desde o início. (Uma primeira tentativa, `StatusBar.overlaysWebView`, não resolveu; fica como reforço.)
 - **Setinhas de sentido não cobrem mais paradas, ônibus nem a bolinha de localização**: ficam num painel próprio do Leaflet, abaixo de todos os marcadores.
-- **Bolinha azul sobre uma parada**: o toque passa pra parada (que agora dá pra abrir) e a bolinha fica levemente transparente enquanto coincide com ela.
+- **Bolinha azul sobre uma parada**: o toque passa pra parada (que agora dá pra abrir) e a bolinha fica levemente transparente (70%) enquanto está sobre ela.
 
 ### Adicionado
 - **Termos de Uso** (`docs/terms.md`, no GitHub Pages), linkados no README e na tela de privacidade do app. Informações de terceiros podem estar erradas, sem garantia, independente da Prefeitura/SEGBEL.

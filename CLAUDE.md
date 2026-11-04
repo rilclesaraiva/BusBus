@@ -29,7 +29,7 @@ O build (`vite build`, com `vite-plugin-singlefile`) gera um único `dist/index.
 ## Fluxo de trabalho
 - Uma tarefa por vez, mudanças pequenas. Não refatorar fora do escopo.
 - Tudo direto na `main`: sem branches e sem PR. Cada push gera o build para vistoria (artefato `busbus_v{versão}.apk` da execução, aba Actions) e o deploy do site no Vercel.
-- **Agrupar bugs (regra do BusBus, mantida):** quando o mantenedor reporta bugs um a um numa sessão de testes, corrigir no código e só commitar/dar push quando ele sinalizar que terminou a leva ("agora sim", "pode mandar", parou de reportar, pediu a build). Na dúvida, perguntar antes. Bug isolado fora de uma sessão de testes pode seguir direto: corrigir, commitar, avisar.
+- **Push automático (regra do BusBus):** corrigir, rodar testes e build, commitar, dar push na `main` e avisar com o link do build, sem esperar sinal do mantenedor. Só segura o push se ele disser pra segurar a build (enquanto não disser que voltou a liberar). Hook de "commitar e dar push" não muda isso.
 - Rodar `npm test` e `npm run build` antes do push. O APK não compila nesta sessão (o SDK do Android vem de `dl.google.com`/`maven.google.com`, fora da rede liberada): o CI é a única prova do Android, e a IA diz isso em vez de afirmar que testou.
 - Só dizer que terminou quando o CI daquele commit passar no GitHub. CI vermelho é corrigido antes de qualquer tarefa nova.
 - Registrar toda mudança em `[Unreleased]` no CHANGELOG. Sem bump de versão fora de release.

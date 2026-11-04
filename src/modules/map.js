@@ -139,7 +139,7 @@ btn.classList.toggle("off", Math.abs(bearing % 360) < 0.5);
 }
 
 // Bolinha azul do usuário fica levemente transparente quando está em cima de
-// uma parada (distância em pixels menor que a soma dos raios dos dois ícones),
+// uma parada (centro da bolinha a menos de 16px do centro da parada),
 // pra parada continuar visível. O toque já passa direto (interactive:false).
 export function updateUserMarkerOverlap(){
 if(!leafletMap || !userMarker) return;
@@ -148,9 +148,9 @@ const u = leafletMap.latLngToContainerPoint(userMarker.getLatLng());
 const over = state.stops.some(s => {
 if(!s.lat || !s.lng) return false;
 const p = leafletMap.latLngToContainerPoint([s.lat, s.lng]);
-return Math.hypot(p.x - u.x, p.y - u.y) < 21;
+return Math.hypot(p.x - u.x, p.y - u.y) < 16;
 });
-userMarker.setOpacity(over ? 0.45 : 1);
+userMarker.setOpacity(over ? 0.7 : 1);
 }catch(e){ /* mapa em transição: tenta de novo no próximo evento */ }
 }
 
