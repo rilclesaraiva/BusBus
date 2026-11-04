@@ -16,7 +16,7 @@ BusBus — rastreamento de ônibus em tempo real para Belém (PA), publicado com
 - Mapa: projeto existente, mantém os nomes que já tem — código em `src/modules/` (módulos planos: mapa, GPS, busca, paradas, planejador, ajustes…), entrada em `src/app.js`, dados oficiais de itinerário em `src/modules/itinerarios.js`. Sem reestruturar pastas sem pedido do mantenedor.
 - Versão: campo `"version"` do `package.json` (fonte única; injetado no build por `vite.config.js` e lido no CI por `VERSION_CMD`)
 - Release: automático pelo CI quando a versão é nova e tem seção no CHANGELOG (ver Release) → `busbus_v{versão}.apk` na Release do GitHub
-- Pacote Android: `com.busbus.app`, fixo · R8 ainda desligado (`minifyEnabled false`); o documento manda ligar, sem ofuscação (`-dontobfuscate`) — pendente, em rodada própria com vistoria no aparelho
+- Pacote Android: `com.busbus.app`, fixo · R8 ligado sem ofuscação (`minifyEnabled true` + `-dontobfuscate`, regras do Capacitor em `proguard-rules.pro`); aguardando vistoria no aparelho
 - Ícone: `public/icon-*.png` e `android/app/src/main/res/mipmap-*`; só muda se o mantenedor pedir
 
 ## Arquitetura
@@ -84,5 +84,5 @@ O build (`vite build`, com `vite-plugin-singlefile`) gera um único `dist/index.
 ## Contexto atual
 - Foco: alinhamento ao documento de estrutura (feito em `[Unreleased]`, sem versão nova; a próxima versão só com "confirmo release vX.Y.Z").
 - Ida à Play Store: pausada por tempo indeterminado (talvez cancelada). Existe app criado no Play Console, sem ficha completa.
-- Pendências do documento: R8 ligado sem ofuscação (rodada própria, com vistoria no aparelho). AAB fora do escopo enquanto a Play estiver pausada.
+- Pendências do documento: vistoria do R8 no aparelho (CI só prova que compila). AAB fora do escopo enquanto a Play estiver pausada.
 - Problemas conhecidos: nenhum registrado.

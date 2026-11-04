@@ -60,7 +60,8 @@ android {
             if (hasKeystoreProperties) {
                 signingConfig signingConfigs.release
             }
-            minifyEnabled false
+            // R8 ligado (encolhe e otimiza), mas sem ofuscar: ver proguard-rules.pro
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
