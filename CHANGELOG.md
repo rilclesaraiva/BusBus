@@ -12,7 +12,7 @@ Formato livremente inspirado em [Keep a Changelog](https://keepachangelog.com/pt
 - **Bolinha azul sobre uma parada**: o toque passa pra parada (que agora dá pra abrir) e a bolinha fica levemente transparente (70%) enquanto está sobre ela.
 
 ### Adicionado
-- **Termos de Uso** (`docs/terms.md`, no GitHub Pages), linkados no README e na tela de privacidade do app. Informações de terceiros podem estar erradas, sem garantia, independente da Prefeitura/SEGBEL.
+- **Termos de Uso** (`docs/terms.md`, no GitHub Pages), linkados no README e na seção Legal dos Ajustes do app. Informações de terceiros podem estar erradas, sem garantia, independente da Prefeitura/SEGBEL.
 - `docs/` com `_config.yml` e `index.md` pro GitHub Pages (branch `main`, pasta `/docs`).
 
 ### Removido

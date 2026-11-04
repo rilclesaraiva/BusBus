@@ -62,7 +62,7 @@ O build (`vite build`, com `vite-plugin-singlefile`) gera um único `dist/index.
 
 ## Projeto público
 - Política de privacidade e termos de uso: `docs/privacy.md` e `docs/terms.md`, publicados no GitHub Pages (`https://rilclesaraiva.github.io/BusBus/privacy` e `/terms`; Settings → Pages → branch `main`, pasta `/docs`). Linkados no README e na seção Legal dos Ajustes do app (`settings.js`, constantes `PRIVACY_URL`/`TERMS_URL`), que abrem a página do GitHub Pages direto, sem modal de política dentro do app. O Worker só redireciona `/privacy` e `/terms` pra lá (links de versões antigas do app); esse redirect só vale depois do deploy manual do Worker.
-- Coleta nova (SDK, permissão, chamada de rede, cookie) → atualizar a política (`docs/privacy.md`), o resumo no app e o README no mesmo commit.
+- Coleta nova (SDK, permissão, chamada de rede, cookie) → atualizar a política (`docs/privacy.md`) e o README no mesmo commit (o app só linka a página, não tem resumo próprio).
 - Nenhuma afirmação sem respaldo: o que README, política e loja dizem precisa ser verdade no código. Antes de reescrever a política, fazer o inventário a partir do código (permissões, bibliotecas de terceiros, chamadas de rede, armazenamento local). Na dúvida, não afirmar.
 
 ## Apoio e contato
