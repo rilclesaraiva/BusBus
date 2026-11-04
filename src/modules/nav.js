@@ -8,7 +8,7 @@ import { destroyLeafletMap } from "./map.js";
 import { destroyTripMap, renderRouteScreen, savedRouteScrollY, saveRouteScroll } from "./trip-planner.js";
 import { stopPolling, stopLinesPolling, startLinesPolling, fetchLinesForStop, renderStopsScreenStructure, savedStopsScrollY, savedLinesScrollY, renderLines, saveStopsScroll } from "./stops.js";
 import { renderSearchScreen, setPendingSearchScrollRestore, saveSearchScroll } from "./search.js";
-import { renderConfigScreen, closeModal, savedConfigScrollY, saveConfigScroll } from "./settings.js";
+import { renderConfigScreen, renderAboutScreen, closeModal, savedConfigScrollY, saveConfigScroll } from "./settings.js";
 import { renderMessagesScreen } from "./messages.js";
 import { startGpsTracking } from "./gps.js";
 
@@ -133,6 +133,8 @@ destroyLeafletMap(); renderConfigScreen();
 if(savedConfigScrollY){
 requestAnimationFrame(() => window.scrollTo(0, savedConfigScrollY));
 }
+} else if(label === "about"){
+destroyLeafletMap(); renderAboutScreen();
 } else if(label === "messages"){
 destroyLeafletMap(); renderMessagesScreen();
 } else {
@@ -231,6 +233,9 @@ renderRouteScreen();
 if(savedRouteScrollY){
 requestAnimationFrame(() => window.scrollTo(0, savedRouteScrollY));
 }
+} else if(tab === 'about') {
+destroyLeafletMap();
+renderAboutScreen();
 } else if(tab === 'messages') {
 destroyLeafletMap();
 renderMessagesScreen();

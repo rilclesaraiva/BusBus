@@ -59,15 +59,6 @@ const mapThemeOptions = [
 const mapThemeBtns = mapThemeOptions.map(t => `
 <button class="radioBtn ${state.mapTheme === t.id ? 'selected' : ''}" onclick="setMapTheme('${t.id}')">${t.label}</button>
 `).join("");
-const updateSnoozeOptions = [
-{ days: 0, label: "Nunca" },
-{ days: 1, label: "1 dia" },
-{ days: 3, label: "3 dias" },
-{ days: 7, label: "1 semana" },
-];
-const updateSnoozeBtns = updateSnoozeOptions.map(o => `
-<button class="radioBtn ${state.updateSnoozeDays === o.days ? 'selected' : ''}" onclick="setUpdateSnoozeDays(${o.days})">${o.label}</button>
-`).join("");
 render(`
 <section>
 <div class="settingsTitle">Ajustes</div>
@@ -115,6 +106,38 @@ Ativar rotação do mapa (padrão: desligado)
 </div>
 </div>
 </div>
+<div class="sectionLabel">Sobre</div>
+<div class="settingsGroup">
+<div class="settingsRow link" onclick="navTo('about')">
+<div class="settingsIcon">${shieldIcon}</div>
+<div class="rowBody">
+<div class="rowTitle">Sobre o BusBus</div>
+<div class="rowDesc">Versão, atualizações, código-fonte, licenças e informações legais.</div>
+</div>
+<div class="chev">›</div>
+</div>
+</div>
+</section>
+`);
+}
+
+// Tela "Sobre": abre a partir dos Ajustes (navTo('about')), com botão voltar.
+export function renderAboutScreen(){
+destroyLeafletMap();
+state.view = "about";
+updateHeaderAndNav("about");
+el("subtitle").textContent = "Sobre";
+const updateSnoozeOptions = [
+{ days: 0, label: "Nunca" },
+{ days: 1, label: "1 dia" },
+{ days: 3, label: "3 dias" },
+{ days: 7, label: "1 semana" },
+];
+const updateSnoozeBtns = updateSnoozeOptions.map(o => `
+<button class="radioBtn ${state.updateSnoozeDays === o.days ? 'selected' : ''}" onclick="setUpdateSnoozeDays(${o.days})">${o.label}</button>
+`).join("");
+render(`
+<section>
 <div class="aboutHero">
 <img class="aboutHeroIcon" src="./icon-192.png" alt="" onerror="this.style.display='none'">
 <div class="aboutHeroName">BusBus</div>
@@ -194,14 +217,6 @@ ${IS_NATIVE ? `
 </div>
 <div class="chev">›</div>
 </div>
-<div class="settingsRow link" onclick="openAboutModal()">
-<div class="settingsIcon">${shieldIcon}</div>
-<div class="rowBody">
-<div class="rowTitle">Sobre o BusBus</div>
-<div class="rowDesc">Nossa promessa, como o app evolui e o apoio de IA</div>
-</div>
-<div class="chev">›</div>
-</div>
 </div>
 <div class="sectionLabel">Legal</div>
 <div class="settingsGroup">
@@ -240,7 +255,7 @@ export function setUpdateSnoozeDays(days){
 if(!ALLOWED_UPDATE_SNOOZE_DAYS.includes(days)) return;
 state.updateSnoozeDays = days;
 try{ localStorage.setItem("busbus_update_snooze_days", String(days)); }catch(e){}
-renderConfigScreen();
+renderAboutScreen();
 }
 
 export function setRadius(r){
@@ -451,36 +466,6 @@ closeModal();
 export function confirmDownloadUpdate(){
 if(pendingUpdateDownloadUrl) window.open(pendingUpdateDownloadUrl, "_blank");
 closeModal();
-}
-
-export function openAboutModal(){
-openModal(`
-<div class="modalHead"><h3>Sobre o BusBus</h3><button class="modalClose" onclick="closeModal()">✕</button></div>
-<div class="aboutSection">
-<div class="aboutTitle">O BusBus nunca vai cobrar nada</div>
-<div class="aboutText">O BusBus existe pelo bem-estar de quem trabalha e de quem mora em Belém — motoristas, cobradores,
-passageiros, pedestres — e pelo direito de todo mundo saber quando o próximo ônibus chega. Não é, e nunca será,
-uma crítica a uma empresa ou pessoa específica: é uma crítica construtiva, feita na esperança de que os sistemas
-de transporte da cidade continuem melhorando. O app não cobra, não vai cobrar e não tem planos pagos escondidos —
-essa é uma promessa, não um período de teste.</div>
-</div>
-<div class="aboutSection">
-<div class="aboutTitle">Um app que nunca para de melhorar</div>
-<div class="aboutText">O BusBus é construído com a ideia de que ele nunca vai estar realmente "pronto". Sempre vai
-existir uma versão melhor possível — mais rápida, mais precisa, mais acessível — e é atrás dela que o
-desenvolvimento continua, por mais perto que a gente chegue. Esse estado perfeito é inatingível de propósito: é o
-que garante que o app continue sendo cuidado e atualizado, em vez de parar no "bom o suficiente".</div>
-</div>
-<div class="aboutSection" style="border-bottom:none;">
-<div class="aboutTitle">Feito com apoio de inteligência artificial</div>
-<div class="aboutText">O código do BusBus foi escrito com apoio de ferramentas de IA, sob a direção de
-rilclesaraiva — cada funcionalidade, ajuste e correção parte de uma decisão sua, não de algo gerado sozinho e
-publicado sem revisão. É assim que um projeto pessoal e independente consegue entregar um app deste tamanho sem
-uma equipe por trás. O cuidado pra deixar tudo o mais polido e livre de problemas possível é constante — e, como
-em qualquer software, alguma coisa pode passar despercebida. Encontrou algo estranho? Conta pra gente em
-<a class="licenseLink" href="mailto:saraivarilcle@gmail.com">saraivarilcle@gmail.com</a>.</div>
-</div>
-`);
 }
 
 export const LICENSE_ITEMS = [
