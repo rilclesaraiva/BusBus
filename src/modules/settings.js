@@ -7,7 +7,7 @@ import { el, render, isOfflineError } from "./utils.js";
 import { updateHeaderAndNav } from "./nav.js";
 import {
   paletteIcon, locIcon, rotateSettingIcon, mapThemeIcon, githubIcon,
-  licenseIcon, shieldIcon, heartIcon, favicon, osmLogoDataUri, updateIcon,
+  licenseIcon, shieldIcon, heartIcon, favicon, osmLogoDataUri, updateIcon, bugIcon, docIcon,
 } from "./icons.js";
 import { destroyLeafletMap, leafletMap } from "./map.js";
 import { initLeafletMapOnce } from "./map.js";
@@ -115,7 +115,13 @@ Ativar rotação do mapa (padrão: desligado)
 </div>
 </div>
 </div>
-<div class="sectionLabel">Sobre</div>
+<div class="aboutHero">
+<img class="aboutHeroIcon" src="./icon-192.png" alt="" onerror="this.style.display='none'">
+<div class="aboutHeroName">BusBus</div>
+<div class="aboutBadges"><span class="aboutBadge">v${APP_VERSION}</span><span class="aboutBadge">${IS_NATIVE ? "Android" : "Site"}</span></div>
+<div class="aboutHeroDesc">Rastreamento de ônibus em tempo real para Belém. Gratuito, sem anúncios e sem conta. Feito no Brasil, com auxílio de IA, sob direção e revisão do autor.</div>
+</div>
+<div class="sectionLabel">Atualizações</div>
 <div class="settingsGroup">
 <div class="settingsRow link" onclick="checkForUpdate()">
 <div class="settingsIcon">${updateIcon}</div>
@@ -134,11 +140,49 @@ ${IS_NATIVE ? `
 <div class="rowControl radioGroup">${updateSnoozeBtns}</div>
 </div>
 </div>` : ``}
+</div>
+<div class="sectionLabel">Desenvolvedor</div>
+<div class="settingsGroup">
+<div class="settingsRow link" onclick="window.open('${GITHUB_PROFILE_URL}', '_blank')">
+<div class="settingsIcon">${heartIcon}</div>
+<div class="rowBody">
+<div class="rowTitle">rilclesaraiva</div>
+<div class="rowDesc">Feito no Brasil · github.com/rilclesaraiva</div>
+</div>
+<div class="chev">›</div>
+</div>
+</div>
+<div class="sectionLabel">Projeto</div>
+<div class="settingsGroup">
 <div class="settingsRow link" onclick="window.open('${GITHUB_URL}', '_blank')">
 <div class="settingsIcon">${githubIcon}</div>
 <div class="rowBody">
-<div class="rowTitle">Código-fonte no GitHub</div>
-<div class="rowDesc">Quer apoiar o projeto? Entre no repositório do projeto.</div>
+<div class="rowTitle">Código-fonte</div>
+<div class="rowDesc">github.com/rilclesaraiva/BusBus</div>
+</div>
+<div class="chev">›</div>
+</div>
+<div class="settingsRow link" onclick="window.open('${RELEASES_PAGE_URL}', '_blank')">
+<div class="settingsIcon">${updateIcon}</div>
+<div class="rowBody">
+<div class="rowTitle">Novidades</div>
+<div class="rowDesc">Cada versão e o que mudou nela</div>
+</div>
+<div class="chev">›</div>
+</div>
+<div class="settingsRow link" onclick="window.open('${GITHUB_URL}/issues', '_blank')">
+<div class="settingsIcon">${bugIcon}</div>
+<div class="rowBody">
+<div class="rowTitle">Reportar um problema</div>
+<div class="rowDesc">Achou um erro ou teve uma ideia? Abra uma issue</div>
+</div>
+<div class="chev">›</div>
+</div>
+<div class="settingsRow link" onclick="window.open('${GITHUB_URL}/blob/main/LICENSE', '_blank')">
+<div class="settingsIcon">${licenseIcon}</div>
+<div class="rowBody">
+<div class="rowTitle">Licença</div>
+<div class="rowDesc">GNU GPL v3: livre para usar, estudar, modificar e compartilhar</div>
 </div>
 <div class="chev">›</div>
 </div>
@@ -150,20 +194,43 @@ ${IS_NATIVE ? `
 </div>
 <div class="chev">›</div>
 </div>
-<div class="settingsRow link" onclick="openPrivacyModal()">
+<div class="settingsRow link" onclick="openAboutModal()">
 <div class="settingsIcon">${shieldIcon}</div>
 <div class="rowBody">
-<div class="rowTitle">Política de Privacidade</div>
-<div class="rowDesc">O que o BusBus faz e não faz com seus dados.</div>
+<div class="rowTitle">Sobre o BusBus</div>
+<div class="rowDesc">Nossa promessa, como o app evolui e o apoio de IA</div>
 </div>
 <div class="chev">›</div>
 </div>
 </div>
-<div class="settingsFooter">
-${heartIcon}<br>
-Feito com carinho por <a class="footerAuthorLink" href="${GITHUB_PROFILE_URL}" target="_blank" rel="noopener"><b>rilclesaraiva</b></a><br>
-BusBus · dados em tempo real de Belém · v${APP_VERSION}<br>
-<span style="opacity:.75;">Código escrito com apoio de IA · <span class="licenseLink" style="cursor:pointer;" onclick="openPrivacyModal()">saiba mais</span></span>
+<div class="sectionLabel">Legal</div>
+<div class="settingsGroup">
+<div class="settingsRow link" onclick="window.open('${PRIVACY_URL}', '_blank')">
+<div class="settingsIcon">${shieldIcon}</div>
+<div class="rowBody">
+<div class="rowTitle">Política de privacidade</div>
+<div class="rowDesc">O que o app faz com as informações, por completo</div>
+</div>
+<div class="chev">›</div>
+</div>
+<div class="settingsRow link" onclick="window.open('${TERMS_URL}', '_blank')">
+<div class="settingsIcon">${docIcon}</div>
+<div class="rowBody">
+<div class="rowTitle">Termos de uso</div>
+<div class="rowDesc">As regras para usar o app</div>
+</div>
+<div class="chev">›</div>
+</div>
+</div>
+<div class="settingsGroup">
+<div class="settingsRow link" onclick="window.open('${GITHUB_URL}', '_blank')">
+<div class="settingsIcon">${heartIcon}</div>
+<div class="rowBody">
+<div class="rowTitle">Quer apoiar o projeto?</div>
+<div class="rowDesc">Entre no repositório do projeto.</div>
+</div>
+<div class="chev">›</div>
+</div>
 </div>
 </section>
 `);
@@ -386,21 +453,9 @@ if(pendingUpdateDownloadUrl) window.open(pendingUpdateDownloadUrl, "_blank");
 closeModal();
 }
 
-export function openPrivacyModal(){
+export function openAboutModal(){
 openModal(`
-<div class="modalHead"><h3>Política de Privacidade</h3><button class="modalClose" onclick="closeModal()">✕</button></div>
-<div class="aboutSection">
-<div class="aboutTitle">Privacidade e dados</div>
-<div class="aboutText">O BusBus pede permissão de localização só pra mostrar as paradas e ônibus mais próximos de
-você e calcular distâncias — essa é a única razão. Pra isso, sua posição é enviada ao proxy do BusBus (que repassa a
-consulta ao serviço de dados de transporte de Belém) e ao Open-Meteo (previsão do tempo); se o GPS falhar, o
-ipapi.co estima um local aproximado pelo seu IP. O código do proxy não grava nada. O app não tem conta nem anúncios,
-não usa ferramentas de análise e não vende nem cede seus dados a terceiros pra outros fins. Favoritos, histórico de
-busca, tema, preferências e a última posição conhecida ficam só no seu aparelho. A política completa lista cada
-serviço e o que ele recebe.</div>
-<a class="licenseLink" href="${PRIVACY_URL}" target="_blank" style="display:inline-block;margin-top:8px;">Ver a política completa &rarr;</a><br>
-<a class="licenseLink" href="${TERMS_URL}" target="_blank" style="display:inline-block;margin-top:8px;">Termos de uso &rarr;</a>
-</div>
+<div class="modalHead"><h3>Sobre o BusBus</h3><button class="modalClose" onclick="closeModal()">✕</button></div>
 <div class="aboutSection">
 <div class="aboutTitle">O BusBus nunca vai cobrar nada</div>
 <div class="aboutText">O BusBus existe pelo bem-estar de quem trabalha e de quem mora em Belém — motoristas, cobradores,
