@@ -89,7 +89,11 @@ className: 'user-pin-marker',
 html: `<div style="width:18px;height:18px;background:#2563eb;border:3px solid #ffffff;border-radius:50%;box-shadow:0 0 10px rgba(37,99,235,0.7);"></div>`,
 iconSize: [18, 18], iconAnchor: [9, 9]
 });
-userMarker = L.marker(center, { icon: userSvgIcon }).addTo(leafletMap);
+// interactive:false deixa o toque passar pra parada que estiver embaixo;
+// zIndexOffset alto mantém a bolinha sempre acima das paradas (que ficam
+// semitransparente só quando coincidem, ver updateUserMarkerOverlap).
+userMarker = L.marker(center, { icon: userSvgIcon, interactive: false, keyboard: false, zIndexOffset: 100000 }).addTo(leafletMap);
+leafletMap.on('zoomend moveend', updateUserMarkerOverlap);
 stopMarkersGroup = L.layerGroup().addTo(leafletMap);
 if(state.stops.length > 0) updateStopMarkersOnMap();
 }
@@ -99,6 +103,7 @@ try{
 if(!leafletMap && state.view === "stops") initLeafletMapOnce();
 if(userMarker && state.coord){
 userMarker.setLatLng([state.coord.lat, state.coord.lng]);
+updateUserMarkerOverlap();
 if(!initialCenterSet && leafletMap){
 leafletMap.setView([state.coord.lat, state.coord.lng], 16);
 if(state.locSource === "GPS Vivo") initialCenterSet = true;
@@ -133,6 +138,22 @@ if(svg) svg.style.transform = `rotate(${-bearing}deg)`;
 btn.classList.toggle("off", Math.abs(bearing % 360) < 0.5);
 }
 
+// Bolinha azul do usuário fica levemente transparente quando está em cima de
+// uma parada (distância em pixels menor que a soma dos raios dos dois ícones),
+// pra parada continuar visível. O toque já passa direto (interactive:false).
+export function updateUserMarkerOverlap(){
+if(!leafletMap || !userMarker) return;
+try{
+const u = leafletMap.latLngToContainerPoint(userMarker.getLatLng());
+const over = state.stops.some(s => {
+if(!s.lat || !s.lng) return false;
+const p = leafletMap.latLngToContainerPoint([s.lat, s.lng]);
+return Math.hypot(p.x - u.x, p.y - u.y) < 21;
+});
+userMarker.setOpacity(over ? 0.45 : 1);
+}catch(e){ /* mapa em transição: tenta de novo no próximo evento */ }
+}
+
 export function updateStopMarkersOnMap(){
 if(!stopMarkersGroup) return;
 stopMarkersGroup.clearLayers();
@@ -150,6 +171,7 @@ marker.on('click', () => selectStop(s.id));
 stopMarkersGroup.addLayer(marker);
 }
 });
+updateUserMarkerOverlap();
 }
 
 export function focusStopOnMap(lat, lng){
@@ -180,6 +202,10 @@ addBaseMapLayers(leafletMap);
 // stops.js) — faltava ligar esse mapa (GPS ao vivo de uma linha) ao
 // evento de rotação, por isso o botão não reagia nem aparecia certo aqui.
 leafletMap.on('rotate', () => updateCompassIcon());
+// Setinhas de sentido ficam num painel próprio, acima do traçado (overlayPane,
+// 400) e ABAIXO de todos os marcadores (markerPane, 600): assim nunca cobrem
+// parada, ônibus nem a bolinha de localização, qualquer que seja a latitude.
+leafletMap.createPane("arrowPane").style.zIndex = 450;
 busMarkersGroup = L.layerGroup().addTo(leafletMap);
 // Zera o rastreamento de marcadores de ônibus (busMarkersByPlate, em
 // stops.js) toda vez que uma tela de GPS de linha nova é montada — sem
@@ -311,7 +337,7 @@ iconSize: [12, 12], iconAnchor: [6, 6]
 });
 // interactive/keyboard desligados: são só indicação visual, não devem
 // roubar cliques das paradas nem entrar na ordem de tabulação
-return L.marker([lat, lng], { icon: arrowIcon, interactive: false, keyboard: false });
+return L.marker([lat, lng], { icon: arrowIcon, interactive: false, keyboard: false, pane: "arrowPane" });
 }
 
 export function fitMapToBusAndStop(){

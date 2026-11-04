@@ -53,6 +53,17 @@ let capacitorApp = null;
 export async function setupNativeIntegrations(){
 if(!Capacitor.isNativePlatform()) return;
 
+// A status bar vem primeiro: ela muda a área do WebView, e quanto mais tarde
+// isso acontece, mais tarde a tela "pula" pro lugar certo na abertura. O
+// capacitor.config.json já pede overlaysWebView:false no carregamento do
+// plugin (antes da página aparecer); esta chamada é só o reforço.
+try{
+const { StatusBar } = await import("@capacitor/status-bar");
+await StatusBar.setOverlaysWebView({ overlay: false });
+}catch(e){
+console.error("[BusBus] falha ao configurar a status bar nativa:", e);
+}
+
 try{
 const { App } = await import("@capacitor/app");
 capacitorApp = App;
@@ -95,13 +106,6 @@ openModal(`
 });
 }catch(e){
 console.error("[BusBus] falha ao configurar o botão voltar nativo:", e);
-}
-
-try{
-const { StatusBar } = await import("@capacitor/status-bar");
-await StatusBar.setOverlaysWebView({ overlay: false });
-}catch(e){
-console.error("[BusBus] falha ao configurar a status bar nativa:", e);
 }
 }
 
