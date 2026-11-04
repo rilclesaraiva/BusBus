@@ -137,7 +137,7 @@ const updateSnoozeBtns = updateSnoozeOptions.map(o => `
 <button class="radioBtn ${state.updateSnoozeDays === o.days ? 'selected' : ''}" onclick="setUpdateSnoozeDays(${o.days})">${o.label}</button>
 `).join("");
 render(`
-<section>
+<section class="aboutScreen">
 <div class="aboutHero">
 <img class="aboutHeroIcon" src="./icon-192.png" alt="" onerror="this.style.display='none'">
 <div class="aboutHeroName">BusBus</div>
@@ -198,14 +198,6 @@ ${IS_NATIVE ? `
 <div class="rowBody">
 <div class="rowTitle">Reportar um problema</div>
 <div class="rowDesc">Achou um erro ou teve uma ideia? Abra uma issue</div>
-</div>
-<div class="chev">›</div>
-</div>
-<div class="settingsRow link" onclick="window.open('${GITHUB_URL}/blob/main/LICENSE', '_blank')">
-<div class="settingsIcon">${licenseIcon}</div>
-<div class="rowBody">
-<div class="rowTitle">Licença</div>
-<div class="rowDesc">GNU GPL v3: livre para usar, estudar, modificar e compartilhar</div>
 </div>
 <div class="chev">›</div>
 </div>
@@ -489,6 +481,13 @@ const items = LICENSE_ITEMS.map(it => `
 openModal(`
 <div class="modalHead"><h3>Licenças &amp; Atribuições</h3><button class="modalClose" onclick="closeModal()">✕</button></div>
 <div class="aboutText" style="margin-bottom:10px;">O BusBus é feito com a ajuda de serviços e bibliotecas de terceiros, gratuitos e abertos. O devido crédito vai todo pra eles:</div>
+<div class="licenseItem">
+<div class="licenseBody">
+<div class="licenseTitle">BusBus</div>
+<div class="licenseDesc">Código aberto sob a GNU GPL v3: livre para usar, estudar, modificar e compartilhar.</div>
+<a class="licenseLink" href="${GITHUB_URL}/blob/main/LICENSE" target="_blank">${GITHUB_URL}/blob/main/LICENSE</a>
+</div>
+</div>
 <div class="licenseItem">
 <div class="licenseBody">
 <div class="licenseTitle">Dados de transporte em tempo real</div>

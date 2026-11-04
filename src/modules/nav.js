@@ -236,6 +236,7 @@ requestAnimationFrame(() => window.scrollTo(0, savedRouteScrollY));
 } else if(tab === 'about') {
 destroyLeafletMap();
 renderAboutScreen();
+window.scrollTo(0, 0); // abre sempre no topo, não na rolagem que os Ajustes tinham
 } else if(tab === 'messages') {
 destroyLeafletMap();
 renderMessagesScreen();

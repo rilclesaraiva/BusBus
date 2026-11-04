@@ -7,6 +7,7 @@ Formato livremente inspirado em [Keep a Changelog](https://keepachangelog.com/pt
 ## [Unreleased]
 
 ### Corrigido
+- **Tela Sobre**: abre sempre no topo (antes herdava a rolagem dos Ajustes); sem o espaço vazio no fim da página (reservado à barra de baixo, que ali fica escondida); e a linha "Licença" saiu, porque duplicava "Licenças & Atribuições" — a licença GPL v3 do BusBus agora é o primeiro item desse modal.
 - **Tela dava um "pulo" ao abrir o app pela primeira vez**: o `SystemBars` do Capacitor começava sem saber que a página usa `viewport-fit=cover` (descobria só depois de carregar) e reajustava a janela. Agora `initialViewportFitValueHint: "cover"` no `capacitor.config.json` já entrega isso desde o início. (Uma primeira tentativa, `StatusBar.overlaysWebView`, não resolveu; fica como reforço.)
 - **Setinhas de sentido não cobrem mais paradas, ônibus nem a bolinha de localização**: ficam num painel próprio do Leaflet, abaixo de todos os marcadores.
 - **Bolinha azul sobre uma parada**: o toque passa pra parada (que agora dá pra abrir) e a bolinha fica levemente transparente (70%) enquanto está sobre ela.
