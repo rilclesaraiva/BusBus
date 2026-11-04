@@ -20,7 +20,7 @@ BusBus — rastreamento de ônibus em tempo real para Belém (PA), publicado com
 - Ícone: `public/icon-*.png` e `android/app/src/main/res/mipmap-*`; só muda se o mantenedor pedir
 
 ## Arquitetura
-O build (`vite build`, com `vite-plugin-singlefile`) gera um único `dist/index.html` autocontido. Esse arquivo é o site (deploy automático no Vercel a cada push na `main`) e também o que o Capacitor empacota no APK. `worker.js` / `wrangler.toml` são o proxy em Cloudflare Workers que esconde a API real de dados de transporte e serve a política de privacidade (`/privacy`); o deploy do Worker é manual, feito pelo mantenedor. Linhas fora do acervo de `itinerarios.js` caem no modo antigo (geocodificação reversa ao vivo) em `trip-planner.js`.
+O build (`vite build`, com `vite-plugin-singlefile`) gera um único `dist/index.html` autocontido. Esse arquivo é o site (deploy automático no Vercel a cada push na `main`) e também o que o Capacitor empacota no APK. `worker.js` / `wrangler.toml` são o proxy em Cloudflare Workers que esconde a API real de dados de transporte e redireciona `/privacy` e `/terms` pras páginas legais; o deploy do Worker é manual, feito pelo mantenedor. Linhas fora do acervo de `itinerarios.js` caem no modo antigo (geocodificação reversa ao vivo) em `trip-planner.js`.
 
 ## Regras de estrutura
 - Seguir as convenções do projeto existente. Nenhuma dependência nova sem justificar.
@@ -61,8 +61,8 @@ O build (`vite build`, com `vite-plugin-singlefile`) gera um único `dist/index.
 - O README sempre tem a seção de transparência sobre IA. Nunca remover.
 
 ## Projeto público
-- Política de privacidade: texto em `worker.js` (servida em `https://busbus.saraivarilcle.workers.dev/privacy`), resumo no app (`openPrivacyModal`, em `settings.js`) e no README. Páginas legais em `docs/` (GitHub Pages) e termos de uso ainda não existem; por ora a política fica no Worker, que já está linkado no README e no app.
-- Coleta nova (SDK, permissão, chamada de rede, cookie) → atualizar a política (`worker.js`), o resumo no app e o README no mesmo commit. O texto do Worker só vai ao ar quando o mantenedor faz um novo deploy do Worker.
+- Política de privacidade e termos de uso: `docs/privacy.md` e `docs/terms.md`, publicados no GitHub Pages (`https://rilclesaraiva.github.io/BusBus/privacy` e `/terms`; Settings → Pages → branch `main`, pasta `/docs`). Linkados no README e no app (`openPrivacyModal`, em `settings.js`, constantes `PRIVACY_URL`/`TERMS_URL`). O Worker só redireciona `/privacy` e `/terms` pra lá (links de versões antigas do app); esse redirect só vale depois do deploy manual do Worker.
+- Coleta nova (SDK, permissão, chamada de rede, cookie) → atualizar a política (`docs/privacy.md`), o resumo no app e o README no mesmo commit.
 - Nenhuma afirmação sem respaldo: o que README, política e loja dizem precisa ser verdade no código. Antes de reescrever a política, fazer o inventário a partir do código (permissões, bibliotecas de terceiros, chamadas de rede, armazenamento local). Na dúvida, não afirmar.
 
 ## Apoio e contato
@@ -84,5 +84,5 @@ O build (`vite build`, com `vite-plugin-singlefile`) gera um único `dist/index.
 ## Contexto atual
 - Foco: alinhamento ao documento de estrutura (feito em `[Unreleased]`, sem versão nova; a próxima versão só com "confirmo release vX.Y.Z").
 - Ida à Play Store: pausada por tempo indeterminado (talvez cancelada). Existe app criado no Play Console, sem ficha completa.
-- Pendências do documento: R8 ligado sem ofuscação; termos de uso e páginas legais em `docs/` (só se o projeto for pra loja); AAB só se a Play for retomada; definir onde ficam os segredos.
+- Pendências do documento: R8 ligado sem ofuscação; AAB só se a Play for retomada; definir onde ficam os segredos.
 - Problemas conhecidos: nenhum registrado.

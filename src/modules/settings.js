@@ -250,7 +250,10 @@ export const GITHUB_URL = "https://github.com/rilclesaraiva/BusBus";
 
 export const GITHUB_PROFILE_URL = "https://github.com/rilclesaraiva";
 
-export const PRIVACY_URL = "https://busbus.saraivarilcle.workers.dev/privacy";
+// Páginas legais: ficam em docs/ e são publicadas no GitHub Pages.
+export const PRIVACY_URL = "https://rilclesaraiva.github.io/BusBus/privacy";
+
+export const TERMS_URL = "https://rilclesaraiva.github.io/BusBus/terms";
 
 export const RELEASES_API_URL = "https://api.github.com/repos/rilclesaraiva/BusBus/releases/latest";
 
@@ -395,7 +398,8 @@ ipapi.co estima um local aproximado pelo seu IP. O código do proxy não grava n
 não usa ferramentas de análise e não vende nem cede seus dados a terceiros pra outros fins. Favoritos, histórico de
 busca, tema, preferências e a última posição conhecida ficam só no seu aparelho. A política completa lista cada
 serviço e o que ele recebe.</div>
-<a class="licenseLink" href="${PRIVACY_URL}" target="_blank" style="display:inline-block;margin-top:8px;">Ver a política completa &rarr;</a>
+<a class="licenseLink" href="${PRIVACY_URL}" target="_blank" style="display:inline-block;margin-top:8px;">Ver a política completa &rarr;</a><br>
+<a class="licenseLink" href="${TERMS_URL}" target="_blank" style="display:inline-block;margin-top:8px;">Termos de uso &rarr;</a>
 </div>
 <div class="aboutSection">
 <div class="aboutTitle">O BusBus nunca vai cobrar nada</div>

@@ -52,7 +52,7 @@ BusBus é um projeto pessoal e independente, feito por [rilclesaraiva](https://g
 O app nunca fala direto com a API de dados de transporte. Todas as chamadas passam por um proxy próprio em Cloudflare Workers (`worker.js`), que:
 
 - Esconde o endereço real da API (guardado como *Secret* no painel do Cloudflare, nunca neste repositório);
-- Serve a [política de privacidade](https://busbus.saraivarilcle.workers.dev/privacy) do app;
+- Redireciona os links antigos da política de privacidade para a página atual (as páginas legais ficam em `docs/`, no GitHub Pages);
 - Faz cache curto (5s) na borda da Cloudflare pra aliviar a carga na API de origem sem deixar os dados desatualizados.
 
 ## 🙏 Dados e serviços de terceiros
@@ -71,7 +71,7 @@ O BusBus é construído sobre serviços gratuitos e de código aberto. A lista c
 
 ## 🔒 Privacidade e permissões
 
-O app pede permissão de localização só pra mostrar as paradas e ônibus mais próximos de você. Pra isso, sua posição é enviada ao proxy do BusBus (que repassa a consulta ao serviço de dados de transporte de Belém) e ao Open-Meteo (previsão do tempo); se o GPS falhar, o ipapi.co estima um local aproximado pelo seu IP. O código do proxy não grava nada. Não tem conta, anúncios nem ferramentas de análise, e favoritos, histórico e preferências ficam só no seu aparelho. A [política de privacidade](https://busbus.saraivarilcle.workers.dev/privacy) lista cada serviço e o que ele recebe.
+O app pede permissão de localização só pra mostrar as paradas e ônibus mais próximos de você. Pra isso, sua posição é enviada ao proxy do BusBus (que repassa a consulta ao serviço de dados de transporte de Belém) e ao Open-Meteo (previsão do tempo); se o GPS falhar, o ipapi.co estima um local aproximado pelo seu IP. O código do proxy não grava nada. Não tem conta, anúncios nem ferramentas de análise, e favoritos, histórico e preferências ficam só no seu aparelho. A [política de privacidade](https://rilclesaraiva.github.io/BusBus/privacy) lista cada serviço e o que ele recebe.
 
 ## 🤖 Feito com apoio de IA ("vibe coding")
 
@@ -139,7 +139,8 @@ Este projeto é distribuído sob a [GNU General Public License v3.0](./LICENSE).
 
 ## 📑 Documentos legais
 
-- [Política de privacidade](https://busbus.saraivarilcle.workers.dev/privacy)
+- [Política de privacidade](https://rilclesaraiva.github.io/BusBus/privacy)
+- [Termos de uso](https://rilclesaraiva.github.io/BusBus/terms)
 
 ## ☕ Apoie o projeto
 
