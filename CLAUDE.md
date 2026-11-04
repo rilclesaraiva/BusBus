@@ -8,7 +8,7 @@ BusBus — rastreamento de ônibus em tempo real para Belém (PA), publicado com
 ## Mantenedor
 - Nome: rilclesaraiva (usuário do GitHub) · Contato: saraivarilcle@gmail.com
 - Apoio: https://buymeacoffee.com/saraivarilcle · Licença: GPL-3.0
-- Segredos ficam em: a definir pelo mantenedor (sugestão: pasta privada na nuvem ou gerenciador de senhas)
+- Segredos ficam em: Google Drive do mantenedor (pasta privada). A IA nunca lê nem guarda o conteúdo.
 
 ## Stack
 - Stack: Vite + JavaScript (módulos ES) + Leaflet; no Android, empacotado com Capacitor (`android/`).
@@ -84,5 +84,5 @@ O build (`vite build`, com `vite-plugin-singlefile`) gera um único `dist/index.
 ## Contexto atual
 - Foco: alinhamento ao documento de estrutura (feito em `[Unreleased]`, sem versão nova; a próxima versão só com "confirmo release vX.Y.Z").
 - Ida à Play Store: pausada por tempo indeterminado (talvez cancelada). Existe app criado no Play Console, sem ficha completa.
-- Pendências do documento: R8 ligado sem ofuscação; AAB só se a Play for retomada; definir onde ficam os segredos.
+- Pendências do documento: R8 ligado sem ofuscação (rodada própria, com vistoria no aparelho). AAB fora do escopo enquanto a Play estiver pausada.
 - Problemas conhecidos: nenhum registrado.
