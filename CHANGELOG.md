@@ -15,6 +15,7 @@ Formato livremente inspirado em [Keep a Changelog](https://keepachangelog.com/pt
 - **Bolinha azul sobre uma parada**: o toque passa pra parada (que agora dá pra abrir) e a bolinha fica levemente transparente (70%) enquanto está sobre ela.
 
 ### Adicionado
+- **Aviso de atualização no modelo do BoomListener** (só no app Android): painel em tela cheia com as notas da Release (o texto do CHANGELOG), botão "Baixar", "Agora não" (vale só até abrir o app de novo, não grava nada) e um sino com "Não avisar por uma semana", "Não avisar por um mês" e "Pular esta versão". Depois de a pessoa responder, o aviso não volta na mesma sessão. A checagem roda ao abrir o app e ao voltar pra ele (no máximo a cada 10 min); a última Release fica guardada e aparece na hora, antes da consulta, e o ETag guardado faz o GitHub responder 304, que não gasta o limite da API. Em Sobre → Atualizações, "Avisos de atualização" mostra se estão pausados ou pulando uma versão e permite voltar ao normal. "Verificar atualizações" continua, ignora pausa e pulo e abre o mesmo painel.
 - **"Seguir ônibus" também desliga ao arrastar o mapa** (GPS ao vivo de uma linha e acompanhar um trecho da rota), como o seguimento da Home; só o botão liga de novo (ele fica aceso enquanto está seguindo).
 - **Mapa da Home acompanha você enquanto anda**, como o Google Maps: a cada novo GPS o mapa se move junto, sem mexer no zoom. Ao arrastar o mapa com o dedo, o seguimento desliga; ele só volta ao apertar o botão de localização (que fica aceso enquanto está seguindo). Ver uma parada no mapa também desliga o seguimento.
 - **Reordenar as paradas favoritas**: três barrinhas no fim de cada favorito; segure a alça por um instante (cerca de 0,3 s) e arraste para mudar a ordem; só passar o dedo por cima não move nada e a rolagem da página continua funcionando. A ordem fica salva no aparelho e continua depois de fechar o app.
@@ -22,6 +23,7 @@ Formato livremente inspirado em [Keep a Changelog](https://keepachangelog.com/pt
 - `docs/` com `_config.yml` e `index.md` pro GitHub Pages (branch `main`, pasta `/docs`).
 
 ### Removido
+- **Ajuste "Avisar sobre atualização" (Nunca/1 dia/3 dias/1 semana)**: substituído pelo "Agora não" e pelo sino do novo painel.
 - **"Apoie o projeto" (Pix e Buy Me a Coffee) saiu do app também no site/PWA**, não só do Android: modal, QR e código Pix, seção "Sobre as doações" na tela de privacidade e crédito do Buy Me a Coffee em "Licenças & Atribuições". O apoio financeiro fica só na seção "Apoie o projeto" do README, no GitHub. Saiu junto o `apoie.png` (print do modal do Pix).
 
 ### Alterado

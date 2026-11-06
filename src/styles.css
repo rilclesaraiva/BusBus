@@ -336,3 +336,31 @@ padding:4px 8px;font-size:10px;cursor:pointer;font-family:inherit;}
 .copyBtn:active{background:#334155;}
 .terminalBody{white-space:pre-wrap;word-break:break-all;max-height:140px;overflow-y:auto;
 color:#e2e8f0;line-height:1.4;}
+
+/* Painel de atualização em tela cheia (modelo do BoomListener) */
+.updateOverlay{position:fixed;inset:0;z-index:3500;background:var(--bg);}
+.updatePanel{position:absolute;inset:0;display:flex;flex-direction:column;color:var(--ink);}
+.updScroll{flex:1;overflow-y:auto;padding:calc(36px + env(safe-area-inset-top)) 24px 20px;}
+.updBadge{width:76px;height:76px;border-radius:50%;background:var(--ink);color:var(--bg);display:flex;align-items:center;justify-content:center;margin-bottom:22px;}
+.updTitle{margin:0 0 6px;font-size:30px;line-height:1.15;font-weight:800;}
+.updSub{color:var(--ink-soft);font-size:15px;margin-bottom:22px;}
+.updNotes{font-size:14.5px;line-height:1.55;}
+.updNotes h4{margin:20px 0 8px;font-size:17px;}
+.updNotes p{margin:0 0 10px;}
+.updNotes ul{margin:0 0 10px;padding-left:20px;}
+.updNotes li{margin-bottom:6px;}
+.updNotes code{font-family:monospace;font-size:13px;background:var(--line);padding:1px 5px;border-radius:5px;}
+.updNotes a{color:inherit;text-decoration:underline;}
+.updBar{display:flex;align-items:center;gap:10px;padding:14px 20px calc(14px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:var(--bg);}
+.updBtnPrimary,.updBtnGhost{flex:1;height:48px;border-radius:999px;font-size:15px;font-weight:700;cursor:pointer;}
+.updBtnPrimary{background:var(--ink);color:var(--bg);border:1px solid var(--ink);}
+.updBtnGhost{background:transparent;color:var(--ink);border:1px solid var(--line);}
+.updBellWrap{position:relative;}
+.updBell{width:48px;height:48px;border-radius:50%;background:transparent;color:var(--ink);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.updBellMenu{display:none;position:absolute;right:0;bottom:58px;min-width:230px;background:var(--bg);border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 28px rgba(0,0,0,.4);overflow:hidden;}
+.updBellMenu.open{display:block;}
+.updBellMenu button{display:block;width:100%;text-align:left;background:none;border:none;color:var(--ink);padding:14px 16px;font-size:14.5px;cursor:pointer;}
+.updBellMenu button+button{border-top:1px solid var(--line);}
+.noticeOpts{display:flex;flex-direction:column;gap:8px;}
+.noticeOpts button{background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:14px;font-size:14.5px;font-weight:600;cursor:pointer;text-align:left;}
+.noticeOpts button.cancel{text-align:center;color:var(--ink-soft);}

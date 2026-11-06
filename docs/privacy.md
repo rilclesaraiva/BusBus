@@ -6,7 +6,7 @@ permalink: /privacy
 
 # Política de Privacidade — BusBus
 
-Última atualização: 4 de novembro de 2026
+Última atualização: 5 de novembro de 2026
 
 O BusBus é um app gratuito e independente de rastreamento de ônibus de Belém (PA), feito por uma única pessoa (rilclesaraiva) como projeto pessoal. Esta página descreve, de forma direta, tudo o que o app envia pela rede e o que fica guardado no seu aparelho. O código do app e do proxy é aberto: [github.com/rilclesaraiva/BusBus](https://github.com/rilclesaraiva/BusBus).
 
@@ -21,13 +21,13 @@ O BusBus pede permissão de localização só pra mostrar no mapa as paradas e �
 - **ipapi.co:** só quando o GPS falha ou é negado e não há posição salva: recebe o seu IP pra estimar um local aproximado.
 - **OpenStreetMap, Photon (Komoot) e Nominatim:** o mapa é desenhado com imagens baixadas do servidor de mapas do OpenStreetMap, que vê o seu IP e a região do mapa que você está olhando. Na busca de endereços do planejador de rota, o texto que você digita (junto com um ponto fixo no centro de Belém, não a sua posição) vai pro Photon e pro Nominatim. O Nominatim também recebe pontos do traçado de algumas linhas (não a sua posição) pra descobrir nomes de ruas.
 - **Google (ícones):** ao abrir "Licenças & Atribuições", os pequenos logos de alguns serviços vêm do serviço de ícones de sites do Google, que recebe o seu IP e os endereços dos sites mostrados.
-- **GitHub (só no app Android):** ao abrir o app e quando você toca em "Verificar atualizações", o app consulta a API pública do GitHub pra saber se existe uma versão nova. O GitHub vê o seu IP.
+- **GitHub (só no app Android):** ao abrir o app, ao voltar pra ele (no máximo a cada 10 minutos) e quando você toca em "Verificar atualizações", o app consulta a API pública do GitHub pra saber se existe uma versão nova. O GitHub vê o seu IP.
 
 Cada um desses serviços trata os dados que recebe conforme a política dele. O BusBus não envia nome, e-mail nem qualquer identificador pessoal a nenhum deles.
 
 ## O que fica salvo no seu aparelho
 
-Paradas favoritas, histórico de busca, tema e outras preferências (raio de busca, mapa, aviso de atualização), a última posição conhecida e quais avisos você já viu ficam salvos apenas no seu aparelho, no armazenamento do próprio navegador ou app. Pra apagar tudo, limpe os dados do app ou desinstale.
+Paradas favoritas, histórico de busca, tema e outras preferências (raio de busca, mapa, aviso de atualização), a última posição conhecida, a última versão publicada que o app viu (com as notas) e quais avisos você já viu ficam salvos apenas no seu aparelho, no armazenamento do próprio navegador ou app. Pra apagar tudo, limpe os dados do app ou desinstale.
 
 ## O que o BusBus não faz
 

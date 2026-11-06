@@ -67,6 +67,9 @@ console.error("[BusBus] falha ao configurar a status bar nativa:", e);
 try{
 const { App } = await import("@capacitor/app");
 capacitorApp = App;
+App.addListener("appStateChange", ({ isActive }) => {
+if(isActive) import("./updates.js").then(({ onAppResume }) => onAppResume());
+});
 App.addListener("backButton", () => {
 if(document.getElementById("activeModal")){
 import("./settings.js").then(({ closeModal }) => closeModal());

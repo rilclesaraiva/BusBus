@@ -2,7 +2,7 @@
 // Copyright (C) 2026 rilclesaraiva — licenciado sob GNU GPLv3.
 // Texto completo: https://github.com/rilclesaraiva/BusBus/blob/main/LICENSE
 
-import { state, ALLOWED_RADII, ALLOWED_UPDATE_SNOOZE_DAYS, applyTheme, APP_VERSION } from "./state.js";
+import { state, ALLOWED_RADII, applyTheme, APP_VERSION } from "./state.js";
 import { el, render, isOfflineError } from "./utils.js";
 import { updateHeaderAndNav } from "./nav.js";
 import {
@@ -12,13 +12,14 @@ import {
 import { destroyLeafletMap, leafletMap } from "./map.js";
 import { initLeafletMapOnce } from "./map.js";
 import { fetchStopsSilent } from "./stops.js";
+import { noticesStatusText, clearNotices, setNoticePause, PAUSE_WEEK_MS, PAUSE_MONTH_MS } from "./updates.js";
 // Usado pra decidir se a checagem automática de atualização roda ao abrir o
 // app (ver IS_NATIVE e checkForUpdateOnStartup, mais abaixo) — no site/PWA a
 // atualização já é automática via Vercel, não faz sentido avisar sobre baixar
 // um APK lá.
 import { Capacitor } from "@capacitor/core";
 
-const IS_NATIVE = Capacitor.isNativePlatform();
+export const IS_NATIVE = Capacitor.isNativePlatform();
 
 // Posição de rolagem da aba de Ajustes — guardada ao sair dela (ver
 // saveConfigScroll/navTo/handlePopState em nav.js) e restaurada ao
@@ -127,15 +128,6 @@ destroyLeafletMap();
 state.view = "about";
 updateHeaderAndNav("about");
 el("subtitle").textContent = "Sobre";
-const updateSnoozeOptions = [
-{ days: 0, label: "Nunca" },
-{ days: 1, label: "1 dia" },
-{ days: 3, label: "3 dias" },
-{ days: 7, label: "1 semana" },
-];
-const updateSnoozeBtns = updateSnoozeOptions.map(o => `
-<button class="radioBtn ${state.updateSnoozeDays === o.days ? 'selected' : ''}" onclick="setUpdateSnoozeDays(${o.days})">${o.label}</button>
-`).join("");
 render(`
 <section class="aboutScreen">
 <div class="aboutHero">
@@ -155,13 +147,13 @@ render(`
 <div class="chev">›</div>
 </div>
 ${IS_NATIVE ? `
-<div class="settingsRow">
+<div class="settingsRow link" onclick="openNoticesDialog()">
 <div class="settingsIcon">${updateIcon}</div>
 <div class="rowBody">
-<div class="rowTitle">Avisar sobre atualização</div>
-<div class="rowDesc">O app confere sozinho, ao abrir, se tem uma versão nova. Escolha depois de quanto tempo lembrar de novo se você tocar em "Agora não" — ou desligue com "Nunca" (ainda dá pra checar na mão, no botão acima).</div>
-<div class="rowControl radioGroup">${updateSnoozeBtns}</div>
+<div class="rowTitle">Avisos de atualização</div>
+<div class="rowDesc" id="noticesStatus">${noticesStatusText()}</div>
 </div>
+<div class="chev">›</div>
 </div>` : ``}
 </div>
 <div class="sectionLabel">Desenvolvedor</div>
@@ -243,11 +235,26 @@ ${IS_NATIVE ? `
 `);
 }
 
-export function setUpdateSnoozeDays(days){
-if(!ALLOWED_UPDATE_SNOOZE_DAYS.includes(days)) return;
-state.updateSnoozeDays = days;
-try{ localStorage.setItem("busbus_update_snooze_days", String(days)); }catch(e){}
-renderAboutScreen();
+// Diálogo "Avisos de atualização" (Sobre → Atualizações).
+export function openNoticesDialog(){
+openModal(`
+<div class="modalHead"><h3>Avisos de atualização</h3><button class="modalClose" onclick="closeModal()">✕</button></div>
+<div class="noticeOpts">
+<button onclick="setNotices('normal')">Avisar normalmente</button>
+<button onclick="setNotices('week')">Não avisar por uma semana</button>
+<button onclick="setNotices('month')">Não avisar por um mês</button>
+<button class="cancel" onclick="closeModal()">Cancelar</button>
+</div>
+`);
+}
+
+export function setNotices(kind){
+if(kind === "normal") clearNotices();
+else if(kind === "week") setNoticePause(PAUSE_WEEK_MS);
+else if(kind === "month") setNoticePause(PAUSE_MONTH_MS);
+closeModal();
+const s = el("noticesStatus");
+if(s) s.textContent = noticesStatusText();
 }
 
 export function setRadius(r){
@@ -332,133 +339,6 @@ export const TERMS_URL = "https://rilclesaraiva.github.io/BusBus/terms";
 export const RELEASES_API_URL = "https://api.github.com/repos/rilclesaraiva/BusBus/releases/latest";
 
 export const RELEASES_PAGE_URL = `${GITHUB_URL}/releases`;
-
-// Compara duas versões "MAJOR.MINOR.PATCH" (sem o "v" na frente). Devolve
-// >0 se "a" é mais nova que "b", <0 se mais velha, 0 se igual. Pedaço
-// faltando ou não numérico conta como 0 (ex.: comparar com "dev", a versão
-// de desenvolvimento local, nunca trava a comparação).
-function compareSemver(a, b){
-const pa = String(a).split(".").map(n => parseInt(n, 10) || 0);
-const pb = String(b).split(".").map(n => parseInt(n, 10) || 0);
-for(let i = 0; i < 3; i++){
-const diff = (pa[i] || 0) - (pb[i] || 0);
-if(diff !== 0) return diff;
-}
-return 0;
-}
-
-// Busca a última Release no GitHub e já separa versão + APK anexado —
-// usado tanto pela checagem manual (checkForUpdate, botão em Ajustes)
-// quanto pela automática (checkForUpdateOnStartup, ao abrir o app). Deixa
-// pra quem chama decidir o que fazer com erro/resultado: a manual mostra
-// status na tela, a automática fica calada se der errado.
-async function fetchLatestApkRelease(){
-const res = await fetch(RELEASES_API_URL);
-if(!res.ok) throw new Error("GitHub releases respondeu " + res.status);
-const data = await res.json();
-const remoteVersion = String(data.tag_name || "").replace(/^v/i, "").trim();
-const apkAsset = (data.assets || []).find(a => /\.apk$/i.test(a.name || ""));
-return { remoteVersion, apkAsset };
-}
-
-// Fluxo "manual mas funcional" combinado com o rilclesaraiva: sem uma ponte
-// JS documentada pelo AppMint pra baixar/instalar/apagar arquivo (ver
-// conversa sobre isso), o app não consegue automatizar o download+instalação
-// — só pode levar a pessoa até o APK certo e deixar o Android cuidar do
-// resto (download nativo do navegador/WebView + abrir o instalador, ambos
-// fora do alcance do JS daqui).
-export async function checkForUpdate(){
-const statusEl = el("updateStatus");
-if(statusEl) statusEl.textContent = "Verificando se tem uma versão mais nova…";
-try{
-const { remoteVersion, apkAsset } = await fetchLatestApkRelease();
-if(!remoteVersion || !apkAsset){
-if(statusEl) statusEl.innerHTML = `Não encontrei um APK publicado na última versão. <a class="licenseLink" href="${RELEASES_PAGE_URL}" target="_blank" rel="noopener">Ver releases no GitHub &rarr;</a>`;
-return;
-}
-if(compareSemver(remoteVersion, APP_VERSION) > 0){
-if(statusEl) statusEl.textContent = `Nova versão v${remoteVersion} disponível (você está na v${APP_VERSION}).`;
-openUpdateAvailableModal(remoteVersion, apkAsset.browser_download_url);
-} else {
-if(statusEl) statusEl.textContent = `Você já está na versão mais recente (v${APP_VERSION}).`;
-}
-}catch(e){
-console.error("[BusBus] erro ao verificar atualização:", e);
-if(statusEl) statusEl.innerHTML = `Não consegui verificar agora${isOfflineError(e) ? " — você está sem conexão" : ""}. <a class="licenseLink" href="${RELEASES_PAGE_URL}" target="_blank" rel="noopener">Ver releases no GitHub &rarr;</a>`;
-}
-}
-
-// Checagem automática ao abrir o app — pedida pelo rilclesaraiva depois de
-// ver esse comportamento em outro app (Mihon/Tachiyomi). Só roda no Android
-// nativo (no site/PWA a atualização já é automática via Vercel, avisar
-// sobre baixar um APK não faz sentido lá — ver IS_NATIVE), e respeita tanto
-// o "Nunca" quanto o adiamento em Ajustes → "Avisar sobre atualização": se
-// a pessoa tocou "Agora não" há pouco tempo, fica calada até o prazo
-// escolhido passar. Silenciosa de propósito em qualquer erro — isso roda
-// sem ninguém ter pedido nada, não faz sentido incomodar com erro de rede
-// logo ao abrir o app (quem quiser saber o motivo, confere na mão em
-// Ajustes).
-export async function checkForUpdateOnStartup(){
-if(!IS_NATIVE) return;
-if(state.updateSnoozeDays === 0) return;
-try{
-const snoozedUntil = parseInt(localStorage.getItem("busbus_update_snoozed_until"), 10);
-if(snoozedUntil && Date.now() < snoozedUntil) return;
-}catch(e){}
-try{
-const { remoteVersion, apkAsset } = await fetchLatestApkRelease();
-if(remoteVersion && apkAsset && compareSemver(remoteVersion, APP_VERSION) > 0){
-openUpdateAvailableModal(remoteVersion, apkAsset.browser_download_url, { automatic: true });
-}
-}catch(e){
-console.error("[BusBus] checagem automática de atualização falhou (silenciosa de propósito):", e);
-}
-}
-
-// Guarda a URL do APK entre abrir o aviso e a pessoa tocar em "Baixar" —
-// mais simples que embutir a URL inteira (com barras, dois-pontos etc.)
-// dentro de um atributo onclick="" no HTML gerado.
-let pendingUpdateDownloadUrl = null;
-
-// Antes o toque em "Verificar atualizações" já abria o download sozinho,
-// sem perguntar nada — o rilclesaraiva achou isso ruim (te joga pra fora do
-// app sem escolha). Agora só pergunta: a pessoa decide se quer ir buscar a
-// atualização agora ou deixar pra depois.
-//
-// "automatic" diz se esse aviso apareceu sozinho (checkForUpdateOnStartup)
-// ou foi pedido na mão (botão "Verificar atualizações") — só no primeiro
-// caso o "Agora não" aplica o adiamento escolhido em Ajustes (ver
-// dismissUpdateModal, abaixo): quem checou na mão já tá prestando atenção,
-// não faz sentido um adiamento de dias pra uma recusa feita ali na hora.
-let updateModalIsAutomatic = false;
-
-function openUpdateAvailableModal(version, downloadUrl, opts = {}){
-pendingUpdateDownloadUrl = downloadUrl;
-updateModalIsAutomatic = !!opts.automatic;
-openModal(`
-<div class="modalHead"><h3>Nova versão disponível</h3><button class="modalClose" onclick="dismissUpdateModal()">✕</button></div>
-<div class="aboutText" style="margin-bottom:18px;">A versão <b>v${version}</b> do BusBus já está disponível (você está na v${APP_VERSION}). Quer baixar agora? Depois de baixar, é só abrir o arquivo pra instalar.</div>
-<div class="modalBtnRow">
-<button class="modalBtnCancel" onclick="dismissUpdateModal()">Agora não</button>
-<button class="modalBtnConfirm" onclick="confirmDownloadUpdate()">Baixar</button>
-</div>
-`);
-}
-
-export function dismissUpdateModal(){
-if(updateModalIsAutomatic){
-try{
-const days = ALLOWED_UPDATE_SNOOZE_DAYS.includes(state.updateSnoozeDays) ? state.updateSnoozeDays : 3;
-localStorage.setItem("busbus_update_snoozed_until", String(Date.now() + days * 86400000));
-}catch(e){}
-}
-closeModal();
-}
-
-export function confirmDownloadUpdate(){
-if(pendingUpdateDownloadUrl) window.open(pendingUpdateDownloadUrl, "_blank");
-closeModal();
-}
 
 export const LICENSE_ITEMS = [
 { name: "OpenStreetMap", icon: osmLogoDataUri, url: "https://www.openstreetmap.org", desc: "Mapas e busca de endereços são fornecidos pelos colaboradores do OpenStreetMap, sob a licença Open Database License (ODbL)." },
