@@ -121,6 +121,15 @@ leafletMap.panTo([state.coord.lat, state.coord.lng], { animate: true, duration: 
 }catch(e){ console.error("[BusBus] mapa indisponível:", e); }
 }
 
+// Seguimento do ônibus (telas de GPS ao vivo de uma linha): mesmo
+// comportamento do seguimento do usuário na Home — arrastar o mapa desliga,
+// e só o botão "Seguir ônibus" liga de novo.
+export function setFollowBus(on){
+state.followBusEnabled = on;
+const btn = el("followBusBtn");
+if(btn) btn.classList.toggle("followActive", on);
+}
+
 // Liga/desliga o seguimento do usuário e acende o botão de localização
 // enquanto ele estiver ligado.
 let followPauseUntil = 0;
@@ -223,6 +232,9 @@ addBaseMapLayers(leafletMap);
 // stops.js) — faltava ligar esse mapa (GPS ao vivo de uma linha) ao
 // evento de rotação, por isso o botão não reagia nem aparecia certo aqui.
 leafletMap.on('rotate', () => updateCompassIcon());
+// Arrasto feito pela pessoa desliga o "Seguir ônibus" (os movimentos do
+// próprio app, flyToBounds/fitBounds, não disparam dragstart).
+leafletMap.on('dragstart', () => setFollowBus(false));
 // Setinhas de sentido ficam num painel próprio, acima do traçado (overlayPane,
 // 400) e ABAIXO de todos os marcadores (markerPane, 600): assim nunca cobrem
 // parada, ônibus nem a bolinha de localização, qualquer que seja a latitude.

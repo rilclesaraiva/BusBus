@@ -10,7 +10,7 @@ import { pinIcon, starIconFilled, starIconOutline, busIcon, gripIcon } from "./i
 import { getDepartureSchedule, fetchScheduledLinesAtStop } from "./api.js";
 import {
   destroyLeafletMap, initLeafletMapOnce, updateMapUserPosition, focusStopOnMap,
-  updateStopMarkersOnMap, initLineRouteMap, fitMapToBusAndStop,
+  updateStopMarkersOnMap, initLineRouteMap, fitMapToBusAndStop, setFollowBus,
   busMarkersGroup, leafletMap,
 } from "./map.js";
 // Importação circular de propósito: a navegação (voltar/avançar de aba)
@@ -503,9 +503,7 @@ ${state.rotationEnabled ? `
 }
 
 export function toggleFollowBus(){
-state.followBusEnabled = !state.followBusEnabled;
-const btn = el("followBusBtn");
-if(btn) btn.classList.toggle("followActive", state.followBusEnabled);
+setFollowBus(!state.followBusEnabled);
 if(state.followBusEnabled) fitMapToBusAndStop();
 }
 

@@ -15,6 +15,7 @@ Formato livremente inspirado em [Keep a Changelog](https://keepachangelog.com/pt
 - **Bolinha azul sobre uma parada**: o toque passa pra parada (que agora dá pra abrir) e a bolinha fica levemente transparente (70%) enquanto está sobre ela.
 
 ### Adicionado
+- **"Seguir ônibus" também desliga ao arrastar o mapa** (GPS ao vivo de uma linha e acompanhar um trecho da rota), como o seguimento da Home; só o botão liga de novo (ele fica aceso enquanto está seguindo).
 - **Mapa da Home acompanha você enquanto anda**, como o Google Maps: a cada novo GPS o mapa se move junto, sem mexer no zoom. Ao arrastar o mapa com o dedo, o seguimento desliga; ele só volta ao apertar o botão de localização (que fica aceso enquanto está seguindo). Ver uma parada no mapa também desliga o seguimento.
 - **Reordenar as paradas favoritas**: três barrinhas no fim de cada favorito; segure a alça por um instante (cerca de 0,3 s) e arraste para mudar a ordem; só passar o dedo por cima não move nada e a rolagem da página continua funcionando. A ordem fica salva no aparelho e continua depois de fechar o app.
 - **Termos de Uso** (`docs/terms.md`, no GitHub Pages), linkados no README e na seção Legal dos Ajustes do app. Informações de terceiros podem estar erradas, sem garantia, independente da Prefeitura/SEGBEL.
