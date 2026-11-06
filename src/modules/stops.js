@@ -101,7 +101,7 @@ render(`
 <div class="mapLoadingOverlay" id="mapLoadingOverlay">${mapLoadingHTML("Carregando mapa…")}</div>
 <div class="weatherChip" id="weatherChip" style="display:none;" onclick="toggleWeatherDetail()" title="Previsão do tempo"></div>
 <div class="mapBtnStack">
-<button class="mapBtn" id="locateBtn" onclick="recenterMap()" title="Ir para minha localização">
+<button class="mapBtn ${state.followUserEnabled ? 'followActive' : ''}" id="locateBtn" onclick="recenterMap()" title="Ir para minha localização">
 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
 </button>
 ${state.rotationEnabled ? `
@@ -184,11 +184,14 @@ try{ localStorage.setItem("busbus_favorites", JSON.stringify(state.favoriteStops
 // Só começa a arrastar depois de segurar a alça por FAV_HOLD_MS sem mexer
 // (passar o dedo ou o mouse por cima não move nada). Se o dedo andar mais
 // que FAV_HOLD_SLOP antes disso, é um gesto de rolagem comum e cancela.
+// Durante o arrasto NENHUM cartão muda de lugar no DOM (só transform): mexer
+// no DOM soltava o toque da alça e o arrasto morria quando o dedo saía dela.
+// A ordem no DOM só muda uma vez, ao soltar.
 const FAV_HOLD_MS = 280;
 const FAV_HOLD_SLOP = 10;
 let favDrag = null;
 function cancelFavHold(){
-if(favDrag && favDrag.timer){ clearTimeout(favDrag.timer); }
+if(favDrag && favDrag.timer) clearTimeout(favDrag.timer);
 if(favDrag && !favDrag.active) favDrag = null;
 }
 document.addEventListener("pointerdown", e => {
@@ -196,12 +199,18 @@ const handle = e.target.closest && e.target.closest(".dragHandle");
 if(!handle) return;
 const card = handle.closest(".favCard");
 if(!card) return;
-favDrag = { card, handle, id: e.pointerId, startY: e.clientY, startX: e.clientX, natTop: 0, active: false, timer: null };
+favDrag = { card, handle, id: e.pointerId, startY: e.clientY, startX: e.clientX, active: false, timer: null };
 const d = favDrag;
 d.timer = setTimeout(() => {
 if(favDrag !== d) return;
 d.active = true;
-d.natTop = card.getBoundingClientRect().top;
+d.cards = [...card.parentElement.querySelectorAll(".favCard")];
+d.from = d.cards.indexOf(card);
+d.rects = d.cards.map(c => { const r = c.getBoundingClientRect(); return { top: r.top, h: r.height }; });
+const mb = parseFloat(getComputedStyle(card).marginBottom) || 0;
+d.slot = d.rects[d.from].h + mb;
+d.to = d.from;
+d.cards.forEach(c => { if(c !== card) c.classList.add("favShift"); });
 card.classList.add("dragging");
 try{ handle.setPointerCapture(d.id); }catch(err){}
 }, FAV_HOLD_MS);
@@ -215,38 +224,35 @@ if(!d.active){
 if(Math.abs(e.clientY - d.startY) > FAV_HOLD_SLOP || Math.abs(e.clientX - d.startX) > FAV_HOLD_SLOP) cancelFavHold();
 return;
 }
-let dy = e.clientY - d.startY;
+const dy = e.clientY - d.startY;
 d.card.style.transform = `translateY(${dy}px)`;
-const center = () => { const r = d.card.getBoundingClientRect(); return r.top + r.height / 2; };
-const cards = () => [...d.card.parentElement.querySelectorAll(".favCard")];
-let moved = true;
-while(moved){
-moved = false;
-const list = cards();
-const i = list.indexOf(d.card);
-const next = list[i + 1], prev = list[i - 1];
-const c = center();
-const mid = el => { const r = el.getBoundingClientRect(); return r.top + r.height / 2; };
-if(next && c > mid(next)) { next.after(d.card); moved = true; }
-else if(prev && c < mid(prev)) { prev.before(d.card); moved = true; }
-if(moved){
-// o cartão mudou de lugar no layout: refaz o deslocamento pra ele continuar sob o dedo
-const newNat = d.card.getBoundingClientRect().top - dy;
-d.startY += newNat - d.natTop;
-d.natTop = newNat;
-dy = e.clientY - d.startY;
-d.card.style.transform = `translateY(${dy}px)`;
-}
-}
+const center = d.rects[d.from].top + d.rects[d.from].h / 2 + dy;
+let to = d.from;
+d.rects.forEach((r, j) => {
+const mid = r.top + r.h / 2;
+if(j > d.from && center > mid) to = Math.max(to, j);
+if(j < d.from && center < mid) to = Math.min(to, j);
+});
+d.to = to;
+d.cards.forEach((c, j) => {
+if(c === d.card) return;
+let shift = 0;
+if(d.to > d.from && j > d.from && j <= d.to) shift = -d.slot;
+if(d.to < d.from && j < d.from && j >= d.to) shift = d.slot;
+c.style.transform = shift ? `translateY(${shift}px)` : "";
+});
 });
 function endFavDrag(e){
 if(!favDrag || e.pointerId !== favDrag.id) return;
 if(!favDrag.active){ cancelFavHold(); return; }
-const { card } = favDrag;
+const d = favDrag;
 favDrag = null;
-card.style.transform = "";
-card.classList.remove("dragging");
-const ids = [...card.parentElement.querySelectorAll(".favCard")].map(c => c.dataset.favId);
+d.cards.forEach(c => { c.style.transform = ""; c.classList.remove("favShift", "dragging"); });
+if(d.to !== d.from){
+const ref = d.cards[d.to];
+if(d.to > d.from) ref.after(d.card); else ref.before(d.card);
+}
+const ids = [...d.card.parentElement.querySelectorAll(".favCard")].map(c => c.dataset.favId);
 reorderFavoriteStops(ids);
 }
 document.addEventListener("pointerup", endFavDrag);

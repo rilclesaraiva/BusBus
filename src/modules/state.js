@@ -44,6 +44,7 @@ lineSel: null,
 route: null,
 buses: [],
 followBusEnabled: true,
+followUserEnabled: true, // Home: o mapa acompanha a posição do usuário (como o Google Maps) até ele arrastar o mapa
 timer: null,
 linesTimer: null, // polling da tela "linhas em uma parada" (ver startLinesPolling em stops.js) — separado de "timer" (polling do mapa de ônibus), já que as duas telas nunca ficam abertas ao mesmo tempo mas usam ciclos de vida distintos
 watchGpsId: null,

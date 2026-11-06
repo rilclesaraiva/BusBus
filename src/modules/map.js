@@ -84,6 +84,9 @@ bearing: (typeof leafletMap.getBearing === "function") ? leafletMap.getBearing()
 state.lastMapInteractionTs = Date.now();
 };
 leafletMap.on('zoomend dragend rotate', saveMapView);
+// Só um arrasto feito pela pessoa (dragstart) desliga o seguimento; os
+// movimentos do próprio app (panTo/flyTo) não disparam esse evento.
+leafletMap.on('dragstart', () => setFollowUser(false));
 const userSvgIcon = L.divIcon({
 className: 'user-pin-marker',
 html: `<div style="width:18px;height:18px;background:#2563eb;border:3px solid #ffffff;border-radius:50%;box-shadow:0 0 10px rgba(37,99,235,0.7);"></div>`,
@@ -107,12 +110,29 @@ updateUserMarkerOverlap();
 if(!initialCenterSet && leafletMap){
 leafletMap.setView([state.coord.lat, state.coord.lng], 16);
 if(state.locSource === "GPS Vivo") initialCenterSet = true;
+} else if(leafletMap && state.followUserEnabled && state.locSource === "GPS Vivo" && Date.now() > followPauseUntil){
+// Seguimento automático: a cada novo fix de GPS o mapa acompanha a
+// pessoa, sem mexer no zoom. Ignora deslocamentos de poucos metros (ruído).
+if(metersBetween(leafletMap.getCenter(), state.coord) > 3){
+leafletMap.panTo([state.coord.lat, state.coord.lng], { animate: true, duration: 0.6 });
+}
 }
 }
 }catch(e){ console.error("[BusBus] mapa indisponível:", e); }
 }
 
+// Liga/desliga o seguimento do usuário e acende o botão de localização
+// enquanto ele estiver ligado.
+let followPauseUntil = 0;
+export function setFollowUser(on){
+state.followUserEnabled = on;
+const btn = el("locateBtn");
+if(btn) btn.classList.toggle("followActive", on);
+}
+
 export function recenterMap(){
+setFollowUser(true);
+followPauseUntil = Date.now() + 900; // deixa o flyTo terminar sem um panTo de GPS no meio
 if(leafletMap && state.coord){
 leafletMap.flyTo([state.coord.lat, state.coord.lng], leafletMap.getZoom(), { duration: 0.6 });
 }
@@ -176,6 +196,7 @@ updateUserMarkerOverlap();
 
 export function focusStopOnMap(lat, lng){
 if(leafletMap && lat && lng){
+setFollowUser(false); // a pessoa foi olhar outra parada: não puxa o mapa de volta no próximo GPS
 leafletMap.flyTo([lat, lng], 17, { duration: 0.8 });
 }
 }
