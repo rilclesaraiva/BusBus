@@ -181,21 +181,40 @@ try{ localStorage.setItem("busbus_favorites", JSON.stringify(state.favoriteStops
 // Arrastar pela alça de três barras (segurar e mover). Um listener só no
 // documento, porque a lista é redesenhada o tempo todo. A ordem é salva ao
 // soltar e vale depois de fechar o app (mesma chave dos favoritos).
+// Só começa a arrastar depois de segurar a alça por FAV_HOLD_MS sem mexer
+// (passar o dedo ou o mouse por cima não move nada). Se o dedo andar mais
+// que FAV_HOLD_SLOP antes disso, é um gesto de rolagem comum e cancela.
+const FAV_HOLD_MS = 280;
+const FAV_HOLD_SLOP = 10;
 let favDrag = null;
+function cancelFavHold(){
+if(favDrag && favDrag.timer){ clearTimeout(favDrag.timer); }
+if(favDrag && !favDrag.active) favDrag = null;
+}
 document.addEventListener("pointerdown", e => {
 const handle = e.target.closest && e.target.closest(".dragHandle");
 if(!handle) return;
 const card = handle.closest(".favCard");
 if(!card) return;
-e.preventDefault();
-handle.setPointerCapture && handle.setPointerCapture(e.pointerId);
-const natTop = card.getBoundingClientRect().top;
-favDrag = { card, handle, id: e.pointerId, startY: e.clientY, natTop };
+favDrag = { card, handle, id: e.pointerId, startY: e.clientY, startX: e.clientX, natTop: 0, active: false, timer: null };
+const d = favDrag;
+d.timer = setTimeout(() => {
+if(favDrag !== d) return;
+d.active = true;
+d.natTop = card.getBoundingClientRect().top;
 card.classList.add("dragging");
+try{ handle.setPointerCapture(d.id); }catch(err){}
+}, FAV_HOLD_MS);
 });
+// Depois que o arrasto começou, o toque não pode virar rolagem da página.
+document.addEventListener("touchmove", e => { if(favDrag && favDrag.active) e.preventDefault(); }, { passive: false });
 document.addEventListener("pointermove", e => {
 if(!favDrag || e.pointerId !== favDrag.id) return;
 const d = favDrag;
+if(!d.active){
+if(Math.abs(e.clientY - d.startY) > FAV_HOLD_SLOP || Math.abs(e.clientX - d.startX) > FAV_HOLD_SLOP) cancelFavHold();
+return;
+}
 let dy = e.clientY - d.startY;
 d.card.style.transform = `translateY(${dy}px)`;
 const center = () => { const r = d.card.getBoundingClientRect(); return r.top + r.height / 2; };
@@ -222,6 +241,7 @@ d.card.style.transform = `translateY(${dy}px)`;
 });
 function endFavDrag(e){
 if(!favDrag || e.pointerId !== favDrag.id) return;
+if(!favDrag.active){ cancelFavHold(); return; }
 const { card } = favDrag;
 favDrag = null;
 card.style.transform = "";
@@ -321,6 +341,17 @@ const ok = await fetchLinesForStop(id, myToken);
 if(ok) startLinesPolling(); // só liga o auto-update se a pessoa ainda estiver nessa tela quando a primeira busca terminar
 }
 
+// Identificador de repetição de uma linha na lista da parada. Se a resposta
+// traz o veículo (qualquer campo com cara de placa/veículo), ele manda: a
+// mesma linha + o mesmo veículo é o mesmo ônibus. Sem isso, cai pra linha +
+// previsão idênticas.
+export function lineDedupeKey(l){
+const raw = l.raw || {};
+const vKey = Object.keys(raw).find(k => /vehicle|veic|plate|placa/i.test(k) && raw[k]);
+const base = [l.patternId ?? l.busServiceId, l.number, l.dest].join("|");
+return vKey ? base + "|v:" + raw[vKey] : base + "|e:" + l.etaMin + "|" + l.schedTime;
+}
+
 // Busca as linhas (com previsão ao vivo) de uma parada e, se houver sucesso,
 // atualiza state.lines + redesenha. Usada tanto na primeira carga (selectStop)
 // quanto no auto-update periódico (startLinesPolling) — por isso aceita
@@ -344,7 +375,7 @@ raw: l
 }));
 // A mesma linha, com a mesma previsão (e o mesmo veículo, quando a resposta
 // traz), repetida na resposta é um ônibus só: mostra uma vez.
-lines = dedupeBy(lines, l => [l.patternId ?? l.busServiceId, l.number, l.dest, l.etaMin, l.schedTime, l.raw && (l.raw.codVehicle ?? "")].join("|"));
+lines = dedupeBy(lines, lineDedupeKey);
 if(lines.length === 0){
 const scheduled = await fetchScheduledLinesAtStop(id);
 lines = scheduled.map(l => ({

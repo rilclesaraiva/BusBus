@@ -7,14 +7,14 @@ Formato livremente inspirado em [Keep a Changelog](https://keepachangelog.com/pt
 ## [Unreleased]
 
 ### Corrigido
-- **Ônibus repetido na lista**: quando a fonte de dados devolvia o mesmo ônibus duas vezes (mesma linha, mesmo veículo, mesma previsão), o app mostrava como se fossem dois. Agora a lista de linhas da parada e a de veículos da linha tiram os repetidos. Dois ônibus diferentes da mesma linha continuam aparecendo (previsões diferentes).
+- **Ônibus repetido na lista**: quando a fonte de dados devolvia o mesmo ônibus duas vezes (mesma linha, mesmo veículo, mesma previsão), o app mostrava como se fossem dois. Agora a lista de linhas da parada e a de veículos da linha tiram os repetidos (pela placa/veículo quando a resposta traz; senão, por linha + previsão idênticas). Dois ônibus diferentes da mesma linha continuam aparecendo (previsões diferentes).
 - **Tela Sobre**: abre sempre no topo (antes herdava a rolagem dos Ajustes); sem o espaço vazio no fim da página (reservado à barra de baixo, que ali fica escondida); e a linha "Licença" saiu, porque duplicava "Licenças & Atribuições" — a licença GPL v3 do BusBus agora é o primeiro item desse modal.
 - **Tela dava um "pulo" ao abrir o app pela primeira vez**: o `SystemBars` do Capacitor começava sem saber que a página usa `viewport-fit=cover` (descobria só depois de carregar) e reajustava a janela. Agora `initialViewportFitValueHint: "cover"` no `capacitor.config.json` já entrega isso desde o início. (Uma primeira tentativa, `StatusBar.overlaysWebView`, não resolveu; fica como reforço.)
 - **Setinhas de sentido não cobrem mais paradas, ônibus nem a bolinha de localização**: ficam num painel próprio do Leaflet, abaixo de todos os marcadores.
 - **Bolinha azul sobre uma parada**: o toque passa pra parada (que agora dá pra abrir) e a bolinha fica levemente transparente (70%) enquanto está sobre ela.
 
 ### Adicionado
-- **Reordenar as paradas favoritas**: três barrinhas no fim de cada favorito; segure e arraste para mudar a ordem. A ordem fica salva no aparelho e continua depois de fechar o app.
+- **Reordenar as paradas favoritas**: três barrinhas no fim de cada favorito; segure a alça por um instante (cerca de 0,3 s) e arraste para mudar a ordem; só passar o dedo por cima não move nada e a rolagem da página continua funcionando. A ordem fica salva no aparelho e continua depois de fechar o app.
 - **Termos de Uso** (`docs/terms.md`, no GitHub Pages), linkados no README e na seção Legal dos Ajustes do app. Informações de terceiros podem estar erradas, sem garantia, independente da Prefeitura/SEGBEL.
 - `docs/` com `_config.yml` e `index.md` pro GitHub Pages (branch `main`, pasta `/docs`).
 
