@@ -175,6 +175,9 @@ background-size:200% 100%;animation:shimmer 1.3s infinite;}
 .skeletonIcon{flex:none;width:38px;height:38px;border-radius:12px;}
 .skeletonLine{height:12px;border-radius:6px;}
 @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.dragHandle{flex:none;display:flex;align-items:center;justify-content:center;width:44px;height:44px;margin-right:-8px;
+color:var(--ink-soft);touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;}
+.favCard.dragging{position:relative;z-index:5;box-shadow:0 10px 26px rgba(0,0,0,.35);transition:none;}
 .favStar{flex:none;background:none;border:none;cursor:pointer;color:var(--soon);padding:4px;}
 .favStar:active{transform:scale(.88);}
 .infoBtn{flex:none;width:30px;height:30px;border-radius:50%;background:var(--river-soft);

@@ -113,3 +113,17 @@ return Math.sqrt(x*x + y*y) * R;
 export function bearingBetween(a, b){
 return Math.atan2((b.lng - a.lng) * Math.cos(a.lat*Math.PI/180), b.lat - a.lat) * (180/Math.PI);
 }
+
+// Tira repetidos de uma lista mantendo a primeira ocorrência de cada chave.
+// A fonte de dados (Vem Busão) às vezes devolve o MESMO ônibus duas vezes
+// (mesma linha, mesmo veículo, mesma previsão); a lista do app não deve
+// mostrar um único ônibus como se fossem dois.
+export function dedupeBy(list, keyFn){
+const seen = new Set();
+return list.filter(item => {
+const k = keyFn(item);
+if(seen.has(k)) return false;
+seen.add(k);
+return true;
+});
+}

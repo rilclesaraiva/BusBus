@@ -3,7 +3,7 @@
 // histórico do busbus.html original), só que agora roda via Vitest em vez
 // de um script solto.
 import { describe, it, expect } from "vitest";
-import { normalize, fmtEta, fmtTimeAgo, metersBetween, bearingBetween, jsStr, pick, errMsg } from "../src/modules/utils.js";
+import { normalize, fmtEta, fmtTimeAgo, metersBetween, bearingBetween, jsStr, pick, errMsg, dedupeBy } from "../src/modules/utils.js";
 
 describe("normalize", () => {
   it("remove acentos", () => {
@@ -107,5 +107,19 @@ describe("errMsg", () => {
   });
   it("converte outros valores pra string", () => {
     expect(errMsg("algo")).toBe("algo");
+  });
+});
+
+describe("dedupeBy", () => {
+  it("mantém só a primeira ocorrência de cada chave, na ordem original", () => {
+    const buses = [{ plate: "BN75502", eta: 72 }, { plate: "BN75502", eta: 72 }, { plate: "XYZ1A23", eta: 10 }];
+    expect(dedupeBy(buses, b => b.plate)).toEqual([{ plate: "BN75502", eta: 72 }, { plate: "XYZ1A23", eta: 10 }]);
+  });
+  it("não mexe em itens diferentes (mesma linha, previsões diferentes)", () => {
+    const lines = [{ n: "862", eta: 10 }, { n: "862", eta: 43 }];
+    expect(dedupeBy(lines, l => l.n + "|" + l.eta)).toHaveLength(2);
+  });
+  it("lista vazia continua vazia", () => {
+    expect(dedupeBy([], x => x)).toEqual([]);
   });
 });

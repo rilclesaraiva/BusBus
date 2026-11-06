@@ -4,9 +4,9 @@
 
 import L from "leaflet";
 import { state, CITY, isFavorite } from "./state.js";
-import { el, jsStr, pick, fmtEta, statusHTML, errMsg, render, mapLoadingHTML, isOfflineError, OFFLINE_MSG } from "./utils.js";
+import { el, jsStr, pick, fmtEta, dedupeBy, statusHTML, errMsg, render, mapLoadingHTML, isOfflineError, OFFLINE_MSG } from "./utils.js";
 import { api } from "./api.js";
-import { pinIcon, starIconFilled, starIconOutline, busIcon } from "./icons.js";
+import { pinIcon, starIconFilled, starIconOutline, busIcon, gripIcon } from "./icons.js";
 import { getDepartureSchedule, fetchScheduledLinesAtStop } from "./api.js";
 import {
   destroyLeafletMap, initLeafletMapOnce, updateMapUserPosition, focusStopOnMap,
@@ -156,15 +156,81 @@ if(list) list.innerHTML = renderFavoritesSection() + statusHTML(msg, false, true
 export function renderFavoritesSection(){
 if(!state.favoriteStops.length) return "";
 const html = state.favoriteStops.map(f => `
-<div class="stopCard" onclick="openFavoriteStop('${f.id}', ${f.lat}, ${f.lng}, ${jsStr(f.name)})">
+<div class="stopCard favCard" data-fav-id="${f.id}" onclick="openFavoriteStop('${f.id}', ${f.lat}, ${f.lng}, ${jsStr(f.name)})">
 <div class="stopIcon" style="background:var(--soon-soft);color:var(--soon);">${starIconFilled}</div>
 <div class="stopInfo">
 <div class="name">${f.name}</div>
 <div class="meta">Toque para ver as linhas neste sentido</div>
 </div>
+<div class="dragHandle" title="Segure e arraste para reordenar" onclick="event.stopPropagation()">${gripIcon}</div>
 </div>`).join("");
 return `<div class="sectionTitle">Favoritas</div>${html}`;
 }
+
+// Nova ordem dos favoritos a partir da lista de ids na ordem em que ficaram
+// na tela. Ids desconhecidos são ignorados; favoritos que não vieram na lista
+// (não deveria acontecer) ficam no fim, pra nunca perder nenhum.
+export function reorderFavoriteStops(ids){
+const byId = new Map(state.favoriteStops.map(f => [String(f.id), f]));
+const ordered = [];
+ids.forEach(id => { const f = byId.get(String(id)); if(f){ ordered.push(f); byId.delete(String(id)); } });
+state.favoriteStops = ordered.concat([...byId.values()]);
+try{ localStorage.setItem("busbus_favorites", JSON.stringify(state.favoriteStops)); }catch(e){}
+}
+
+// Arrastar pela alça de três barras (segurar e mover). Um listener só no
+// documento, porque a lista é redesenhada o tempo todo. A ordem é salva ao
+// soltar e vale depois de fechar o app (mesma chave dos favoritos).
+let favDrag = null;
+document.addEventListener("pointerdown", e => {
+const handle = e.target.closest && e.target.closest(".dragHandle");
+if(!handle) return;
+const card = handle.closest(".favCard");
+if(!card) return;
+e.preventDefault();
+handle.setPointerCapture && handle.setPointerCapture(e.pointerId);
+const natTop = card.getBoundingClientRect().top;
+favDrag = { card, handle, id: e.pointerId, startY: e.clientY, natTop };
+card.classList.add("dragging");
+});
+document.addEventListener("pointermove", e => {
+if(!favDrag || e.pointerId !== favDrag.id) return;
+const d = favDrag;
+let dy = e.clientY - d.startY;
+d.card.style.transform = `translateY(${dy}px)`;
+const center = () => { const r = d.card.getBoundingClientRect(); return r.top + r.height / 2; };
+const cards = () => [...d.card.parentElement.querySelectorAll(".favCard")];
+let moved = true;
+while(moved){
+moved = false;
+const list = cards();
+const i = list.indexOf(d.card);
+const next = list[i + 1], prev = list[i - 1];
+const c = center();
+const mid = el => { const r = el.getBoundingClientRect(); return r.top + r.height / 2; };
+if(next && c > mid(next)) { next.after(d.card); moved = true; }
+else if(prev && c < mid(prev)) { prev.before(d.card); moved = true; }
+if(moved){
+// o cartão mudou de lugar no layout: refaz o deslocamento pra ele continuar sob o dedo
+const newNat = d.card.getBoundingClientRect().top - dy;
+d.startY += newNat - d.natTop;
+d.natTop = newNat;
+dy = e.clientY - d.startY;
+d.card.style.transform = `translateY(${dy}px)`;
+}
+}
+});
+function endFavDrag(e){
+if(!favDrag || e.pointerId !== favDrag.id) return;
+const { card } = favDrag;
+favDrag = null;
+card.style.transform = "";
+card.classList.remove("dragging");
+const ids = [...card.parentElement.querySelectorAll(".favCard")].map(c => c.dataset.favId);
+reorderFavoriteStops(ids);
+}
+document.addEventListener("pointerup", endFavDrag);
+document.addEventListener("pointercancel", endFavDrag);
 
 export function renderStopsListOnly(){
 const listEl = el("stopList");
@@ -179,7 +245,7 @@ const html = state.stops.map(s => `
 </div>`).join("");
 listEl.innerHTML = `
 ${renderFavoritesSection()}
-<div class="sectionTitle">${state.stops.length} parada(s) encontradas</div>
+<div class="sectionTitle">${state.stops.length} parada(s) próximas encontradas</div>
 ${html || `<div class="empty">${pinIcon}<div>Nenhuma parada encontrada no raio. Ajuste nos Ajustes.</div></div>`}
 `;
 }
@@ -276,6 +342,9 @@ schedTime: pick(l, ["scheduleTime","horario","time","horaProgramada"]),
 scheduled: false,
 raw: l
 }));
+// A mesma linha, com a mesma previsão (e o mesmo veículo, quando a resposta
+// traz), repetida na resposta é um ônibus só: mostra uma vez.
+lines = dedupeBy(lines, l => [l.patternId ?? l.busServiceId, l.number, l.dest, l.etaMin, l.schedTime, l.raw && (l.raw.codVehicle ?? "")].join("|"));
 if(lines.length === 0){
 const scheduled = await fetchScheduledLinesAtStop(id);
 lines = scheduled.map(l => ({
@@ -475,6 +544,9 @@ state.buses = (Array.isArray(data) ? data : []).map(b => ({
 plate: b.codVehicle, lat: b.latLng && b.latLng.lat, lng: b.latLng && b.latLng.lng,
 eta: b.arrivalTime, dest: b.destination
 })).filter(b => b.lat && b.lng);
+// Mesmo veículo repetido na resposta = um ônibus só. Sem placa, a posição
+// e a previsão idênticas fazem o papel de identificador.
+state.buses = dedupeBy(state.buses, b => b.plate ? "p:" + b.plate : `l:${b.lat},${b.lng},${b.eta}`);
 if(!busMarkersGroup) return;
 // Sem placa não tem como saber se é "o mesmo" veículo da leitura
 // anterior — redesenha esses do zero sempre.

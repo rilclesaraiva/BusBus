@@ -7,12 +7,14 @@ Formato livremente inspirado em [Keep a Changelog](https://keepachangelog.com/pt
 ## [Unreleased]
 
 ### Corrigido
+- **Ônibus repetido na lista**: quando a fonte de dados devolvia o mesmo ônibus duas vezes (mesma linha, mesmo veículo, mesma previsão), o app mostrava como se fossem dois. Agora a lista de linhas da parada e a de veículos da linha tiram os repetidos. Dois ônibus diferentes da mesma linha continuam aparecendo (previsões diferentes).
 - **Tela Sobre**: abre sempre no topo (antes herdava a rolagem dos Ajustes); sem o espaço vazio no fim da página (reservado à barra de baixo, que ali fica escondida); e a linha "Licença" saiu, porque duplicava "Licenças & Atribuições" — a licença GPL v3 do BusBus agora é o primeiro item desse modal.
 - **Tela dava um "pulo" ao abrir o app pela primeira vez**: o `SystemBars` do Capacitor começava sem saber que a página usa `viewport-fit=cover` (descobria só depois de carregar) e reajustava a janela. Agora `initialViewportFitValueHint: "cover"` no `capacitor.config.json` já entrega isso desde o início. (Uma primeira tentativa, `StatusBar.overlaysWebView`, não resolveu; fica como reforço.)
 - **Setinhas de sentido não cobrem mais paradas, ônibus nem a bolinha de localização**: ficam num painel próprio do Leaflet, abaixo de todos os marcadores.
 - **Bolinha azul sobre uma parada**: o toque passa pra parada (que agora dá pra abrir) e a bolinha fica levemente transparente (70%) enquanto está sobre ela.
 
 ### Adicionado
+- **Reordenar as paradas favoritas**: três barrinhas no fim de cada favorito; segure e arraste para mudar a ordem. A ordem fica salva no aparelho e continua depois de fechar o app.
 - **Termos de Uso** (`docs/terms.md`, no GitHub Pages), linkados no README e na seção Legal dos Ajustes do app. Informações de terceiros podem estar erradas, sem garantia, independente da Prefeitura/SEGBEL.
 - `docs/` com `_config.yml` e `index.md` pro GitHub Pages (branch `main`, pasta `/docs`).
 
@@ -20,6 +22,7 @@ Formato livremente inspirado em [Keep a Changelog](https://keepachangelog.com/pt
 - **"Apoie o projeto" (Pix e Buy Me a Coffee) saiu do app também no site/PWA**, não só do Android: modal, QR e código Pix, seção "Sobre as doações" na tela de privacidade e crédito do Buy Me a Coffee em "Licenças & Atribuições". O apoio financeiro fica só na seção "Apoie o projeto" do README, no GitHub. Saiu junto o `apoie.png` (print do modal do Pix).
 
 ### Alterado
+- A lista da Home agora diz "X parada(s) próximas encontradas" (antes: "X parada(s) encontradas").
 - **Aba "Sobre" nos Ajustes, inspirada no BoomListener**: os Ajustes ficam só com Aparência, Mapa e navegação e uma linha "Sobre o BusBus". Ao tocar nela abre a tela Sobre (com botão voltar): ícone, nome, versão, descrição, Atualizações, Desenvolvedor, Projeto (código-fonte, novidades, reportar problema, licença, licenças e atribuições), Legal (política de privacidade e termos de uso, que abrem direto a página do GitHub Pages) e o cartão de apoio ao repositório. O modal de política e o texto de "promessa/evolução/IA" saíram do app (a descrição do cabeçalho mantém a menção à IA).
 - **R8 ligado no APK** (`minifyEnabled true`), sem ofuscação (`-dontobfuscate`), com regras pro Capacitor em `proguard-rules.pro`. O APK não compila nesta sessão: a prova é o CI, e a vistoria no aparelho precisa conferir mapa, GPS, busca, atualização e barra de status.
 - **Política de privacidade reescrita a partir do código** (`docs/privacy.md`, README). O texto anterior dizia que a localização "não é enviada a nenhum servidor nosso", mas a posição vai ao proxy do BusBus e ao Open-Meteo (e o IP ao ipapi.co quando o GPS falha). Agora cada serviço aparece com o que recebe: proxy/Cloudflare, Open-Meteo, ipapi.co, OpenStreetMap (mapa, Photon e Nominatim), ícones do Google nas licenças e API do GitHub (só Android). A política agora é uma página em `docs/`, publicada no GitHub Pages (`https://rilclesaraiva.github.io/BusBus/privacy`); o app e o README apontam pra ela, sem modal de política dentro do app. O Worker passa só a redirecionar `/privacy` pra lá (mantém vivos os links de versões antigas), o que só vale depois de um novo deploy do Worker. Até lá, o texto antigo continua no ar no endereço do Worker.
