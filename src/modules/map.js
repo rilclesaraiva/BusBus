@@ -126,6 +126,7 @@ leafletMap.panTo([state.coord.lat, state.coord.lng], { animate: true, duration: 
 // e só o botão "Seguir ônibus" liga de novo.
 export function setFollowBus(on){
 state.followBusEnabled = on;
+if(on) resetBusFit();
 const btn = el("followBusBtn");
 if(btn) btn.classList.toggle("followActive", on);
 }
@@ -222,6 +223,7 @@ leafletMap.flyTo([lat, lng], 17, { duration: 0.8 });
 export function initLineRouteMap(allPatterns, selectedPatternId){
 const mapEl = el("mapContainer");
 if(!mapEl) return;
+resetBusFit();
 leafletMap = L.map('mapContainer', {
 zoomControl: false, attributionControl: false, rotate: state.rotationEnabled, rotateControl: false,
 touchRotate: state.rotationEnabled, bearing: 0
@@ -373,6 +375,12 @@ iconSize: [12, 12], iconAnchor: [6, 6]
 return L.marker([lat, lng], { icon: arrowIcon, interactive: false, keyboard: false, pane: "arrowPane" });
 }
 
+// Chave do último enquadramento (parada + ônibus + zoom). Se nada mudou desde
+// o último, não reenquadra: refazer o flyToBounds a cada leitura com o ônibus
+// parado fazia o mapa dar uma tremidinha à toa.
+let lastFitKey = null;
+export function resetBusFit(){ lastFitKey = null; }
+
 export function fitMapToBusAndStop(){
 if(!leafletMap || !state.followBusEnabled) return;
 if(!state.buses.length || !state.stopSel || !state.stopSel.lat) return;
@@ -385,6 +393,9 @@ const d = metersBetween(state.stopSel, b);
 if(d < minDist) minDist = d;
 });
 const maxZoom = minDist < 250 ? 18 : (minDist < 800 ? 17 : 15.5);
+const key = [maxZoom, state.stopSel.lat, state.stopSel.lng, ...state.buses.flatMap(b => [b.lat, b.lng])].join("|");
+if(key === lastFitKey) return;
+lastFitKey = key;
 if(typeof leafletMap.flyToBounds === "function"){
 leafletMap.flyToBounds(bounds, { padding: [50, 50], maxZoom, duration: 0.9 });
 } else {
