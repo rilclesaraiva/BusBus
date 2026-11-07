@@ -7,6 +7,7 @@ Formato livremente inspirado em [Keep a Changelog](https://keepachangelog.com/pt
 ## [Unreleased]
 
 ### Corrigido
+- **Zoom com dois dedos que também move o mapa não desligava o seguimento automático** (Home e "Seguir ônibus"): só o arrasto com um dedo desligava. Agora, se o ponto médio dos dois dedos se desloca durante a pinça, o seguimento desliga; dar zoom parado no lugar continua não desligando.
 - **Mapa tremia com o ônibus parado**: a cada leitura (10 s) o acompanhamento reenquadrava o mapa mesmo sem nada ter mudado. Agora só reenquadra quando a posição de algum ônibus, a parada ou o zoom ideal mudam (e ao ligar "Seguir ônibus" de novo).
 - **Arrastar favoritos falhava se o dedo saísse da alça**: o cartão trocava de lugar no DOM durante o arrasto e o toque se soltava. Agora nada muda de lugar até soltar (só deslocamento visual), e o arrasto acompanha o dedo mesmo fora das barrinhas.
 - **Ônibus repetido na lista**: quando a fonte de dados devolvia o mesmo ônibus duas vezes (mesma linha, mesmo veículo, mesma previsão), o app mostrava como se fossem dois. Agora a lista de linhas da parada e a de veículos da linha tiram os repetidos (pela placa/veículo quando a resposta traz; senão, por linha + previsão idênticas). Dois ônibus diferentes da mesma linha continuam aparecendo (previsões diferentes).
