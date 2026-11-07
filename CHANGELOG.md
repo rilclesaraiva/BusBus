@@ -6,6 +6,8 @@ Formato livremente inspirado em [Keep a Changelog](https://keepachangelog.com/pt
 
 ## [Unreleased]
 
+## [1.8.0] — 2026-11-06
+
 ### Corrigido
 - **Zoom com dois dedos que também move o mapa não desligava o seguimento automático** (Home e "Seguir ônibus"): só o arrasto com um dedo desligava. Agora, se o ponto médio dos dois dedos se desloca durante a pinça, o seguimento desliga; dar zoom parado no lugar continua não desligando.
 - **Mapa tremia com o ônibus parado**: a cada leitura (10 s) o acompanhamento reenquadrava o mapa mesmo sem nada ter mudado. Agora só reenquadra quando a posição de algum ônibus, a parada ou o zoom ideal mudam (e ao ligar "Seguir ônibus" de novo).
@@ -36,7 +38,7 @@ Formato livremente inspirado em [Keep a Changelog](https://keepachangelog.com/pt
 - Linha do GitHub nos Ajustes (site e Android): "Quer apoiar o projeto? Entre no repositório do projeto."
 - **CI**: `android.yml` virou `ci.yml`, no modelo do documento de estrutura. Todo push continua testando, buildando e assinando o APK (artefato do build para vistoria); a Release pública agora sai sozinha só quando o `package.json` traz uma versão sem tag e com seção no CHANGELOG, e o APK publicado é o mesmo do build. O disparo manual (`workflow_dispatch`) deixou de existir. `actions/checkout` foi pro v6 e `actions/setup-java` pro v5.
 - **README** reordenado (capturas de tela, funcionalidades, privacidade, IA, instalação, licença, apoio e contato por último), com a seção de IA padronizada e as afirmações conferidas contra o código (163 linhas com itinerário oficial; Android empacotado pelo Capacitor, não mais pelo AppMint).
-- **CLAUDE.md** reescrito pelo template do documento de estrutura. Saíram as regras que o contradiziam (bump de versão a cada push, Release por disparo manual); ficou a regra de agrupar bugs numa sessão de testes.
+- **CLAUDE.md** reescrito pelo template do documento de estrutura. Saíram as regras que o contradiziam (bump de versão a cada push, Release por disparo manual); o push na `main` passou a ser automático, só segurado se o mantenedor pedir.
 
 ### Segurança
 - `.gitignore` agora barra `*.p12`, `*.jks`, `*.keystore`, `keystore.properties` e `*-github-secrets.txt`.
