@@ -7,7 +7,7 @@ Formato livremente inspirado em [Keep a Changelog](https://keepachangelog.com/pt
 ## [Unreleased]
 
 ### Adicionado
-- **Linhas que o itinerário passa pela parada mas o sistema de dados não liga a ela agora aparecem com previsão estimada** (ex.: Sideral na Gama Abreu 1208, que nunca aparecia nem no app oficial). O app usa o traçado de cada linha (`/pattern`): se ele passa a até 35 m da parada (ou termina a até 120 m dela, caso de parada colada num terminal), a linha entra. A posição dos ônibus vem da última parada do trajeto, onde o sistema reconhece a linha, e a previsão é a distância pelo traçado até a parada a ~18 km/h. Aparece na lista como as demais, e tocar na linha abre o mapa com os ônibus. Só entra o que o sistema não listou; até 3 ônibus por trajeto e até 90 min. Os traçados de todas as linhas ficam guardados no aparelho por 7 dias.
+- **Linhas que o itinerário passa pela parada mas o sistema de dados não liga a ela agora aparecem com previsão estimada** (ex.: Sideral na Gama Abreu 1208, que nunca aparecia nem no app oficial). O app usa o traçado de cada linha (`/pattern`): se ele passa a até 35 m da parada (ou termina a até 120 m dela, caso de parada colada num terminal), a linha entra. A posição dos ônibus vem da última parada do trajeto, onde o sistema reconhece a linha, e a previsão é a distância pelo traçado até a parada a 18 km/h (velocidade média de operação de Belém informada pela Semob no relatório do Instituto MDT, abril/2025). Aparece na lista como as demais, e tocar na linha abre o mapa com os ônibus. Só entra o que o sistema não listou; até 3 ônibus por trajeto e até 90 min. Os traçados de todas as linhas ficam guardados no aparelho por 7 dias.
 
 ## [1.8.0] — 2026-11-06
 

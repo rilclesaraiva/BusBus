@@ -15,7 +15,7 @@ import { api, ensureAllLines, ensureAllPoints } from "./api.js";
 export const NEAR_STOP_M = 35;       // o traçado precisa passar a até isso da parada
 export const TERMINAL_NEAR_M = 120;  // fim do traçado (terminal) até isso da parada também conta
 export const BUS_OFF_ROUTE_M = 100;  // ônibus mais longe que isso do traçado é ignorado
-export const AVG_SPEED_MPS = 5;      // ~18 km/h, média de ônibus urbano
+export const AVG_SPEED_MPS = 5;      // 18 km/h: velocidade média de operação de Belém informada pela Semob ao Instituto MDT (relatório "Análise comparativa entre sistemas de transporte público coletivo rodoviário de cidades brasileiras", abril/2025, item 4.17)
 export const MAX_ETA_MIN = 90;
 const BEHIND_TOLERANCE_M = 25;       // ruído de GPS: ônibus "quase" na parada ainda não passou
 
