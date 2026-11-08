@@ -12,7 +12,6 @@ Formato livremente inspirado em [Keep a Changelog](https://keepachangelog.com/pt
 ## [1.8.0] — 2026-11-06
 
 ### Corrigido
-- **Seguimento da Home desligava ao voltar do segundo plano sem ninguém mexer no mapa**: o gesto de voltar pro app pode vazar toques pro mapa e contar como arrasto. Arrastos nos primeiros 1,5 s depois de voltar agora são ignorados, e, com o seguimento ligado, o mapa já se alinha com a posição atual ao voltar, sem esperar o próximo fix de GPS. (Arrastar o mapa de verdade, ou abrir uma parada pelo mapa, continua desligando o seguimento, como antes.)
 - **Zoom com dois dedos que também move o mapa não desligava o seguimento automático** (Home e "Seguir ônibus"): só o arrasto com um dedo desligava. Agora, se o ponto médio dos dois dedos se desloca durante a pinça, o seguimento desliga; dar zoom parado no lugar continua não desligando.
 - **Mapa tremia com o ônibus parado**: a cada leitura (10 s) o acompanhamento reenquadrava o mapa mesmo sem nada ter mudado. Agora só reenquadra quando a posição de algum ônibus, a parada ou o zoom ideal mudam (e ao ligar "Seguir ônibus" de novo).
 - **Arrastar favoritos falhava se o dedo saísse da alça**: o cartão trocava de lugar no DOM durante o arrasto e o toque se soltava. Agora nada muda de lugar até soltar (só deslocamento visual), e o arrasto acompanha o dedo mesmo fora das barrinhas.

@@ -12,7 +12,7 @@ import { getDepartureSchedule, fetchScheduledLinesAtStop } from "./api.js";
 import {
   destroyLeafletMap, initLeafletMapOnce, updateMapUserPosition, focusStopOnMap,
   updateStopMarkersOnMap, initLineRouteMap, fitMapToBusAndStop, setFollowBus,
-  busMarkersGroup, leafletMap, noteAppResumed,
+  busMarkersGroup, leafletMap,
 } from "./map.js";
 // Importação circular de propósito: a navegação (voltar/avançar de aba)
 // precisa chamar renderStopsScreenStructure/startGpsTracking ao voltar pra
@@ -749,7 +749,6 @@ else {
 // relatado. Chamar de novo mais de uma vez, com atraso crescente, é uma
 // rede de segurança barata (invalidateSize() não tem efeito colateral
 // ruim se o tamanho já estava certo) até cobrir o caso mais lento.
-noteAppResumed();
 const refreshMapSize = () => { if(leafletMap) leafletMap.invalidateSize(); };
 requestAnimationFrame(refreshMapSize);
 setTimeout(refreshMapSize, 300);
