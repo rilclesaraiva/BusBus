@@ -6,6 +6,7 @@ import L from "leaflet";
 import { state, CITY, isFavorite } from "./state.js";
 import { el, jsStr, pick, fmtEta, dedupeBy, statusHTML, errMsg, render, mapLoadingHTML, isOfflineError, OFFLINE_MSG } from "./utils.js";
 import { api } from "./api.js";
+import { computeEstimatedLines, estimateBusesForLine, mergeLines } from "./estimates.js";
 import { pinIcon, starIconFilled, starIconOutline, busIcon, gripIcon } from "./icons.js";
 import { getDepartureSchedule, fetchScheduledLinesAtStop } from "./api.js";
 import {
@@ -358,6 +359,32 @@ const base = [l.patternId ?? l.busServiceId, l.number, l.dest].join("|");
 return vKey ? base + "|v:" + raw[vKey] : base + "|e:" + l.etaMin + "|" + l.schedTime;
 }
 
+// Linhas que o itinerário passa pela parada mas o sistema não liga a ela
+// (ver estimates.js). Calculadas em segundo plano, no máximo a cada 20 s por
+// parada, e juntadas à lista do sistema sem atrapalhar a primeira exibição.
+let lastSystemLines = [];
+let extrasCache = null;
+const EXTRAS_TTL_MS = 20000;
+
+function extrasKey(rows){ return rows.map(r => `${r.patternId}|${r.plate}|${r.etaMin}`).join(";"); }
+
+async function refreshEstimatedLines(stopId, myToken){
+if(extrasCache && String(extrasCache.stopId) === String(stopId) && Date.now() - extrasCache.ts < EXTRAS_TTL_MS) return;
+const stop = state.stopSel;
+if(!stop || String(stop.id) !== String(stopId) || !stop.lat) return;
+try{
+const rows = await computeEstimatedLines(stop, lastSystemLines);
+if(myToken !== navToken || state.view !== "lines" || !state.stopSel || String(state.stopSel.id) !== String(stopId)) return;
+const before = extrasCache && String(extrasCache.stopId) === String(stopId) ? extrasKey(extrasCache.rows) : "";
+extrasCache = { stopId, rows, ts: Date.now() };
+if(extrasKey(rows) === before) return;
+state.lines = mergeLines(lastSystemLines, rows);
+renderLines();
+}catch(e){
+console.error("[BusBus] linhas estimadas indisponíveis (ignorado):", e);
+}
+}
+
 // Busca as linhas (com previsão ao vivo) de uma parada e, se houver sucesso,
 // atualiza state.lines + redesenha. Usada tanto na primeira carga (selectStop)
 // quanto no auto-update periódico (startLinesPolling) — por isso aceita
@@ -391,8 +418,11 @@ etaMin: null, schedTime: null, scheduled: true
 }));
 }
 if(myToken !== navToken) return false; // a pessoa já saiu dessa tela enquanto isso carregava
-state.lines = lines;
+lastSystemLines = lines;
+const cached = extrasCache && String(extrasCache.stopId) === String(id) ? extrasCache.rows : [];
+state.lines = mergeLines(lines, cached);
 renderLines();
+refreshEstimatedLines(id, myToken);
 return true;
 }catch(e){
 if(myToken !== navToken) return false;
@@ -574,11 +604,15 @@ iconSize: [26, 26], iconAnchor: [13, 13]
 
 export async function refreshBusesOnMap(){
 try{
+if(state.lineSel.estimated){
+state.buses = await estimateBusesForLine(state.lineSel, state.stopSel, state.route);
+} else {
 const data = await api(`/all/forecast/${state.stopSel.id}/${state.lineSel.patternId}/${CITY}`);
 state.buses = (Array.isArray(data) ? data : []).map(b => ({
 plate: b.codVehicle, lat: b.latLng && b.latLng.lat, lng: b.latLng && b.latLng.lng,
 eta: b.arrivalTime, dest: b.destination
 })).filter(b => b.lat && b.lng);
+}
 // Mesmo veículo repetido na resposta = um ônibus só. Sem placa, a posição
 // e a previsão idênticas fazem o papel de identificador.
 state.buses = dedupeBy(state.buses, b => b.plate ? "p:" + b.plate : `l:${b.lat},${b.lng},${b.eta}`);

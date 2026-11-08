@@ -46,6 +46,7 @@ BusBus é um projeto pessoal e independente, feito por [rilclesaraiva](https://g
 | 🎨 **Temas** | Claro, escuro e AMOLED (preto puro, economiza bateria) |
 | 🔔 **Avisos do sistema** | Comunicados mantidos pelo desenvolvedor |
 | 🔄 **Aviso de atualização** | No Android, o app confere sozinho, ao abrir e ao voltar pra ele, se há versão nova, e mostra as notas da Release |
+| 🕒 **Previsão estimada** | Linhas cujo itinerário passa pela parada mas que o sistema de dados não liga a ela aparecem com previsão calculada pelo traçado |
 
 ## ⚙️ Como funciona
 
