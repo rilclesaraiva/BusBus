@@ -86,8 +86,8 @@ state.lastMapInteractionTs = Date.now();
 leafletMap.on('zoomend dragend rotate', saveMapView);
 // Só um arrasto feito pela pessoa (dragstart) desliga o seguimento; os
 // movimentos do próprio app (panTo/flyTo) não disparam esse evento.
-leafletMap.on('dragstart', () => setFollowUser(false));
-watchPinchPan(leafletMap, () => setFollowUser(false));
+leafletMap.on('dragstart', () => { if(userDragCountsNow()) setFollowUser(false); });
+watchPinchPan(leafletMap, () => { if(userDragCountsNow()) setFollowUser(false); });
 const userSvgIcon = L.divIcon({
 className: 'user-pin-marker',
 html: `<div style="width:18px;height:18px;background:#2563eb;border:3px solid #ffffff;border-radius:50%;box-shadow:0 0 10px rgba(37,99,235,0.7);"></div>`,
@@ -155,6 +155,26 @@ if(btn) btn.classList.toggle("followActive", on);
 // Liga/desliga o seguimento do usuário e acende o botão de localização
 // enquanto ele estiver ligado.
 let followPauseUntil = 0;
+// Ao voltar pro app depois de um tempo em segundo plano, o gesto que traz o
+// app de volta (deslizar a partir da borda, tocar no card dos recentes) pode
+// vazar uns toques pro mapa e contar como "a pessoa arrastou", desligando o
+// seguimento sem ninguém ter mexido no mapa. Por isso, arrastos nos primeiros
+// instantes depois de voltar são ignorados, e, se o seguimento estava ligado,
+// o mapa já se alinha com a posição atual (sem esperar o próximo fix de GPS,
+// que pode demorar a chegar com o app recém-acordado).
+export const RESUME_GUARD_MS = 1500;
+let resumeTs = 0;
+export function userDragCountsNow(now = Date.now()){ return now - resumeTs >= RESUME_GUARD_MS; }
+
+export function noteAppResumed(){
+resumeTs = Date.now();
+setTimeout(() => {
+if(leafletMap && state.followUserEnabled && state.coord && state.view === "stops"){
+leafletMap.setView([state.coord.lat, state.coord.lng], leafletMap.getZoom(), { animate: false });
+}
+}, 350); // depois do invalidateSize() que roda ao voltar (stops.js)
+}
+
 export function setFollowUser(on){
 state.followUserEnabled = on;
 const btn = el("locateBtn");
@@ -257,8 +277,8 @@ addBaseMapLayers(leafletMap);
 leafletMap.on('rotate', () => updateCompassIcon());
 // Arrasto feito pela pessoa desliga o "Seguir ônibus" (os movimentos do
 // próprio app, flyToBounds/fitBounds, não disparam dragstart).
-leafletMap.on('dragstart', () => setFollowBus(false));
-watchPinchPan(leafletMap, () => setFollowBus(false));
+leafletMap.on('dragstart', () => { if(userDragCountsNow()) setFollowBus(false); });
+watchPinchPan(leafletMap, () => { if(userDragCountsNow()) setFollowBus(false); });
 // Setinhas de sentido ficam num painel próprio, acima do traçado (overlayPane,
 // 400) e ABAIXO de todos os marcadores (markerPane, 600): assim nunca cobrem
 // parada, ônibus nem a bolinha de localização, qualquer que seja a latitude.
