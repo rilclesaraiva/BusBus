@@ -95,6 +95,61 @@ export function etaToStop(poly, stopPositions, bus, speed = AVG_SPEED_MPS){
   return mins > MAX_ETA_MIN ? null : mins;
 }
 
+// ---------- sentido do ônibus ----------
+// Ida e volta de uma linha usam as mesmas ruas, então um ônibus voltando pro
+// terminal (outra pista) também cai em cima do traçado da ida. A posição sozinha
+// não diz pra que lado ele anda; por isso (1) se acompanha o ônibus de uma
+// leitura pra outra e quem anda no sentido contrário ao traçado é descartado, e
+// (2) se descarta quem o próprio sistema diz estar muito mais longe do fim do
+// trajeto do que a geometria sugere (ônibus ainda no fim da volta, indo pro
+// terminal pra só então começar esta ida).
+const TRACK_MOVE_M = 40;              // só conta como andou se mexeu isso (ignora ruído de GPS)
+const TRACK_TTL_MS = 10 * 60 * 1000;
+const tracks = new Map();
+
+// Devolve 1 (andando a favor do traçado), -1 (contra) ou 0 (ainda não dá pra saber).
+export function trackDirection(key, s, now = Date.now(), store = tracks){
+  const prev = store.get(key);
+  let dir = 0, ref = s;
+  if(prev && now - prev.t < TRACK_TTL_MS){
+    dir = prev.dir; ref = prev.s;
+    const ds = s - prev.s;
+    if(Math.abs(ds) >= TRACK_MOVE_M){ dir = ds > 0 ? 1 : -1; ref = s; }
+  }
+  store.set(key, { s: ref, t: now, dir });
+  return dir;
+}
+
+// O sistema diz que o ônibus está a systemMin do fim do trajeto; a geometria
+// diz expectedMin. Aceita folga grande (o sistema usa as próprias velocidades).
+export function plausibleArrival(expectedMin, systemMin){
+  if(systemMin === undefined || systemMin === null || !isFinite(systemMin)) return true;
+  return systemMin <= expectedMin * 2 + 10;
+}
+
+const lengthCache = new WeakMap();
+function routeLength(poly){
+  let n = lengthCache.get(poly);
+  if(n === undefined){
+    n = 0;
+    for(let i = 0; i < poly.length - 1; i++) n += metersApart(poly[i], poly[i + 1]);
+    lengthCache.set(poly, n);
+  }
+  return n;
+}
+
+// Previsão de um ônibus até a parada, já com os filtros de sentido.
+export function vehicleEta(poly, positions, v, patternId){
+  const loc = locateOnRoute(poly, v);
+  if(!loc || loc.d > BUS_OFF_ROUTE_M) return null;
+  if(v.plate){
+    if(trackDirection(`${patternId}|${v.plate}`, loc.s) === -1) return null;
+  }
+  const toEnd = Math.max(0, routeLength(poly) - loc.s) / AVG_SPEED_MPS / 60;
+  if(!plausibleArrival(toEnd, v.arrival)) return null;
+  return etaToStop(poly, positions, v);
+}
+
 export function normName(s){
   return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 }
@@ -185,7 +240,7 @@ export async function fetchPatternVehicles(pointId, patternId, ttlMs = 15000){
   if(hit && Date.now() - hit.t < ttlMs) return hit.v;
   const data = await api(`/all/forecast/${pointId}/${patternId}/${CITY}`);
   const v = (Array.isArray(data) ? data : [])
-    .map(b => ({ plate: b.codVehicle, lat: b.latLng && b.latLng.lat, lng: b.latLng && b.latLng.lng }))
+    .map(b => ({ plate: b.codVehicle, lat: b.latLng && b.latLng.lat, lng: b.latLng && b.latLng.lng, arrival: b.arrivalTime }))
     .filter(b => b.lat && b.lng);
   vehicleCache.set(key, { t: Date.now(), v });
   return v;
@@ -220,7 +275,7 @@ export async function computeEstimatedLines(stop, systemLines){
         if(pointId == null) continue;
         const vehicles = await fetchPatternVehicles(pointId, c.pattern.id);
         const mine = vehicles
-          .map(v => ({ v, eta: etaToStop(c.pattern.poly, c.pos, v) }))
+          .map(v => ({ v, eta: vehicleEta(c.pattern.poly, c.pos, v, c.pattern.id) }))
           .filter(x => x.eta !== null)
           .sort((a, b) => a.eta - b.eta)
           .slice(0, 3);
@@ -246,7 +301,7 @@ export async function estimateBusesForLine(line, stop, route){
   if(!pos.length) return [];
   const vehicles = await fetchPatternVehicles(line.vehiclePoint, line.patternId, 8000);
   return vehicles
-    .map(v => ({ plate: v.plate, lat: v.lat, lng: v.lng, eta: etaToStop(route, pos, v), dest: line.dest }))
+    .map(v => ({ plate: v.plate, lat: v.lat, lng: v.lng, eta: vehicleEta(route, pos, v, line.patternId), dest: line.dest }))
     .filter(b => b.eta !== null);
 }
 

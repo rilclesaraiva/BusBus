@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
-  locateOnRoute, passesNear, stopPositions, etaToStop, normName, findVehiclePoint, mergeLines,
+  locateOnRoute, passesNear, stopPositions, trackDirection, plausibleArrival, vehicleEta, etaToStop, normName, findVehiclePoint, mergeLines,
 } from "../src/modules/estimates.js";
 
 // Rua reta de ~1,1 km, de oeste pra leste, na latitude de Belém.
@@ -101,5 +101,48 @@ describe("mergeLines", () => {
     expect(mergeLines(sys, [])).toBe(sys);
     const out = mergeLines(sys, [{ etaMin: 9, estimated: true }]);
     expect(out.map(l => l.etaMin)).toEqual([2, 9, 20, null]);
+  });
+});
+
+describe("sentido do ônibus", () => {
+  it("trackDirection: andou a favor, contra, e ruído de GPS não decide", () => {
+    const st = new Map();
+    expect(trackDirection("a", 1000, 0, st)).toBe(0);          // 1ª leitura: não sabe
+    expect(trackDirection("a", 1010, 1000, st)).toBe(0);       // 10 m = ruído
+    expect(trackDirection("a", 1200, 2000, st)).toBe(1);       // +200 m
+    expect(trackDirection("a", 1195, 3000, st)).toBe(1);       // parou: mantém
+    expect(trackDirection("a", 1000, 4000, st)).toBe(-1);      // -195 m: voltou
+    expect(trackDirection("b", 500, 0, st)).toBe(0);           // outro ônibus
+  });
+  it("trackDirection esquece depois de 10 min", () => {
+    const st = new Map();
+    trackDirection("a", 100, 0, st);
+    trackDirection("a", 400, 1000, st);
+    expect(trackDirection("a", 100, 11 * 60 * 1000, st)).toBe(0);
+  });
+  it("plausibleArrival descarta quem o sistema diz estar bem mais longe", () => {
+    expect(plausibleArrival(10, 14)).toBe(true);
+    expect(plausibleArrival(10, 30)).toBe(true);   // até 2x + 10
+    expect(plausibleArrival(10, 45)).toBe(false);  // ainda no fim da volta
+    expect(plausibleArrival(10, undefined)).toBe(true);
+  });
+  it("vehicleEta: ônibus andando contra o traçado some na segunda leitura", () => {
+    const stop = passesNear(line, at(800, 10), 35);
+    const idKey = "T" + Math.random();
+    const v1 = { plate: "X1", ...at(700) };
+    expect(vehicleEta(line, stop, v1, idKey)).not.toBeNull();   // 1ª leitura: ainda não sabe
+    const v2 = { plate: "X1", ...at(300) };                      // recuou 400 m
+    expect(vehicleEta(line, stop, v2, idKey)).toBeNull();
+  });
+  it("vehicleEta: ônibus que avança continua aparecendo", () => {
+    const stop = passesNear(line, at(900, 10), 35);
+    const idKey = "U" + Math.random();
+    expect(vehicleEta(line, stop, { plate: "Y", ...at(100) }, idKey)).not.toBeNull();
+    expect(vehicleEta(line, stop, { plate: "Y", ...at(400) }, idKey)).not.toBeNull();
+  });
+  it("vehicleEta: descarta se o sistema diz que está muito mais longe", () => {
+    const stop = passesNear(line, at(900, 10), 35);
+    expect(vehicleEta(line, stop, { plate: "Z", ...at(100), arrival: 90 }, "V" + Math.random())).toBeNull();
+    expect(vehicleEta(line, stop, { plate: "Z2", ...at(100), arrival: 3 }, "W" + Math.random())).not.toBeNull();
   });
 });
