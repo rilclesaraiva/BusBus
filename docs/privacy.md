@@ -6,7 +6,7 @@ permalink: /privacy
 
 # Política de Privacidade — BusBus
 
-Última atualização: 8 de novembro de 2026
+Última atualização: 5 de novembro de 2026
 
 O BusBus é um app gratuito e independente de rastreamento de ônibus de Belém (PA), feito por uma única pessoa (rilclesaraiva) como projeto pessoal. Esta página descreve, de forma direta, tudo o que o app envia pela rede e o que fica guardado no seu aparelho. O código do app e do proxy é aberto: [github.com/rilclesaraiva/BusBus](https://github.com/rilclesaraiva/BusBus).
 
@@ -16,7 +16,7 @@ O BusBus pede permissão de localização só pra mostrar no mapa as paradas e �
 
 ## Pra quem vai o quê
 
-- **Proxy do BusBus (Cloudflare Workers):** recebe a sua posição (latitude e longitude) ao buscar paradas próximas, além dos códigos das linhas e paradas que você abre e, pra estimar a previsão de linhas que o sistema não liga à parada, dos traçados e das posições dos ônibus dessas linhas (sem a sua posição), e repassa essas consultas ao serviço de dados de transporte público de Belém. A Cloudflare pode manter uma cópia da resposta por até 5 segundos e, como hospedagem, processa o endereço IP das conexões segundo a política dela.
+- **Proxy do BusBus (Cloudflare Workers):** recebe a sua posição (latitude e longitude) ao buscar paradas próximas, além dos códigos das linhas e paradas que você abre, e repassa essas consultas ao serviço de dados de transporte público de Belém. A Cloudflare pode manter uma cópia da resposta por até 5 segundos e, como hospedagem, processa o endereço IP das conexões segundo a política dela.
 - **Open-Meteo (previsão do tempo):** recebe a latitude e a longitude da sua posição atual (ou da última conhecida) pra devolver a previsão local, além do seu IP, como qualquer site.
 - **ipapi.co:** só quando o GPS falha ou é negado e não há posição salva: recebe o seu IP pra estimar um local aproximado.
 - **OpenStreetMap, Photon (Komoot) e Nominatim:** o mapa é desenhado com imagens baixadas do servidor de mapas do OpenStreetMap, que vê o seu IP e a região do mapa que você está olhando. Na busca de endereços do planejador de rota, o texto que você digita (junto com um ponto fixo no centro de Belém, não a sua posição) vai pro Photon e pro Nominatim. O Nominatim também recebe pontos do traçado de algumas linhas (não a sua posição) pra descobrir nomes de ruas.
@@ -27,7 +27,7 @@ Cada um desses serviços trata os dados que recebe conforme a política dele. O 
 
 ## O que fica salvo no seu aparelho
 
-Paradas favoritas, histórico de busca, tema e outras preferências (raio de busca, mapa, aviso de atualização), a última posição conhecida, os traçados das linhas (usados pra estimar a previsão de linhas que o sistema não liga à parada, renovados a cada 7 dias), a última versão publicada que o app viu (com as notas) e quais avisos você já viu ficam salvos apenas no seu aparelho, no armazenamento do próprio navegador ou app. Pra apagar tudo, limpe os dados do app ou desinstale.
+Paradas favoritas, histórico de busca, tema e outras preferências (raio de busca, mapa, aviso de atualização), a última posição conhecida, a última versão publicada que o app viu (com as notas) e quais avisos você já viu ficam salvos apenas no seu aparelho, no armazenamento do próprio navegador ou app. Pra apagar tudo, limpe os dados do app ou desinstale.
 
 ## O que o BusBus não faz
 

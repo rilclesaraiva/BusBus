@@ -6,13 +6,9 @@ Formato livremente inspirado em [Keep a Changelog](https://keepachangelog.com/pt
 
 ## [Unreleased]
 
-### Adicionado
-- **Linhas que o itinerário passa pela parada mas o sistema de dados não liga a ela agora aparecem com previsão estimada** (ex.: Sideral na Gama Abreu 1208, que nunca aparecia nem no app oficial). O app usa o traçado de cada linha (`/pattern`): se ele passa a até 35 m da parada (ou termina a até 120 m dela, caso de parada colada num terminal), a linha entra. A posição dos ônibus vem da última parada do trajeto, onde o sistema reconhece a linha, e a previsão é a distância pelo traçado até a parada a 18 km/h (velocidade média de operação de Belém informada pela Semob no relatório do Instituto MDT, abril/2025). Aparece na lista como as demais, e tocar na linha abre o mapa com os ônibus. Só entra o que o sistema não listou; até 3 ônibus por trajeto e até 90 min. Os traçados de todas as linhas ficam guardados no aparelho por 7 dias.
-
 ## [1.8.0] — 2026-11-06
 
 ### Corrigido
-- **Previsão estimada mostrava ônibus voltando pro terminal em parada de ida**: ida e volta usam as mesmas ruas, e a estimativa não sabia pra que lado o ônibus andava. Agora o ônibus é acompanhado de uma leitura pra outra e quem anda contra o sentido do traçado é descartado, e também é descartado o que o sistema diz estar muito mais longe do fim do trajeto do que a geometria sugere (ainda no fim da volta). Na primeira leitura de um ônibus o sentido ainda não é conhecido, então ele pode aparecer por ~20 s até a leitura seguinte confirmar.
 - **Zoom com dois dedos que também move o mapa não desligava o seguimento automático** (Home e "Seguir ônibus"): só o arrasto com um dedo desligava. Agora, se o ponto médio dos dois dedos se desloca durante a pinça, o seguimento desliga; dar zoom parado no lugar continua não desligando.
 - **Mapa tremia com o ônibus parado**: a cada leitura (10 s) o acompanhamento reenquadrava o mapa mesmo sem nada ter mudado. Agora só reenquadra quando a posição de algum ônibus, a parada ou o zoom ideal mudam (e ao ligar "Seguir ônibus" de novo).
 - **Arrastar favoritos falhava se o dedo saísse da alça**: o cartão trocava de lugar no DOM durante o arrasto e o toque se soltava. Agora nada muda de lugar até soltar (só deslocamento visual), e o arrasto acompanha o dedo mesmo fora das barrinhas.
