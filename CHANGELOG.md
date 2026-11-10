@@ -6,6 +6,10 @@ Formato livremente inspirado em [Keep a Changelog](https://keepachangelog.com/pt
 
 ## [Unreleased]
 
+### Alterado
+
+- **"Verificar atualizações" e "Avisos de atualização" saíram de Sobre e foram pro fim da lista de Ajustes**, no grupo "Atualizações", logo acima de "Sobre".
+
 ## [1.8.0] — 2026-11-06
 
 ### Corrigido

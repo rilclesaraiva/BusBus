@@ -107,13 +107,33 @@ Ativar rotação do mapa (padrão: desligado)
 </div>
 </div>
 </div>
+<div class="sectionLabel">Atualizações</div>
+<div class="settingsGroup">
+<div class="settingsRow link" onclick="checkForUpdate()">
+<div class="settingsIcon">${updateIcon}</div>
+<div class="rowBody">
+<div class="rowTitle">Verificar atualizações</div>
+<div class="rowDesc" id="updateStatus">Você está na versão v${APP_VERSION}. Toque para ver se já tem uma mais nova.</div>
+</div>
+<div class="chev">›</div>
+</div>
+${IS_NATIVE ? `
+<div class="settingsRow link" onclick="openNoticesDialog()">
+<div class="settingsIcon">${updateIcon}</div>
+<div class="rowBody">
+<div class="rowTitle">Avisos de atualização</div>
+<div class="rowDesc" id="noticesStatus">${noticesStatusText()}</div>
+</div>
+<div class="chev">›</div>
+</div>` : ``}
+</div>
 <div class="sectionLabel">Sobre</div>
 <div class="settingsGroup">
 <div class="settingsRow link" onclick="navTo('about')">
 <div class="settingsIcon">${shieldIcon}</div>
 <div class="rowBody">
 <div class="rowTitle">Sobre o BusBus</div>
-<div class="rowDesc">Versão, atualizações, código-fonte, licenças e informações legais.</div>
+<div class="rowDesc">Versão, código-fonte, licenças e informações legais.</div>
 </div>
 <div class="chev">›</div>
 </div>
@@ -135,26 +155,6 @@ render(`
 <div class="aboutHeroName">BusBus</div>
 <div class="aboutBadges"><span class="aboutBadge">v${APP_VERSION}</span><span class="aboutBadge">${IS_NATIVE ? "Android" : "Site"}</span></div>
 <div class="aboutHeroDesc">Rastreamento de ônibus em tempo real para Belém. Gratuito, sem anúncios e sem conta. Feito no Brasil, com auxílio de IA, sob direção e revisão do autor.</div>
-</div>
-<div class="sectionLabel">Atualizações</div>
-<div class="settingsGroup">
-<div class="settingsRow link" onclick="checkForUpdate()">
-<div class="settingsIcon">${updateIcon}</div>
-<div class="rowBody">
-<div class="rowTitle">Verificar atualizações</div>
-<div class="rowDesc" id="updateStatus">Você está na versão v${APP_VERSION}. Toque para ver se já tem uma mais nova.</div>
-</div>
-<div class="chev">›</div>
-</div>
-${IS_NATIVE ? `
-<div class="settingsRow link" onclick="openNoticesDialog()">
-<div class="settingsIcon">${updateIcon}</div>
-<div class="rowBody">
-<div class="rowTitle">Avisos de atualização</div>
-<div class="rowDesc" id="noticesStatus">${noticesStatusText()}</div>
-</div>
-<div class="chev">›</div>
-</div>` : ``}
 </div>
 <div class="sectionLabel">Desenvolvedor</div>
 <div class="settingsGroup">
