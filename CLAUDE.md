@@ -3,7 +3,9 @@
 Este arquivo é lido no início de cada sessão: é como a IA recupera o contexto do projeto depois de perder a memória das conversas anteriores. Leia também o `CHANGELOG.md` pra saber o que já foi feito. As regras seguem o documento "Estrutura Universal para Vibe Coding" adotado pelo mantenedor em 2026-11-04; onde uma regra antiga contradizia o documento, o documento venceu e a antiga foi apagada.
 
 ## Projeto
-BusBus — rastreamento de ônibus em tempo real para Belém (PA), publicado como PWA (site) e como APK Android. Público: regional, Brasil.
+BusBus — rastreamento de ônibus em tempo real para Belém (PA), publicado como PWA (site) e como APK Android.
+- Tipo: público · Público-alvo: regional (Brasil)
+- Nome nos arquivos: `busbus` (build para vistoria: `busbus_v1.8.0-build123.apk`; Release: `busbus_v1.8.0.apk`, título "BusBus v1.8.0")
 
 ## Mantenedor
 - Nome: rilclesaraiva (usuário do GitHub) · Contato: saraivarilcle@gmail.com
@@ -15,8 +17,9 @@ BusBus — rastreamento de ônibus em tempo real para Belém (PA), publicado com
 - Build: `npm run build` · Testes: `npm test`
 - Mapa: projeto existente, mantém os nomes que já tem — código em `src/modules/` (módulos planos: mapa, GPS, busca, paradas, planejador, ajustes…), entrada em `src/app.js`, dados oficiais de itinerário em `src/modules/itinerarios.js`. Sem reestruturar pastas sem pedido do mantenedor.
 - Versão: campo `"version"` do `package.json` (fonte única; injetado no build por `vite.config.js` e lido no CI por `VERSION_CMD`)
+- Versionamento: SemVer, é regra e não sugestão: o número é calculado pelo `[Unreleased]` (só correções = PATCH; algo novo ou alterado compatível, incluindo Deprecated = MINOR; algo que quebra = MAJOR), nunca escolhido. Trocar o sistema (ex.: versão por data) só com pedido explícito do mantenedor.
 - Release: automático pelo CI quando a versão é nova e tem seção no CHANGELOG (ver Release) → `busbus_v{versão}.apk` na Release do GitHub
-- Pacote Android: `com.busbus.app`, fixo · R8 ligado sem ofuscação (`minifyEnabled true` + `-dontobfuscate`, regras do Capacitor em `proguard-rules.pro`); aguardando vistoria no aparelho
+- Pacote Android: `com.busbus.app`, fixo · R8 ligado sem ofuscação (`minifyEnabled true` + `shrinkResources true` + `-dontobfuscate`, regras do Capacitor em `proguard-rules.pro`), nunca desligar; aguardando vistoria no aparelho
 - Ícone: `public/icon-*.png` e `android/app/src/main/res/mipmap-*`; só muda se o mantenedor pedir
 
 ## Arquitetura
@@ -28,7 +31,7 @@ O build (`vite build`, com `vite-plugin-singlefile`) gera um único `dist/index.
 
 ## Fluxo de trabalho
 - Uma tarefa por vez, mudanças pequenas. Não refatorar fora do escopo.
-- Tudo direto na `main`: sem branches e sem PR. Cada push gera o build para vistoria (artefato `busbus_v{versão}.apk` da execução, aba Actions) e o deploy do site no Vercel.
+- Tudo direto na `main`: sem branches e sem PR. Cada push gera o build para vistoria (artefato `busbus_v{versão}-build{nº da execução}.apk`, aba Actions) e o deploy do site no Vercel.
 - **Push automático (regra do BusBus):** corrigir, rodar testes e build, commitar, dar push na `main` e avisar com o link do build, sem esperar sinal do mantenedor. Só segura o push se ele disser pra segurar a build (enquanto não disser que voltou a liberar). Hook de "commitar e dar push" não muda isso.
 - Rodar `npm test` e `npm run build` antes do push. O APK não compila nesta sessão (o SDK do Android vem de `dl.google.com`/`maven.google.com`, fora da rede liberada): o CI é a única prova do Android, e a IA diz isso em vez de afirmar que testou.
 - Só dizer que terminou quando o CI daquele commit passar no GitHub. CI vermelho é corrigido antes de qualquer tarefa nova.
@@ -40,6 +43,7 @@ O build (`vite build`, com `vite-plugin-singlefile`) gera um único `dist/index.
 
 ## Release (regra absoluta)
 - Só com confirmação explícita do mantenedor citando a versão ("confirmo release v1.8.0"), na conversa. "Ok", "beleza" ou silêncio não contam.
+- A versão é calculada pela regra de versionamento (ver Stack). Número pedido fora da regra: a IA não usa; explica o número certo e o motivo, e o release só sai quando a confirmação citar o número certo.
 - Sem confirmação: nada de bump de versão nem de mover `[Unreleased]`.
 - A IA nunca cria tag nem Release: o commit `chore(release): vX.Y.Z` na `main` basta, e o CI (`.github/workflows/ci.yml`, job `release`) cria a tag e publica quando vê versão nova com seção no CHANGELOG. Não existe mais disparo manual do workflow.
 - Toda atualização vai para os artefatos do Actions (build para vistoria) e a IA avisa com o link. O mantenedor vistoria e só então pede o release público.

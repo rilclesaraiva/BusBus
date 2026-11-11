@@ -62,6 +62,7 @@ android {
             }
             // R8 ligado (encolhe e otimiza), mas sem ofuscar: ver proguard-rules.pro
             minifyEnabled true
+            shrinkResources true    // remove recursos sem uso (exige minifyEnabled)
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }

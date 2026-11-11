@@ -89,11 +89,13 @@ jobs:
         working-directory: android
         run: ./gradlew assembleRelease --no-daemon
 
-      - name: Renomear o APK com a versão (busbus_v{versão}.apk)
+      # Cada execução leva o próprio número no nome (busbus_v1.8.0-build123.apk),
+      # pra dois builds da mesma versão não se confundirem na pasta de downloads.
+      - name: Renomear o APK com versão e nº da execução (busbus_v{versão}-build{nº}.apk)
         id: apk
         run: |
           SRC=android/app/build/outputs/apk/release/app-release.apk
-          OUT="busbus_v${{ steps.version.outputs.version }}.apk"
+          OUT="busbus_v${{ steps.version.outputs.version }}-build${{ github.run_number }}.apk"
           cp "$SRC" "$OUT"
           echo "path=$OUT" >> "$GITHUB_OUTPUT"
 
@@ -138,7 +140,12 @@ jobs:
         if: steps.v.outputs.publish == 'true'
         uses: actions/download-artifact@v4
         with:
-          name: busbus_v${{ steps.v.outputs.version }}.apk
+          name: busbus_v${{ steps.v.outputs.version }}-build${{ github.run_number }}.apk
+
+      # Nome público, sem o nº da execução: busbus_v{versão}.apk
+      - name: Nomear o APK da Release
+        if: steps.v.outputs.publish == 'true'
+        run: cp "busbus_v${{ steps.v.outputs.version }}-build${{ github.run_number }}.apk" "busbus_v${{ steps.v.outputs.version }}.apk"
 
       - name: Publicar a Release do GitHub (cria a tag vX.Y.Z neste commit)
         if: steps.v.outputs.publish == 'true'
