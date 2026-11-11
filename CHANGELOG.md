@@ -12,6 +12,7 @@ Formato livremente inspirado em [Keep a Changelog](https://keepachangelog.com/pt
 
 ### Alterado
 
+- **`updates.js` ganhou o cabeçalho de licença** que os outros módulos já tinham (só comentário, sem mudança de comportamento).
 - **Build para vistoria agora leva o número da execução no nome** (`busbus_v1.8.0-build123.apk`), pra dois builds da mesma versão não se confundirem. A Release continua publicando `busbus_v{versão}.apk`, que é o mesmo APK do build vistoriado, só renomeado.
 - **R8 também remove recursos sem uso** (`shrinkResources true`), como manda a estrutura do projeto.
 - **CLAUDE.md alinhado à versão atual do documento de estrutura**: tipo do projeto e nome dos arquivos registrados, e a regra de versionamento (número calculado, nunca escolhido; número fora da regra não é usado).

@@ -1,3 +1,7 @@
+// BusBus Experimental Modular (B.E.M.) — módulo "updates.js"
+// Copyright (C) 2026 rilclesaraiva — licenciado sob GNU GPLv3.
+// Texto completo: https://github.com/rilclesaraiva/BusBus/blob/main/LICENSE
+//
 // Aviso de atualização do app Android, no modelo do BoomListener.
 //
 // Fluxo: busca a última Release pública no GitHub, compara com a versão
