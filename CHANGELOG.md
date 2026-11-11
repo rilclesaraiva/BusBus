@@ -6,6 +6,10 @@ Formato livremente inspirado em [Keep a Changelog](https://keepachangelog.com/pt
 
 ## [Unreleased]
 
+### Adicionado
+
+- **`ARCHITECTURE.md`**: visão geral do build e do Worker e mapa dos módulos, tirados do `CLAUDE.md` (o projeto passou de 5 funcionalidades, gatilho do documento de estrutura). O `CLAUDE.md` e o README apontam pra ele.
+
 ### Alterado
 
 - **Build para vistoria agora leva o número da execução no nome** (`busbus_v1.8.0-build123.apk`), pra dois builds da mesma versão não se confundirem. A Release continua publicando `busbus_v{versão}.apk`, que é o mesmo APK do build vistoriado, só renomeado.

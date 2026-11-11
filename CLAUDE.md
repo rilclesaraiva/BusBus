@@ -23,7 +23,7 @@ BusBus — rastreamento de ônibus em tempo real para Belém (PA), publicado com
 - Ícone: `public/icon-*.png` e `android/app/src/main/res/mipmap-*`; só muda se o mantenedor pedir
 
 ## Arquitetura
-O build (`vite build`, com `vite-plugin-singlefile`) gera um único `dist/index.html` autocontido. Esse arquivo é o site (deploy automático no Vercel a cada push na `main`) e também o que o Capacitor empacota no APK. `worker.js` / `wrangler.toml` são o proxy em Cloudflare Workers que esconde a API real de dados de transporte e redireciona `/privacy` e `/terms` pras páginas legais; o deploy do Worker é manual, feito pelo mantenedor. Linhas fora do acervo de `itinerarios.js` caem no modo antigo (geocodificação reversa ao vivo) em `trip-planner.js`.
+Veja [`ARCHITECTURE.md`](ARCHITECTURE.md): visão geral do build e do Worker e o mapa dos módulos em `src/modules/`.
 
 ## Regras de estrutura
 - Seguir as convenções do projeto existente. Nenhuma dependência nova sem justificar.

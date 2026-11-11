@@ -83,7 +83,8 @@ O cuidado é para que isso não vire código descartável:
 - **O mantenedor decide, a IA executa.** Toda funcionalidade parte de uma
   necessidade real, e cada versão é testada em aparelhos Android reais.
 - **Regras escritas que a IA precisa seguir.** O [`CLAUDE.md`](CLAUDE.md) define
-  arquitetura, limites de privacidade e processo, e é atualizado a cada decisão.
+  limites de privacidade e processo, e é atualizado a cada decisão; a
+  arquitetura está no [`ARCHITECTURE.md`](ARCHITECTURE.md).
 - **Testes e builds automáticos.** Toda mudança passa pelo GitHub Actions,
   e teste falhando significa build barrado.
 - **Nenhum release sem aprovação.** Nada é publicado sem a aprovação
